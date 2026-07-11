@@ -289,7 +289,7 @@
         <div class="opt-desc">Smaller cars packed tighter across the road. Fast and unforgiving.</div>
       </button>
     </div>
-    <div class="hint">Dodge traffic. Stay on the road.<br>Watch your fuel.</div>
+    <div class="hint">Dodge traffic. Stay on the road.<br>Hit a gold ramp for a speed boost. Watch your fuel.</div>
   </div>
 </div>
 
@@ -348,7 +348,7 @@
     roadGradient.addColorStop(1, '#19180f');
 
     if (player){
-      player.width = roadWidth() * 0.20;
+      player.width = roadWidth() * PLAYER_WIDTH_RATIO;
       player.height = player.width * 1.85;
       player.y = H * 0.80;
       player.x = Math.max(roadLeft()+player.width/2, Math.min(roadRight()-player.width/2, player.x));
@@ -362,6 +362,10 @@
   function roadRight(){ return W * 0.86; }
   function roadWidth(){ return roadRight() - roadLeft(); }
 
+  // Cars sized a bit smaller than before, for a slightly more spacious-
+  // feeling but still challenging road.
+  const PLAYER_WIDTH_RATIO = 0.165;
+
   // ---- State ----
   const STORAGE_KEY = 'roadfighter_al_best';
   let best = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
@@ -369,9 +373,10 @@
 
   let state = 'start'; // start | playing | over
   let difficulty = 'medium'; // easy | medium | hard
-  let player, traffic, pickups, score, frame, roadOffset, fuel, lowFuelWarned;
+  let player, traffic, pickups, ramps, score, frame, roadOffset, fuel, lowFuelWarned;
   let heldDir = 0;      // -1 left, 0 none, 1 right (keyboard)
   let touchDir = 0;     // -1 left, 0 none, 1 right (touch)
+  let boostTimer = 0;   // frames of active speed boost remaining
 
   // Difficulty presets: hard mode shrinks cars and packs more of them
   // across the road at once (smaller but far more crowded), on top of
@@ -388,18 +393,21 @@
   function reset(){
     player = {
       x: W/2, y: H*0.80,
-      width: roadWidth()*0.20, height: roadWidth()*0.20*1.85,
-      swerve: 0
+      width: roadWidth()*PLAYER_WIDTH_RATIO, height: roadWidth()*PLAYER_WIDTH_RATIO*1.85,
+      swerve: 0, jumpT: 0, jumpFrame: 0
     };
     traffic = [];
     pickups = [];
+    ramps = [];
     score = 0;
     frame = 0;
     roadOffset = 0;
     fuel = 100;
     lowFuelWarned = false;
+    boostTimer = 0;
     spawnTimer = 60;
     pickupTimer = 260;
+    rampTimer = 320;
     document.getElementById('score').textContent = '0';
     updateFuelUI();
   }
@@ -410,12 +418,16 @@
   function baseSpeed(){ return 3.7 * (H/560); }
   const SPAWN_MIN_BASE = 58, SPAWN_MAX_BASE = 96;
   const DIFFICULTY_START = 20, DIFFICULTY_SPAN = 22;
+  const BOOST_MULT = 1.5, BOOST_DURATION = 95; // frames (~1.6s at 60fps)
+  const JUMP_DURATION = 26; // frames for the ramp hop animation
+  const RAMP_MIN_GAP = 460, RAMP_MAX_GAP = 760;
 
   function difficultyT(){
     return Math.max(0, Math.min(1, (score - DIFFICULTY_START) / DIFFICULTY_SPAN));
   }
   function currentSpeed(){
-    return baseSpeed() * diff().speedMult * (1 + difficultyT() * 0.6);
+    const boostFactor = boostTimer > 0 ? BOOST_MULT : 1;
+    return baseSpeed() * diff().speedMult * (1 + difficultyT() * 0.6) * boostFactor;
   }
   function spawnRange(){
     const t = difficultyT();
@@ -430,6 +442,7 @@
 
   let spawnTimer = 60;
   let pickupTimer = 260;
+  let rampTimer = 320;
 
   // ---- Sound (synthesized, no external audio files) ----
   let actx = null;
@@ -457,6 +470,7 @@
   }
   function sfxPass(){ tone(760, 0.08, 'sine', 0.13, 0); }
   function sfxFuel(){ tone(700,0.08,'sine',0.14,0); tone(980,0.10,'sine',0.13,0.07); }
+  function sfxBoost(){ tone(300,0.22,'sawtooth',0.15,0,{ sweepTo: 900 }); tone(500,0.14,'triangle',0.1,0.05,{ sweepTo: 1100 }); }
   function sfxLowFuel(){ tone(220,0.16,'triangle',0.13,0); }
   function sfxCrash(){
     const ac = audioCtx(); if (!ac) return;
@@ -526,11 +540,21 @@
     return heldDir;
   }
 
+  // Most traffic cruises at roughly road speed, but some are noticeably
+  // faster or slower than others — that's what makes them catch up to
+  // and visually overtake one another in neighboring lanes over time.
+  function randomSpeedFactor(){
+    const r = Math.random();
+    if (r < 0.16) return 1.28 + Math.random()*0.24; // occasional fast car, overtakes others
+    if (r < 0.30) return 0.62 + Math.random()*0.16; // occasional slow car, gets overtaken
+    return 0.94 + Math.random()*0.14;                // typical traffic
+  }
+
   function spawnTraffic(){
     const w = player.width * diff().sizeMult * (0.92 + Math.random()*0.18);
     const h = w * 1.85;
     const usable = roadWidth() - w;
-    if (usable <= 0){ traffic.push({ x: W/2, y:-h, width:w, height:h, passed:false }); return; }
+    if (usable <= 0){ traffic.push({ x: W/2, y:-h, width:w, height:h, passed:false, speedFactor:randomSpeedFactor() }); return; }
 
     // How many car-widths fit side-by-side across the road. Smaller cars
     // (higher sizeMult reduction on Hard) mean more lanes fit — that's
@@ -555,8 +579,15 @@
     const carsToPlace = Math.max(1, Math.round(fillable.length * fillFraction));
 
     for (let i=0;i<Math.min(carsToPlace, fillable.length); i++){
-      traffic.push({ x: fillable[i], y: -h, width: w, height: h, passed:false });
+      traffic.push({ x: fillable[i], y: -h, width: w, height: h, passed:false, speedFactor:randomSpeedFactor() });
     }
+  }
+
+  function spawnRamp(){
+    const w = player.width * 0.95;
+    const minX = roadLeft() + w/2, maxX = roadRight() - w/2;
+    if (maxX <= minX) return;
+    ramps.push({ x: minX + Math.random()*(maxX-minX), y: -w*1.3, width:w, height:w*1.15, used:false });
   }
 
   function spawnPickup(){
@@ -640,9 +671,26 @@
 
   function drawPlayer(){
     const w = player.width, h = player.height;
+    const jt = player.jumpT || 0; // 0 = grounded, ramps 0→1→0 across the hop
+    const lift = Math.sin(jt * Math.PI) * h * 0.55;
+    const scale = 1 + Math.sin(jt * Math.PI) * 0.22;
+
+    if (jt > 0){
+      // shrinking ground shadow sells the height
+      ctx.save();
+      ctx.translate(player.x, player.y + h*0.30);
+      ctx.scale(1 - jt*0.35, 1 - jt*0.35);
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, w*0.42, w*0.16, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     ctx.save();
-    ctx.translate(player.x, player.y);
+    ctx.translate(player.x, player.y - lift);
     ctx.rotate(player.swerve * 0.24);
+    ctx.scale(scale, scale);
     drawCarShape(w, h, getPlayerGradient(w,h), true);
     ctx.restore();
   }
@@ -651,6 +699,47 @@
     ctx.save();
     ctx.translate(t.x, t.y);
     drawCarShape(t.width, t.height, getTrafficGradient(t.width,t.height), false);
+    ctx.restore();
+  }
+
+  const _rampGradCache = new Map();
+  function getRampGradient(w,h){
+    const key = Math.round(w) + 'x' + Math.round(h);
+    let grad = _rampGradCache.get(key);
+    if (grad) return grad;
+    grad = ctx.createLinearGradient(0,-h/2,0,h/2);
+    grad.addColorStop(0, GOLD_LIGHT);
+    grad.addColorStop(1, GOLD_DARK);
+    if (_rampGradCache.size > 12) _rampGradCache.clear();
+    _rampGradCache.set(key, grad);
+    return grad;
+  }
+  function drawRamp(r){
+    const w = r.width, h = r.height;
+    ctx.save();
+    ctx.translate(r.x, r.y);
+    ctx.fillStyle = getRampGradient(w,h);
+    ctx.beginPath();
+    ctx.moveTo(0, -h/2);
+    ctx.lineTo(w/2, h/2);
+    ctx.lineTo(-w/2, h/2);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(12,12,11,0.4)';
+    ctx.lineWidth = Math.max(1, w*0.035);
+    ctx.stroke();
+    // ridge lines suggesting an incline, plus an upward chevron
+    ctx.strokeStyle = 'rgba(12,12,11,0.3)';
+    ctx.lineWidth = Math.max(1, w*0.025);
+    ctx.beginPath();
+    ctx.moveTo(0, -h*0.14); ctx.lineTo(0, h*0.42);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(240,237,230,0.75)';
+    ctx.lineWidth = Math.max(1.5, w*0.045);
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-w*0.16, h*0.02); ctx.lineTo(0, -h*0.18); ctx.lineTo(w*0.16, h*0.02);
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -690,6 +779,14 @@
     player.x = Math.max(roadLeft()+half, Math.min(roadRight()-half, player.x));
     player.swerve += (dir - player.swerve) * 0.25;
 
+    if (boostTimer > 0) boostTimer--;
+    if (player.jumpFrame > 0){
+      player.jumpFrame--;
+      player.jumpT = 1 - (player.jumpFrame / JUMP_DURATION);
+    } else {
+      player.jumpT = 0;
+    }
+
     fuel -= fuelDrainRate();
     if (fuel <= 25 && !lowFuelWarned){ lowFuelWarned = true; sfxLowFuel(); }
     updateFuelUI();
@@ -706,9 +803,14 @@
       spawnPickup();
       pickupTimer = 340 + Math.random()*220;
     }
+    rampTimer -= 1;
+    if (rampTimer <= 0){
+      spawnRamp();
+      rampTimer = RAMP_MIN_GAP + Math.random()*(RAMP_MAX_GAP-RAMP_MIN_GAP);
+    }
 
     for (const t of traffic){
-      t.y += speed;
+      t.y += speed * t.speedFactor;
       if (!t.passed && t.y - t.height/2 > player.y + player.height/2){
         t.passed = true;
         score++;
@@ -722,6 +824,12 @@
     pickups = pickups.filter(p => {
       if (p.taken) return false;
       return p.y - p.size/2 < H + 40;
+    });
+
+    for (const r of ramps) r.y += speed;
+    ramps = ramps.filter(r => {
+      if (r.used) return false;
+      return r.y - r.height/2 < H + 40;
     });
 
     // collision: forgiving inset hitboxes
@@ -749,6 +857,18 @@
         lowFuelWarned = fuel > 25 ? false : lowFuelWarned;
         updateFuelUI();
         sfxFuel();
+      }
+    }
+
+    for (const r of ramps){
+      if (r.used) continue;
+      const dx = r.x - player.x, dy = r.y - player.y;
+      const rr = (r.width*0.55 + player.width*0.4);
+      if (dx*dx + dy*dy < rr*rr){
+        r.used = true;
+        boostTimer = BOOST_DURATION;
+        player.jumpFrame = JUMP_DURATION;
+        sfxBoost();
       }
     }
 
@@ -792,6 +912,7 @@
     }
     ctx.stroke();
 
+    for (const r of ramps) if (!r.used) drawRamp(r);
     for (const p of pickups) if (!p.taken) drawPickup(p);
     for (const t of traffic) drawTraffic(t);
     if (player) drawPlayer();
