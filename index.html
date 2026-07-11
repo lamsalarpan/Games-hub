@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mini Games — Arpan Lamsal</title>
+<meta name="description" content="Pick a mini game — Flappy Bird or Dino Run — built by Arpan Lamsal.">
+
+<link rel="icon" href="faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="faviconset/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="faviconset/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="faviconset/favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="faviconset/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="faviconset/favicon-180.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:            #0c0c0b;
+    --bg-2:          #111110;
+    --bg-3:          #181817;
+    --bg-card:       #141413;
+    --border:        rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.13);
+    --text-primary:  #f0ede6;
+    --text-secondary:#8a8880;
+    --text-muted:    #505050;
+    --gold:          #c8973a;
+    --gold-light:    #e8b55a;
+    --gold-dark:     #9c7328;
+    --font-display:  'Cormorant Garamond', Georgia, serif;
+    --font-mono:     'Space Mono', monospace;
+    --nav-h: 64px;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{
+    min-height:100%; background:var(--bg); color:var(--text-primary);
+    font-family:var(--font-mono);
+    -webkit-font-smoothing:antialiased;
+    -webkit-tap-highlight-color:transparent;
+  }
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(60% 50% at 50% 0%, rgba(200,151,58,0.08), transparent 70%),
+      linear-gradient(180deg, #0c0c0b 0%, #14140f 55%, #1a1710 100%);
+    display:flex; flex-direction:column;
+  }
+
+  /* ---- Nav ---- */
+  .nav{
+    position:fixed; top:0; left:0; right:0; height:var(--nav-h);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 1.5rem; z-index:50;
+    background:linear-gradient(to bottom, rgba(12,12,11,0.95), rgba(12,12,11,0));
+  }
+  .nav-logo{ display:flex; align-items:center; gap:0.6rem; text-decoration:none; }
+  .nav-logo img{ width:30px; height:30px; display:block; }
+  .nav-title{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
+    color:var(--text-secondary); text-transform:uppercase;
+  }
+  .nav-back{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em;
+    color:var(--text-secondary); text-decoration:none; text-transform:uppercase;
+    border:1px solid var(--border-strong); border-radius:100px;
+    padding:0.5rem 1rem; transition:color .25s ease, border-color .25s ease;
+  }
+  .nav-back:hover{ color:var(--gold); border-color:var(--gold); }
+
+  /* ---- Hero / selection ---- */
+  .stage-wrap{
+    flex:1;
+    display:flex; align-items:center; justify-content:center;
+    padding: calc(var(--nav-h) + 28px) 1.5rem 3rem;
+  }
+  .hero{
+    width:100%; max-width:640px;
+    text-align:center;
+  }
+  .hero img.mark{
+    width:56px; height:56px; margin-bottom:1.4rem; opacity:0.95;
+    animation:float 4.5s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-6px); }
+  }
+  .hero h1{
+    font-family:var(--font-display); font-weight:300; font-style:italic;
+    font-size:clamp(2.2rem, 6vw, 3.4rem); color:var(--gold-light);
+    line-height:1.08; margin-bottom:0.7rem;
+  }
+  .hero .sub{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--text-secondary);
+    margin-bottom:2.6rem;
+  }
+
+  .game-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:1.1rem;
+  }
+  @media (max-width:520px){
+    .game-grid{ grid-template-columns:1fr; }
+  }
+
+  .game-card{
+    position:relative;
+    display:flex; flex-direction:column; align-items:center;
+    background:var(--bg-card);
+    border:1px solid var(--border-strong);
+    border-radius:8px;
+    padding:2.2rem 1.4rem 1.7rem;
+    text-decoration:none; color:inherit;
+    cursor:pointer;
+    transition:transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+    overflow:hidden;
+  }
+  .game-card:hover, .game-card:focus-visible{
+    transform:translateY(-4px);
+    border-color:var(--gold);
+    box-shadow:0 20px 50px rgba(0,0,0,0.45);
+    outline:none;
+  }
+  .game-card:active{ transform:translateY(-1px); }
+
+  .game-card .icon-wrap{
+    width:84px; height:84px; margin-bottom:1.3rem;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .game-card svg{ width:100%; height:100%; display:block; }
+
+  .game-card h2{
+    font-family:var(--font-display); font-weight:400; font-style:italic;
+    font-size:1.7rem; color:var(--text-primary); margin-bottom:0.4rem;
+  }
+  .game-card .desc{
+    font-family:var(--font-mono); font-size:11.5px; line-height:1.6;
+    color:var(--text-secondary); margin-bottom:1.3rem;
+  }
+  .game-card .play-tag{
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.12em;
+    text-transform:uppercase; color:var(--gold);
+    border:1px solid var(--gold); border-radius:100px;
+    padding:0.45rem 1.1rem;
+    transition:background .25s ease, color .25s ease;
+  }
+  .game-card:hover .play-tag{
+    background:var(--gold); color:#0c0c0b;
+  }
+
+  .hero .hint{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em;
+    color:var(--text-muted); margin-top:2.2rem;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .hero img.mark{ animation:none; }
+    .game-card{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+    <img src="logo.png" alt="Arpan Lamsal logo">
+    <span class="nav-title">Mini Games</span>
+  </a>
+  <a href="https://lamsalarpan.com.np/projects" class="nav-back">← Portfolio</a>
+</nav>
+
+<div class="stage-wrap">
+  <div class="hero">
+    <img class="mark" src="logo.png" alt="">
+    <h1>Which game do you want to play?</h1>
+    <div class="sub">Pick one to jump straight in</div>
+
+    <div class="game-grid">
+      <a class="game-card" href="flappy/index.html" id="flappyCard" aria-label="Play Flappy Bird">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="birdGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#e8b55a"/>
+                <stop offset="100%" stop-color="#c8973a"/>
+              </linearGradient>
+            </defs>
+            <ellipse cx="55" cy="52" rx="9" ry="17" fill="#9c7328" transform="rotate(28 55 52)"/>
+            <ellipse cx="48" cy="50" rx="30" ry="24" fill="url(#birdGrad)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+            <ellipse cx="38" cy="60" rx="17" ry="9" fill="rgba(240,237,230,0.16)"/>
+            <ellipse cx="68" cy="38" rx="16" ry="15" fill="url(#birdGrad)"/>
+            <path d="M80 32 L95 38 L80 44 Z" fill="#e8683a" stroke="rgba(12,12,11,0.3)" stroke-width="1"/>
+            <circle cx="74" cy="32" r="3.4" fill="#0c0c0b"/>
+            <circle cx="72.8" cy="30.8" r="1.2" fill="rgba(255,255,255,0.85)"/>
+          </svg>
+        </div>
+        <h2>Flappy Bird</h2>
+        <div class="desc">Tap to flap. Weave the gold bird through the pipes.</div>
+        <span class="play-tag">Play</span>
+      </a>
+
+      <a class="game-card" href="dino/index.html" id="dinoCard" aria-label="Play Dino Run">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="dinoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#e8b55a"/>
+                <stop offset="100%" stop-color="#c8973a"/>
+              </linearGradient>
+            </defs>
+            <!-- tail -->
+            <path d="M40 54 Q18 60 8 80 Q22 74 36 65 Z" fill="#9c7328" stroke="rgba(12,12,11,0.35)" stroke-width="1"/>
+            <!-- legs -->
+            <path d="M40 74 L36 92 M40 74 L46 91" stroke="#9c7328" stroke-width="6" stroke-linecap="round"/>
+            <path d="M56 76 L53 93 M56 76 L60 92" stroke="#9c7328" stroke-width="6" stroke-linecap="round"/>
+            <!-- torso -->
+            <rect x="32" y="34" width="34" height="44" rx="15" fill="url(#dinoGrad)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+            <!-- belly -->
+            <ellipse cx="42" cy="60" rx="11" ry="15" fill="rgba(240,237,230,0.16)"/>
+            <!-- arm -->
+            <line x1="58" y1="62" x2="67" y2="67" stroke="#9c7328" stroke-width="4" stroke-linecap="round"/>
+            <!-- head -->
+            <ellipse cx="68" cy="27" rx="17" ry="15" fill="url(#dinoGrad)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+            <!-- jaw -->
+            <path d="M79 30 L96 35 L94 44 L74 39 Z" fill="url(#dinoGrad)" stroke="rgba(12,12,11,0.3)" stroke-width="1"/>
+            <!-- teeth -->
+            <path d="M79 37 L82 41 L85 37 L88 41 L91 37" stroke="rgba(240,237,230,0.9)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+            <!-- eye -->
+            <circle cx="73" cy="21" r="3" fill="#0c0c0b"/>
+            <circle cx="71.8" cy="19.8" r="1.1" fill="rgba(255,255,255,0.85)"/>
+          </svg>
+        </div>
+        <h2>Dino Run</h2>
+        <div class="desc">Jump the thorns, duck the crows. Speed only goes up.</div>
+        <span class="play-tag">Play</span>
+      </a>
+
+      <a class="game-card" href="tic-tac-toe/index.html" id="ticTacToeCard" aria-label="Play Tic Tac Toe">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="gridGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#e8b55a"/>
+              <stop offset="100%" stop-color="#c8973a"/>
+            </linearGradient>
+          </defs>
+
+          <line x1="38.3" y1="16" x2="38.3" y2="84" stroke="url(#gridGrad)" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="61.7" y1="16" x2="61.7" y2="84" stroke="url(#gridGrad)" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="16" y1="38.3" x2="84" y2="38.3" stroke="url(#gridGrad)" stroke-width="4.5" stroke-linecap="round"/>
+          <line x1="16" y1="61.7" x2="84" y2="61.7" stroke="url(#gridGrad)" stroke-width="4.5" stroke-linecap="round"/>
+
+          <path d="M20.5 20.5 L32.5 32.5 M32.5 20.5 L20.5 32.5" stroke="url(#gridGrad)" stroke-width="5" stroke-linecap="round"/>
+
+          <circle cx="73" cy="27.3" r="8.3" fill="none" stroke="#f0ede6" stroke-width="5"/>
+
+          <path d="M67.5 67.5 L79.5 79.5 M79.5 67.5 L67.5 79.5" stroke="url(#gridGrad)" stroke-width="5" stroke-linecap="round"/>
+
+          <circle cx="27.3" cy="73" r="8.3" fill="none" stroke="rgba(240,237,230,0.55)" stroke-width="5"/>
+        </svg>
+        </div>
+        <h2>Tic Tac Toe</h2>
+        <div class="desc">Get three in a row to win.</div>
+        <span class="play-tag">Play</span>
+      </a>
+
+      <a class="game-card" href="Road-Fighter/index.html" id="roadFighterCard" aria-label="Road Fighter">
+        <div class="icon-wrap">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="carGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#e8b55a"/>
+              <stop offset="100%" stop-color="#c8973a"/>
+            </linearGradient>
+          </defs>
+
+          <line x1="24" y1="18" x2="18" y2="30" stroke="#9c7328" stroke-width="3.5" stroke-linecap="round" opacity="0.6"/>
+          <line x1="34" y1="12" x2="28" y2="26" stroke="#9c7328" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+
+          <rect x="32" y="16" width="36" height="68" rx="14"
+                fill="url(#carGrad)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+
+          <rect x="40" y="34" width="20" height="16" rx="5" fill="rgba(12,12,11,0.55)"/>
+
+          <rect x="22" y="38" width="10" height="10" rx="3" fill="rgba(12,12,11,0.4)"/>
+          <rect x="68" y="38" width="10" height="10" rx="3" fill="rgba(12,12,11,0.4)"/>
+
+          <circle cx="42" cy="27" r="3.6" fill="#f0ede6"/>
+          <circle cx="58" cy="27" r="3.6" fill="#f0ede6"/>
+
+          <circle cx="41.5" cy="76" r="3.4" fill="#c8432a"/>
+          <circle cx="58.5" cy="76" r="3.4" fill="#c8432a"/>
+        </svg>
+        </div>
+        <h2>Road Fighter</h2>
+        <div class="desc">Race against the traffic and avoid collisions.</div>
+        <span class="play-tag">Play</span>
+      </a>
+    </div>
+
+    <div class="hint">Use ← → or tap a card to choose</div>
+  </div>
+</div>
+
+<script>
+  const cards = [
+    document.getElementById('ticTacToeCard'),
+    document.getElementById('flappyCard'),
+    document.getElementById('dinoCard'),
+    document.getElementById('roadFighterCard')
+  ];
+  let focusIdx = -1;
+
+  function setFocus(i){
+    focusIdx = (i + cards.length) % cards.length;
+    cards[focusIdx].focus();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight'){ e.preventDefault(); setFocus(focusIdx === -1 ? 0 : focusIdx + 1); }
+    else if (e.key === 'ArrowLeft'){ e.preventDefault(); setFocus(focusIdx === -1 ? 0 : focusIdx - 1); }
+    else if ((e.key === 'Enter' || e.key === ' ') && focusIdx !== -1){
+      e.preventDefault();
+      window.location.href = cards[focusIdx].getAttribute('href');
+    }
+  });
+</script>
+</body>
+</html>
