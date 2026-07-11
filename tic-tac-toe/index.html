@@ -17,56 +17,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
+<link rel="stylesheet" href="../assets/css/theme.css">
 <style>
-  :root{
-    --bg:            #0c0c0b;
-    --bg-2:          #111110;
-    --bg-3:          #181817;
-    --bg-card:       #141413;
-    --border:        rgba(255,255,255,0.07);
-    --border-strong: rgba(255,255,255,0.13);
-    --text-primary:  #f0ede6;
-    --text-secondary:#8a8880;
-    --text-muted:    #505050;
-    --gold:          #c8973a;
-    --gold-light:    #e8b55a;
-    --font-display:  'Cormorant Garamond', Georgia, serif;
-    --font-mono:     'Space Mono', monospace;
-    --nav-h: 64px;
-  }
-  *{ box-sizing:border-box; margin:0; padding:0; }
-  html,body{
-    min-height:100%; background:var(--bg); color:var(--text-primary);
-    font-family:var(--font-mono);
-    -webkit-font-smoothing:antialiased;
-    overscroll-behavior:none;
-    -webkit-tap-highlight-color:transparent;
-  }
   body{
     min-height:100vh; min-height:100dvh;
     display:flex; flex-direction:column;
+    overscroll-behavior:none;
   }
-
-  /* ---- Nav ---- */
-  .nav{
-    position:fixed; top:0; left:0; right:0; height:var(--nav-h);
-    display:flex; align-items:center; justify-content:space-between;
-    padding:0 1.5rem; z-index:50;
-    background:linear-gradient(to bottom, rgba(12,12,11,0.95), rgba(12,12,11,0.85) 70%, rgba(12,12,11,0));
-  }
-  .nav-logo{ display:flex; align-items:center; gap:0.6rem; text-decoration:none; }
-  .nav-logo img{ width:30px; height:30px; display:block; }
-  .nav-title{
-    font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
-    color:var(--text-secondary); text-transform:uppercase;
-  }
-  .nav-back{
-    font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em;
-    color:var(--text-secondary); text-decoration:none; text-transform:uppercase;
-    border:1px solid var(--border-strong); border-radius:100px;
-    padding:0.5rem 1rem; transition:color .25s ease, border-color .25s ease;
-  }
-  .nav-back:hover{ color:var(--gold); border-color:var(--gold); }
 
   /* ---- Stage ---- */
   .stage-wrap{
@@ -190,93 +147,6 @@
     border:1px solid var(--border-strong);
   }
   .btn-ghost:hover{ color:var(--gold); border-color:var(--gold); }
-
-  /* ---- Overlays (menu / difficulty / round-over) ---- */
-  .overlay{
-    position:fixed; inset:0; z-index:60;
-    display:flex; align-items:center; justify-content:center;
-    padding:calc(var(--nav-h) + 20px) 1.5rem 2rem;
-    background:rgba(8,8,7,0.82);
-    backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px);
-    opacity:0; pointer-events:none;
-    transition:opacity .35s ease;
-  }
-  .overlay.show{ opacity:1; pointer-events:auto; }
-  .panel{
-    width:100%; max-width:360px;
-    background:var(--bg-card);
-    border:1px solid var(--border-strong);
-    border-radius:6px;
-    padding:2.4rem 2rem;
-    text-align:center;
-    transform:translateY(10px) scale(0.98);
-    transition:transform .35s ease;
-  }
-  .overlay.show .panel{ transform:translateY(0) scale(1); }
-  .panel img.mark-logo{ width:48px; height:48px; margin-bottom:1.1rem; opacity:0.95; }
-  .panel h1{
-    font-family:var(--font-display); font-weight:300; font-style:italic;
-    font-size:2.4rem; color:var(--gold-light); line-height:1.05;
-    margin-bottom:0.5rem;
-  }
-  .panel .sub{
-    font-family:var(--font-mono); font-size:11px; letter-spacing:0.1em;
-    text-transform:uppercase; color:var(--text-secondary);
-    margin-bottom:1.8rem;
-  }
-  .panel .hint{
-    font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em;
-    color:var(--text-muted); margin-top:1.4rem;
-  }
-  .option-list{ display:flex; flex-direction:column; gap:0.65rem; }
-  .option-btn{
-    width:100%; text-align:left;
-    background:var(--bg-2); border:1px solid var(--border-strong);
-    border-radius:5px; padding:0.9rem 1.1rem;
-    color:var(--text-primary); cursor:pointer;
-    font-family:var(--font-mono);
-    transition:border-color .2s ease, background .2s ease, transform .15s ease;
-  }
-  .option-btn:hover{ border-color:var(--gold); background:var(--bg-3); }
-  .option-btn:active{ transform:translateY(1px); }
-  .option-btn .opt-title{
-    font-size:13px; font-weight:700; letter-spacing:0.04em;
-    color:var(--gold-light); text-transform:uppercase; margin-bottom:0.2rem;
-  }
-  .option-btn .opt-desc{ font-size:11px; color:var(--text-secondary); line-height:1.4; }
-  .back-link{
-    display:inline-block; margin-top:1.4rem;
-    font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
-    color:var(--text-muted); text-decoration:none; cursor:pointer;
-    background:none; border:none; font-family:var(--font-mono);
-  }
-  .back-link:hover{ color:var(--gold); }
-
-  .stat-row{
-    display:flex; justify-content:space-between;
-    padding:0.8rem 0; border-bottom:1px solid var(--border);
-    font-family:var(--font-mono); font-size:12px;
-    letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);
-  }
-  .stat-row:last-of-type{ border-bottom:none; }
-  .stat-row b{ color:var(--gold-light); font-size:15px; letter-spacing:0.02em; }
-
-  .btn-primary{
-    display:block; width:100%; margin-top:1.6rem;
-    background:var(--gold); color:#0c0c0b;
-    border:none; border-radius:4px;
-    font-family:var(--font-mono); font-size:12px; font-weight:700;
-    letter-spacing:0.1em; text-transform:uppercase;
-    padding:0.9rem 1rem; cursor:pointer;
-    transition:background .25s ease, transform .2s ease;
-  }
-  .btn-primary:hover{ background:var(--gold-light); transform:translateY(-1px); }
-  .btn-primary:active{ transform:translateY(0); }
-
-  @media (max-width:480px){
-    .panel{ padding:2rem 1.5rem; }
-    .panel h1{ font-size:2.1rem; }
-  }
 </style>
 </head>
 <body>
@@ -286,7 +156,7 @@
     <img src="../logo.png" alt="Arpan Lamsal logo">
     <span class="nav-title">Tic Tac Toe</span>
   </a>
-  <a href="https://lamsalarpan.com.np/projects" class="nav-back">← Portfolio</a>
+  <a href="../index.html" class="nav-back">← Games</a>
 </nav>
 
 <div class="stage-wrap">
@@ -372,11 +242,12 @@
     <div class="stat-row"><span>Draws</span><b id="finalScoreDraw">0</b></div>
     <div class="stat-row"><span id="scoreLabelB2">Player 2</span><b id="finalScoreB">0</b></div>
     <button class="btn-primary" id="nextRoundBtn">Next Game</button>
-    
+    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
     <div class="hint">Space or Enter to continue</div>
   </div>
 </div>
 
+<script src="../assets/js/common.js"></script>
 <script>
 (function(){
   const WIN_LINES = [
@@ -416,29 +287,11 @@
 
   let scores = { a:0, b:0, draw:0 };
 
-  // ---- Sound (synthesized, no audio files) ----
-  let actx = null;
-  function audioCtx(){
-    if (!actx){
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) actx = new AC();
-    }
-    if (actx && actx.state === 'suspended') actx.resume();
-    return actx;
-  }
+  // ---- Sound — thin wrappers around the shared Arcade audio engine ----
+  function audioCtx(){ return Arcade.audioCtx(); }
   function tone(freq, dur, type, startGain, delay, opts){
-    const ac = audioCtx(); if (!ac) return;
-    opts = opts || {};
-    const t0 = ac.currentTime + (delay||0);
-    const osc = ac.createOscillator(), gain = ac.createGain();
-    osc.type = type || 'sine';
-    osc.frequency.setValueAtTime(freq, t0);
-    if (opts.sweepTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1,opts.sweepTo), t0+dur);
-    gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.linearRampToValueAtTime(startGain, t0+0.012);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
-    osc.connect(gain).connect(ac.destination);
-    osc.start(t0); osc.stop(t0+dur+0.02);
+    if (delay) { setTimeout(() => Arcade.tone(freq, dur, type, startGain, opts), delay * 1000); }
+    else { Arcade.tone(freq, dur, type, startGain, opts); }
   }
   function sfxPlace(sym){ tone(sym==='X'?520:400, 0.11, 'triangle', 0.14, 0); }
   function sfxWin(){
