@@ -13,7 +13,7 @@ window.Arcade = (function () {
   const GAMES = [
     {
       id: 'flappy', title: 'Flappy Bird', href: 'flappy/index.html',
-      accent: '#e8b55a',
+      accent: '#e8b55a', category: 'Arcade', difficulty: 'Medium', playTime: '2–4 min',
       desc: 'Tap to flap. Weave the gold bird through the pipes.',
       icon: `<defs><linearGradient id="g-flappy" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
@@ -28,7 +28,7 @@ window.Arcade = (function () {
     },
     {
       id: 'dino', title: 'Dino Run', href: 'dino/index.html',
-      accent: '#7fd88f',
+      accent: '#7fd88f', category: 'Endless Runner', difficulty: 'Medium', playTime: '3–5 min',
       desc: 'Jump the thorns, duck the crows. Speed only goes up.',
       icon: `<defs><linearGradient id="g-dino" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
@@ -47,7 +47,7 @@ window.Arcade = (function () {
     },
     {
       id: 'tictactoe', title: 'Tic Tac Toe', href: 'tic-tac-toe/index.html',
-      accent: '#e6e6e1',
+      accent: '#e6e6e1', category: 'Strategy', difficulty: 'Easy', playTime: '~1 min',
       desc: 'Get three in a row to win.',
       icon: `<defs><linearGradient id="g-ttt" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
@@ -63,7 +63,7 @@ window.Arcade = (function () {
     },
     {
       id: 'roadfighter', title: 'Road Fighter', href: 'Road-fighter/index.html',
-      accent: '#e8683a',
+      accent: '#e8683a', category: 'Racing', difficulty: 'Hard', playTime: '3–6 min',
       desc: 'Race against the traffic and avoid collisions.',
       icon: `<defs><linearGradient id="g-road" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
@@ -81,7 +81,7 @@ window.Arcade = (function () {
     },
     {
       id: 'snake', title: 'Snake', href: 'snake/index.html',
-      accent: '#6fd0a8',
+      accent: '#6fd0a8', category: 'Arcade', difficulty: 'Medium', playTime: '2–5 min',
       desc: 'Eat, grow, don\u2019t bite yourself. Classic grid-snake.',
       icon: `<defs><linearGradient id="g-snake" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="#7fe0b0"/><stop offset="100%" stop-color="#3f9c74"/>
@@ -238,6 +238,8 @@ window.Arcade = (function () {
      personal leaderboard without needing any server. */
   const RUNS_PREFIX = 'arcade_runs_';
   const PLAYS_KEY = 'arcade_total_plays_v1';
+  const GAME_PLAYS_PREFIX = 'arcade_gameplays_';
+  const LAST_PLAYED_PREFIX = 'arcade_lastplayed_';
   function logRun(gameId, score, difficulty) {
     const key = RUNS_PREFIX + gameId;
     let runs = [];
@@ -249,6 +251,10 @@ window.Arcade = (function () {
 
     const totalPlays = parseInt(localStorage.getItem(PLAYS_KEY) || '0', 10) + 1;
     localStorage.setItem(PLAYS_KEY, String(totalPlays));
+
+    const gamePlays = parseInt(localStorage.getItem(GAME_PLAYS_PREFIX + gameId) || '0', 10) + 1;
+    localStorage.setItem(GAME_PLAYS_PREFIX + gameId, String(gamePlays));
+    localStorage.setItem(LAST_PLAYED_PREFIX + gameId, String(Date.now()));
 
     // A handful of cross-game milestones live here so every game gets them
     // for free just by calling logRun — no per-game wiring needed.
@@ -266,7 +272,25 @@ window.Arcade = (function () {
     catch (e) { return []; }
   }
   function getTotalPlays() { return parseInt(localStorage.getItem(PLAYS_KEY) || '0', 10); }
+  function getGamePlays(gameId) { return parseInt(localStorage.getItem(GAME_PLAYS_PREFIX + gameId) || '0', 10); }
+  function getLastPlayed(gameId) { return parseInt(localStorage.getItem(LAST_PLAYED_PREFIX + gameId) || '0', 10); }
   function gameLabel(id) { const g = GAMES.find(g => g.id === id); return g ? g.title : id; }
+
+  /* ---- Favorites (hub grid "favorite" heart, saved locally) ---- */
+  const FAV_KEY = 'arcade_favorites_v1';
+  function getFavorites() {
+    try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); }
+    catch (e) { return []; }
+  }
+  function isFavorite(gameId) { return getFavorites().indexOf(gameId) !== -1; }
+  function toggleFavorite(gameId) {
+    const favs = getFavorites();
+    const i = favs.indexOf(gameId);
+    if (i === -1) { favs.push(gameId); if (favs.length === 1) unlock('first_favorite', 'Picked A Favorite', 'Favorite your first game'); }
+    else favs.splice(i, 1);
+    localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+    return favs.indexOf(gameId) !== -1;
+  }
 
   /* ---- Settings (mute / theme / reduced motion) ----
      A single small store, applied on every page load so a choice made
@@ -427,6 +451,8 @@ window.Arcade = (function () {
     getBest: getBest, setBest: setBest, wireDifficulty: wireDifficulty, toast: toast,
     registerServiceWorker: registerServiceWorker, unlock: unlock, isUnlocked: isUnlocked,
     getUnlocked: getUnlocked, logRun: logRun, getRuns: getRuns, getTotalPlays: getTotalPlays,
+    getGamePlays: getGamePlays, getLastPlayed: getLastPlayed,
+    getFavorites: getFavorites, isFavorite: isFavorite, toggleFavorite: toggleFavorite,
     getSettings: getSettings, setSetting: setSetting, applySettings: applySettings, mountPanels: mountPanels
   };
 })();

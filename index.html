@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Game Hub — Arpan Lamsal</title>
-<meta name="description" content="Game Hub — a small collection of mini games by Arpan Lamsal. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake.">
+<meta name="description" content="Game Hub — a collection of beautifully recreated classic games by Arpan Lamsal. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake.">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0c0c0b">
 
@@ -30,7 +30,8 @@
      minimal dark surface without ever reading as "colored" — stays black. */
   body::before{
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-    background:radial-gradient(52% 42% at 50% 0%, rgba(var(--gold-rgb),0.10), transparent 68%);
+    background:radial-gradient(52% 42% at var(--glow-x, 50%) 0%, rgba(var(--gold-rgb),0.10), transparent 68%);
+    transition:background .4s ease-out;
   }
   body::after{
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;
@@ -46,7 +47,7 @@
 
   .stage-wrap{
     flex:1;
-    display:flex; align-items:center; justify-content:center;
+    display:flex; flex-direction:column; align-items:center;
     padding: calc(var(--nav-h) + 28px) 1.5rem 3rem;
   }
   .hero{
@@ -61,6 +62,7 @@
     width:56px; height:56px; margin-bottom:1.4rem;
     animation:fadeUp 0.8s ease 0.05s both, float 4.5s ease-in-out 0.85s infinite;
     filter:drop-shadow(0 6px 18px rgba(var(--gold-rgb),0.25));
+    will-change:transform;
   }
   .hero .kicker{
     margin-bottom:1.1rem;
@@ -84,17 +86,45 @@
     opacity:0; animation:fadeUp 0.8s ease 0.24s both;
   }
   .hero .sub{
-    font-family:var(--font-mono); font-size:11px; letter-spacing:0.12em;
-    text-transform:uppercase; color:var(--text-secondary);
-    margin-bottom:1.6rem;
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em;
+    color:var(--text-secondary); line-height:1.6;
+    max-width:460px; margin:0 auto 1.9rem;
     opacity:0; animation:fadeUp 0.8s ease 0.3s both;
   }
+
+  /* ---- Hero CTAs ---- */
+  .hero-ctas{
+    display:flex; align-items:center; justify-content:center; gap:0.8rem;
+    flex-wrap:wrap; margin-bottom:1.9rem;
+    opacity:0; animation:fadeUp 0.8s ease 0.36s both;
+  }
+  .cta-btn{
+    display:inline-flex; align-items:center; gap:0.5rem;
+    font-family:var(--font-mono); font-size:11.5px; font-weight:700;
+    letter-spacing:0.08em; text-transform:uppercase;
+    border-radius:100px; padding:0.85rem 1.5rem;
+    cursor:pointer; text-decoration:none;
+    transition:transform .2s ease, box-shadow .25s ease, background .2s ease, color .2s ease, border-color .2s ease;
+    touch-action:manipulation; border:1px solid transparent;
+  }
+  .cta-btn.primary{
+    background:var(--gold); color:#0c0c0b;
+    box-shadow:0 8px 28px rgba(var(--gold-rgb),0.28);
+  }
+  .cta-btn.primary:hover{ background:var(--gold-light); transform:translateY(-2px); box-shadow:0 12px 34px rgba(var(--gold-rgb),0.4); }
+  .cta-btn.primary:active{ transform:translateY(0); }
+  .cta-btn.ghost{
+    background:rgba(255,255,255,0.02); color:var(--text-secondary);
+    border-color:var(--border-strong);
+  }
+  .cta-btn.ghost:hover{ color:var(--gold-light); border-color:var(--gold); transform:translateY(-2px); }
+  .cta-btn svg{ width:14px; height:14px; flex-shrink:0; }
 
   /* ---- Stat strip (games count / offline / updated) ---- */
   .stat-strip{
     display:flex; align-items:center; justify-content:center;
-    gap:0.9rem; flex-wrap:wrap; margin-bottom:1.9rem;
-    opacity:0; animation:fadeUp 0.8s ease 0.36s both;
+    gap:0.9rem; flex-wrap:wrap; margin-bottom:2.6rem;
+    opacity:0; animation:fadeUp 0.8s ease 0.42s both;
   }
   .stat-chip{
     display:inline-flex; align-items:baseline; gap:0.4rem;
@@ -104,11 +134,182 @@
   .stat-chip b{ color:var(--gold-light); font-size:13px; letter-spacing:0.02em; }
   .stat-sep{ width:3px; height:3px; border-radius:50%; background:var(--border-strong); }
 
+  /* ================= Toolbar (search / filter / sort) ================= */
+  .hub-body{ width:100%; max-width:1180px; }
+  .toolbar{
+    display:flex; align-items:center; gap:0.7rem; flex-wrap:wrap;
+    padding:0.9rem 1rem; margin-bottom:1.6rem;
+    background:rgba(255,255,255,0.02); border:1px solid var(--border);
+    border-radius:12px; backdrop-filter:blur(10px);
+  }
+  .search-wrap{
+    position:relative; flex:1 1 220px; min-width:180px;
+  }
+  .search-wrap svg{
+    position:absolute; left:0.85rem; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; color:var(--text-muted); pointer-events:none;
+  }
+  .search-input{
+    width:100%; background:var(--bg-2); border:1px solid var(--border-strong);
+    border-radius:100px; color:var(--text-primary);
+    font-family:var(--font-mono); font-size:12px;
+    padding:0.65rem 0.9rem 0.65rem 2.2rem;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .search-input::placeholder{ color:var(--text-muted); }
+  .search-input:focus{ outline:none; border-color:var(--gold); background:var(--bg-3); }
+  .search-kbd{
+    position:absolute; right:0.6rem; top:50%; transform:translateY(-50%);
+    font-family:var(--font-mono); font-size:9.5px; color:var(--text-muted);
+    border:1px solid var(--border-strong); border-radius:4px; padding:0.15rem 0.4rem;
+    pointer-events:none;
+  }
+  .filter-chips{ display:flex; gap:0.45rem; flex-wrap:wrap; }
+  .chip{
+    background:transparent; color:var(--text-secondary);
+    border:1px solid var(--border-strong); border-radius:100px;
+    font-family:var(--font-mono); font-size:10.5px; font-weight:700;
+    letter-spacing:0.05em; text-transform:uppercase;
+    padding:0.55rem 0.9rem; cursor:pointer; white-space:nowrap;
+    transition:border-color .2s ease, color .2s ease, background .2s ease;
+    touch-action:manipulation;
+  }
+  .chip:hover{ border-color:var(--gold); color:var(--gold-light); }
+  .chip.active{ background:var(--gold); color:#0c0c0b; border-color:var(--gold); }
+  .sort-select{
+    background:var(--bg-2); color:var(--text-secondary);
+    border:1px solid var(--border-strong); border-radius:100px;
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.04em;
+    text-transform:uppercase; padding:0.6rem 1.9rem 0.6rem 1rem;
+    cursor:pointer; transition:border-color .2s ease, color .2s ease;
+    -webkit-appearance:none; appearance:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 0.75rem center; background-size:11px;
+  }
+  .sort-select:hover{ border-color:var(--gold); color:var(--gold-light); }
+  .sort-select:focus{ outline:none; border-color:var(--gold); }
+
+  /* ================= Section labels ================= */
+  .section-label{
+    display:flex; align-items:center; gap:0.8rem;
+    margin:0 0 0.9rem;
+  }
+  .section-label span{
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.18em;
+    text-transform:uppercase; color:var(--text-muted); white-space:nowrap;
+  }
+  .section-label .rule{ flex:1; height:1px; background:var(--border-strong); }
+  .fav-section{ margin-bottom:2.2rem; }
+
+  /* ================= Game grid & premium cards ================= */
+  .game-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr));
+    gap:1.1rem;
+  }
+  .fav-grid{ grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); }
+
+  .game-card{
+    position:relative;
+    display:flex; flex-direction:column;
+    background:linear-gradient(180deg, var(--bg-3), var(--bg-card));
+    border:1px solid var(--border-strong); border-radius:14px;
+    overflow:hidden; text-decoration:none; color:inherit;
+    transform:perspective(800px) rotateX(0) rotateY(0) translateZ(0);
+    transition:transform .12s ease-out, box-shadow .3s ease, border-color .3s ease;
+    will-change:transform;
+    opacity:0; animation:fadeUp .6s ease both;
+  }
+  .game-card:hover, .game-card:focus-visible{
+    border-color:rgba(var(--card-accent-rgb, var(--gold-rgb)),0.55);
+    box-shadow:0 22px 46px -14px rgba(0,0,0,0.65), 0 0 0 1px rgba(var(--card-accent-rgb, var(--gold-rgb)),0.12), 0 0 40px -8px rgba(var(--card-accent-rgb, var(--gold-rgb)),0.35);
+    outline:none;
+  }
+  .game-card-thumb{
+    position:relative; height:132px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(var(--card-accent-rgb, var(--gold-rgb)),0.22), transparent 70%),
+      repeating-linear-gradient(135deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 14px);
+    border-bottom:1px solid var(--border);
+  }
+  .game-card-thumb svg{
+    width:64px; height:64px; display:block;
+    filter:drop-shadow(0 8px 20px rgba(0,0,0,0.5));
+    transition:transform .35s ease;
+  }
+  .game-card:hover .game-card-thumb svg{ transform:scale(1.08) translateY(-2px); }
+
+  .diff-badge{
+    position:absolute; top:0.7rem; left:0.7rem;
+    display:inline-flex; align-items:center; gap:0.35rem;
+    font-family:var(--font-mono); font-size:9px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-secondary); background:rgba(8,8,7,0.68);
+    border:1px solid var(--border-strong); border-radius:100px;
+    padding:0.28rem 0.55rem 0.28rem 0.45rem; backdrop-filter:blur(6px);
+  }
+  .diff-dot{ width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .diff-dot.easy{ background:#6fd0a8; box-shadow:0 0 5px rgba(111,208,168,0.7); }
+  .diff-dot.medium{ background:var(--gold); box-shadow:0 0 5px rgba(var(--gold-rgb),0.7); }
+  .diff-dot.hard{ background:#e0665a; box-shadow:0 0 5px rgba(224,102,90,0.7); }
+
+  .fav-btn{
+    position:absolute; top:0.6rem; right:0.6rem; z-index:2;
+    width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+    background:rgba(8,8,7,0.68); border:1px solid var(--border-strong); border-radius:50%;
+    color:var(--text-secondary); cursor:pointer; backdrop-filter:blur(6px);
+    transition:border-color .2s ease, color .2s ease, transform .15s ease, background .2s ease;
+    touch-action:manipulation;
+  }
+  .fav-btn svg{ width:14px; height:14px; display:block; }
+  .fav-btn:hover{ border-color:var(--gold); color:var(--gold-light); transform:scale(1.08); }
+  .fav-btn.active{ color:var(--gold); border-color:var(--gold); background:rgba(var(--gold-rgb),0.12); }
+  .fav-btn.active svg{ fill:currentColor; }
+
+  .game-card-body{
+    padding:1rem 1.1rem 1.1rem; display:flex; flex-direction:column; flex:1; gap:0.55rem;
+  }
+  .game-card-cat{
+    font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--card-accent, var(--gold));
+  }
+  .game-card-title{
+    font-family:var(--font-display); font-style:italic; font-weight:600;
+    font-size:1.42rem; color:var(--text-primary); line-height:1.15;
+  }
+  .game-card-desc{
+    font-family:var(--font-mono); font-size:10.5px; line-height:1.55;
+    color:var(--text-secondary); flex:1;
+  }
+  .game-card-meta{
+    display:flex; align-items:center; justify-content:space-between; gap:0.5rem;
+    font-family:var(--font-mono); font-size:9.5px; color:var(--text-muted);
+    letter-spacing:0.03em; padding-top:0.5rem; border-top:1px solid var(--border);
+  }
+  .game-card-meta span{ display:inline-flex; align-items:center; gap:0.3rem; }
+  .game-card-meta svg{ width:11px; height:11px; }
+  .game-card-meta b{ color:var(--gold-light); font-weight:700; }
+  .game-card-play{
+    display:flex; align-items:center; justify-content:center; gap:0.4rem;
+    margin-top:0.7rem;
+    font-family:var(--font-mono); font-size:10.5px; font-weight:700;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--card-accent, var(--gold)); border:1px solid var(--card-accent, var(--gold));
+    border-radius:100px; padding:0.6rem 1rem;
+    transition:background .25s ease, color .25s ease;
+  }
+  .game-card-play svg{ width:11px; height:11px; transition:transform .25s ease; }
+  .game-card:hover .game-card-play{ background:var(--card-accent, var(--gold)); color:#0c0c0b; }
+  .game-card:hover .game-card-play svg{ transform:translateX(2px); }
+
+  .empty-state{
+    grid-column:1/-1; text-align:center; padding:3rem 1rem;
+    font-family:var(--font-mono); color:var(--text-muted); font-size:12px;
+  }
+
   /* ---- Play offline control ---- */
   .offline-row{
-    display:flex; align-items:center; justify-content:center; gap:0.7rem;
-    margin-bottom:2.6rem; flex-wrap:wrap;
-    opacity:0; animation:fadeUp 0.8s ease 0.4s both;
+    display:flex; align-items:center; justify-content:center;
+    margin:2.4rem 0 0.5rem;
   }
   .offline-btn{
     display:inline-flex; align-items:center; gap:0.55rem;
@@ -128,126 +329,80 @@
   .offline-btn.ready .dot{ background:var(--gold); box-shadow:0 0 6px rgba(var(--gold-rgb),0.8); }
   .offline-btn.ready{ color:var(--gold-light); border-color:var(--gold); background:rgba(var(--gold-rgb),0.06); }
 
-  /* ---- Section label above the line-up ---- */
-  .section-label{
-    display:flex; align-items:center; gap:0.8rem;
-    margin-bottom:0.4rem;
-    opacity:0; animation:fadeUp 0.8s ease 0.46s both;
-  }
-  .section-label span{
-    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.18em;
-    text-transform:uppercase; color:var(--text-muted); white-space:nowrap;
-  }
-  .section-label .rule{ flex:1; height:1px; background:var(--border-strong); }
-
-  /* ---- Game line-up: a numbered menu list, not a card grid — reads like
-     an arcade cabinet's game select screen and scales cleanly as more
-     games are added (each entry is just one more row). ---- */
-  .game-list{
-    display:flex; flex-direction:column;
-    border-top:1px solid var(--border);
-    opacity:0; animation:fadeUp 0.8s ease 0.54s both;
-  }
-  .game-row{
-  position:relative;
-  display:flex; align-items:center; gap:1.1rem;
-  padding:1.15rem 0.25rem 1.15rem 0.9rem;
-  border-bottom:1px solid var(--border);
-  text-decoration:none; color:inherit;
-  transition:padding-left .25s ease, background-color .25s ease;
-  --row-accent: var(--gold);
-}
-.game-row::before{
-    content:''; position:absolute; left:0; top:0; bottom:0; width:0;
-    background:var(--row-accent);
-    transition:width .25s ease;
-  }
-  .game-row:hover, .game-row:focus-visible{
-    padding-left:1.3rem; background:rgba(var(--gold-rgb),0.045); outline:none;
-  }
-  .game-row:hover::before, .game-row:focus-visible::before{ width:3px; }
-  .game-row:active{ background:rgba(var(--gold-rgb),0.08); }
-
-  .row-index{
-    font-family:var(--font-display); font-style:italic; font-weight:300;
-    font-size:1.5rem; color:var(--text-muted); width:2rem; flex-shrink:0;
-    transition:color .25s ease;
-  }
-  .game-row:hover .row-index{ color:var(--gold); }
-
-  .row-icon{
-    position:relative; width:50px; height:50px; flex-shrink:0;
-    display:flex; align-items:center; justify-content:center;
-  }
-  .row-icon::before{
-    content:''; position:absolute; inset:-6px; border-radius:50%;
-    background:radial-gradient(circle, rgba(var(--gold-rgb),0.18), transparent 72%);
-    background:radial-gradient(circle, color-mix(in srgb, var(--row-accent) 45%, transparent), transparent 72%);
-    opacity:0; transition:opacity .3s ease;
-  }
-  .game-row:hover .row-icon::before{ opacity:1; }
-  .row-icon svg{ width:100%; height:100%; display:block; position:relative; transition:transform .3s ease; }
-  .game-row:hover .row-icon svg{ transform:scale(1.08); }
-
-  .row-body{ flex:1; min-width:0; display:flex; flex-direction:column; gap:0.22rem; }
-  .row-title{
-    font-family:var(--font-display); font-style:italic; font-weight:600;
-    font-size:1.28rem; color:var(--text-primary); line-height:1.2;
-  }
-  .row-desc{
-    font-family:var(--font-mono); font-size:10.5px; line-height:1.5;
-    color:var(--text-secondary);
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-
-  .row-cta{
-    display:flex; align-items:center; gap:0.4rem; flex-shrink:0;
-    font-family:var(--font-mono); font-size:10px; letter-spacing:0.1em;
-    text-transform:uppercase; color:var(--gold);
-    border:1px solid var(--gold); border-radius:100px;
-    padding:0.5rem 0.95rem;
-    transition:background .25s ease, color .25s ease;
-  }
-  .row-cta svg{ width:11px; height:11px; transition:transform .25s ease; }
-  .game-row:hover .row-cta{ background:var(--gold); color:#0c0c0b; }
-  .game-row:hover .row-cta svg{ transform:translateX(2px); }
-
-  /* ---- "more coming" placeholder row ---- */
-  .game-row.more{
-    cursor:default; color:var(--text-muted);
-  }
-  .game-row.more:hover{ padding-left:0.9rem; background:none; }
-  .game-row.more:hover::before{ width:0; }
-  .game-row.more .row-index{ animation:pulse 2.4s ease-in-out infinite; }
-  .game-row.more .row-title{ color:var(--text-muted); font-style:italic; font-weight:400; }
-  .game-row.more .row-desc{ white-space:normal; }
-
-  @media (max-width:560px){
-    .row-desc{ display:none; }
-    .row-cta span{ display:none; }
-    .row-cta{ padding:0.55rem; }
-    .row-icon{ width:42px; height:42px; }
-  }
-
   .hero .hint{
     font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em;
-    color:var(--text-muted); margin-top:1.8rem;
-    opacity:0; animation:fadeUp 0.8s ease 0.62s both;
+    color:var(--text-muted); margin-top:1.2rem; text-align:center;
+  }
+
+  /* ================= Command palette ================= */
+  .cmdk-overlay{
+    position:fixed; inset:0; z-index:95;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:12vh 1.5rem 2rem;
+    background:rgba(8,8,7,0.75); backdrop-filter:blur(4px);
+    opacity:0; pointer-events:none; transition:opacity .2s ease;
+  }
+  .cmdk-overlay.show{ opacity:1; pointer-events:auto; }
+  .cmdk-panel{
+    width:100%; max-width:480px; max-height:60vh; display:flex; flex-direction:column;
+    background:var(--bg-card); border:1px solid var(--border-strong); border-radius:12px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.6);
+    transform:translateY(-8px) scale(0.98); transition:transform .2s ease;
+    overflow:hidden;
+  }
+  .cmdk-overlay.show .cmdk-panel{ transform:translateY(0) scale(1); }
+  .cmdk-input-row{ display:flex; align-items:center; gap:0.6rem; padding:0.9rem 1rem; border-bottom:1px solid var(--border); }
+  .cmdk-input-row svg{ width:15px; height:15px; color:var(--text-muted); flex-shrink:0; }
+  .cmdk-input{
+    flex:1; background:none; border:none; color:var(--text-primary);
+    font-family:var(--font-mono); font-size:13px;
+  }
+  .cmdk-input:focus{ outline:none; }
+  .cmdk-esc{
+    font-family:var(--font-mono); font-size:9.5px; color:var(--text-muted);
+    border:1px solid var(--border-strong); border-radius:4px; padding:0.15rem 0.4rem;
+  }
+  .cmdk-list{ overflow-y:auto; padding:0.5rem; }
+  .cmdk-item{
+    display:flex; align-items:center; gap:0.75rem;
+    padding:0.65rem 0.7rem; border-radius:8px; cursor:pointer;
+    font-family:var(--font-mono); font-size:12px; color:var(--text-secondary);
+    text-decoration:none;
+  }
+  .cmdk-item svg{ width:15px; height:15px; flex-shrink:0; color:var(--text-muted); }
+  .cmdk-item .cmdk-item-title{ color:var(--text-primary); flex:1; }
+  .cmdk-item .cmdk-item-sub{ font-size:9.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+  .cmdk-item.active, .cmdk-item:hover{ background:rgba(var(--gold-rgb),0.1); }
+  .cmdk-item.active svg, .cmdk-item.active .cmdk-item-title{ color:var(--gold-light); }
+  .cmdk-empty{ padding:1.5rem 1rem; text-align:center; color:var(--text-muted); font-family:var(--font-mono); font-size:11.5px; }
+
+  @media (max-width:900px){
+    .game-grid{ grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); }
+  }
+  @media (max-width:560px){
+    .toolbar{ flex-direction:column; align-items:stretch; }
+    .filter-chips{ order:3; }
+    .sort-select{ order:2; }
+    .game-grid{ grid-template-columns:1fr 1fr; gap:0.7rem; }
+    .game-card-thumb{ height:100px; }
+    .game-card-thumb svg{ width:48px; height:48px; }
+    .game-card-title{ font-size:1.18rem; }
+    .game-card-body{ padding:0.8rem; }
+  }
+  @media (max-width:400px){
+    .game-grid{ grid-template-columns:1fr; }
   }
 
   @media (prefers-reduced-motion: reduce){
-    .hero .mark, .hero h1, .hero .title-rule, .hero .sub, .stat-strip, .offline-row,
-    .section-label, .game-list, .hero .hint{
+    .hero .mark, .hero h1, .hero .title-rule, .hero .sub, .hero-ctas, .stat-strip, .game-card{
       animation:none !important; opacity:1 !important; transform:none !important;
     }
-    .game-row{ transition:none; }
-    .game-row.more .row-index{ animation:none; }
+    .game-card{ transition:none; }
   }
 </style>
 </head>
 <body>
 <canvas id="starfield" aria-hidden="true"></canvas>
-
 
 <nav class="nav">
   <div class="nav-left">
@@ -262,17 +417,54 @@
 <div class="stage-wrap">
   <div class="hero">
     <span class="kicker"><span class="kicker-dot"></span>Arpan Lamsal — Arcade</span>
-    <img class="mark" src="logo.png" alt="" aria-hidden="true">
+    <img class="mark" src="logo.png" alt="" aria-hidden="true" id="heroMark">
     <h1>Game Hub</h1>
     <div class="title-rule"></div>
-    <div class="sub">A small, growing collection of mini games — pick one to jump straight in</div>
+    <p class="sub">A collection of beautifully recreated classic games built with modern web technologies.</p>
+
+    <div class="hero-ctas">
+      <a href="#gameGrid" class="cta-btn primary" id="playNowBtn">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        Play Now
+      </a>
+      <a href="https://github.com/lamsalarpan" class="cta-btn ghost" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        View Source
+      </a>
+    </div>
+
     <div class="stat-strip">
-      <span class="stat-chip"><b id="statCount">4</b> Games</span>
+      <span class="stat-chip"><b id="statCount">5</b> Games</span>
       <span class="stat-sep"></span>
       <span class="stat-chip">Works <b>Offline</b></span>
       <span class="stat-sep"></span>
       <span class="stat-chip">No <b>Install</b> Needed</span>
     </div>
+  </div>
+
+  <div class="hub-body">
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" class="search-input" id="searchInput" placeholder="Search games…" aria-label="Search games">
+        <span class="search-kbd">Ctrl K</span>
+      </div>
+      <div class="filter-chips" id="filterChips"></div>
+      <select class="sort-select" id="sortSelect" aria-label="Sort games">
+        <option value="featured">Featured</option>
+        <option value="recent">Recently Played</option>
+        <option value="alpha">Alphabetical</option>
+        <option value="most">Most Played</option>
+      </select>
+    </div>
+
+    <div class="fav-section" id="favSection" hidden>
+      <div class="section-label"><span>Favorites</span><span class="rule"></span></div>
+      <div class="game-grid fav-grid" id="favGrid"></div>
+    </div>
+
+    <div class="section-label"><span id="gridLabel">All Games</span><span class="rule"></span></div>
+    <div class="game-grid" id="gameGrid"></div>
 
     <div class="offline-row">
       <button type="button" class="offline-btn" id="offlineBtn" aria-live="polite">
@@ -281,11 +473,19 @@
         <span id="offlineBtnLabel">Play Offline</span>
       </button>
     </div>
+    <div class="hint">Search, filter, or press <b style="color:var(--text-secondary)">Ctrl + K</b> to jump to any game.</div>
+  </div>
+</div>
 
-    <div class="section-label"><span>The Line-up</span><span class="rule"></span></div>
-    <div class="game-list" id="gameList"></div>
-
-    <div class="hint">Use ↑ ↓ or tap a row to choose</div>
+<!-- ---- Command palette ---- -->
+<div class="cmdk-overlay" id="cmdkOverlay" role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="cmdk-panel">
+    <div class="cmdk-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="text" class="cmdk-input" id="cmdkInput" placeholder="Jump to a game or action…" aria-label="Command palette search">
+      <span class="cmdk-esc">Esc</span>
+    </div>
+    <div class="cmdk-list" id="cmdkList"></div>
   </div>
 </div>
 
@@ -311,57 +511,138 @@
 
 <script src="assets/js/common.js"></script>
 <script>
-  // Data-driven grid, sourced from the single shared registry in common.js —
-  // add a game there once and it shows up here, in the stats panel, and
-  // in the service worker's precache list automatically.
   const GAMES = Arcade.GAMES;
-
-  const list = document.getElementById('gameList');
-  GAMES.forEach((g, i) => {
-    const a = document.createElement('a');
-    a.className = 'game-row';
-    a.href = g.href;
-    a.id = g.id + 'Card';
-    a.style.setProperty('--row-accent', g.accent);
-    a.setAttribute('aria-label', 'Play ' + g.title);
-    a.innerHTML = `
-      <span class="row-index">${String(i+1).padStart(2,'0')}</span>
-      <span class="row-icon"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${g.icon}</svg></span>
-      <span class="row-body">
-        <span class="row-title">${g.title}</span>
-        <span class="row-desc">${g.desc}</span>
-      </span>
-      <span class="row-cta">Play <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
-    `;
-    list.appendChild(a);
-  });
   document.getElementById('statCount').textContent = GAMES.length;
 
-  // A dashed placeholder row signals there's room for more without
-  // looking like a broken layout when a next game shows up.
-  const more = document.createElement('div');
-  more.className = 'game-row more';
-  more.innerHTML = `
-    <span class="row-index">+</span>
-    <span class="row-body"><span class="row-title">More on the way</span><span class="row-desc">New games get added here as they're built.</span></span>
-  `;
-  list.appendChild(more);
+  const PLAY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>';
+  const HEART_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.6Z"/></svg>';
+  const TIME_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>';
+  const TROPHY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/></svg>';
 
-  const cards = Array.from(list.querySelectorAll('.game-row:not(.more)'));
-  let focusIdx = -1;
-  function setFocus(i){
-    focusIdx = (i + cards.length) % cards.length;
-    cards[focusIdx].focus();
+  function diffClass(d){ return (d || 'medium').toLowerCase(); }
+
+  function gameCardHTML(g, i){
+    const best = Arcade.getRuns(g.id)[0]?.score || 0;
+    const fav = Arcade.isFavorite(g.id);
+    return `
+      <a href="${g.href}" class="game-card" id="card-${g.id}" style="--card-accent:${g.accent}; --card-accent-rgb:${hexToRgb(g.accent)}; animation-delay:${Math.min(i * 0.05, 0.4)}s">
+        <div class="game-card-thumb">
+          <span class="diff-badge"><span class="diff-dot ${diffClass(g.difficulty)}"></span>${g.difficulty || 'Medium'}</span>
+          <button type="button" class="fav-btn${fav ? ' active' : ''}" data-fav="${g.id}" aria-label="Toggle favorite for ${g.title}" aria-pressed="${fav}">${HEART_ICON}</button>
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${g.icon}</svg>
+        </div>
+        <div class="game-card-body">
+          <span class="game-card-cat">${g.category || 'Arcade'}</span>
+          <span class="game-card-title">${g.title}</span>
+          <span class="game-card-desc">${g.desc}</span>
+          <div class="game-card-meta">
+            <span>${TIME_ICON} ${g.playTime || '~3 min'}</span>
+            <span>${TROPHY_ICON} Best <b>${best}</b></span>
+          </div>
+          <span class="game-card-play">Play ${PLAY_ICON}</span>
+        </div>
+      </a>
+    `;
   }
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight'){ e.preventDefault(); setFocus(focusIdx === -1 ? 0 : focusIdx + 1); }
-    else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft'){ e.preventDefault(); setFocus(focusIdx === -1 ? 0 : focusIdx - 1); }
-    else if ((e.key === 'Enter' || e.key === ' ') && focusIdx !== -1){
-      e.preventDefault();
-      window.location.href = cards[focusIdx].getAttribute('href');
-    }
+
+  function hexToRgb(hex){
+    hex = hex.replace('#','');
+    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+    const n = parseInt(hex, 16);
+    return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+  }
+
+  // ---- Filters / search / sort state ----
+  const categories = Array.from(new Set(GAMES.map(g => g.category)));
+  let activeFilter = 'all';
+  let searchQuery = '';
+  let sortMode = 'featured';
+
+  const chipsEl = document.getElementById('filterChips');
+  const chipDefs = [{ id: 'all', label: 'All' }, { id: 'favorites', label: 'Favorites' }]
+    .concat(categories.map(c => ({ id: c, label: c })));
+  chipsEl.innerHTML = chipDefs.map(c => `<button type="button" class="chip${c.id === 'all' ? ' active' : ''}" data-filter="${c.id}">${c.label}</button>`).join('');
+  chipsEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if (!btn) return;
+    activeFilter = btn.getAttribute('data-filter');
+    chipsEl.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === btn));
+    render();
   });
 
+  const searchInput = document.getElementById('searchInput');
+  searchInput.addEventListener('input', () => { searchQuery = searchInput.value.trim().toLowerCase(); render(); });
+
+  const sortSelect = document.getElementById('sortSelect');
+  sortSelect.addEventListener('change', () => { sortMode = sortSelect.value; render(); });
+
+  function getFilteredSorted(){
+    let list = GAMES.filter(g => {
+      if (activeFilter === 'favorites' && !Arcade.isFavorite(g.id)) return false;
+      if (activeFilter !== 'all' && activeFilter !== 'favorites' && g.category !== activeFilter) return false;
+      if (searchQuery && !(g.title.toLowerCase().includes(searchQuery) || g.desc.toLowerCase().includes(searchQuery) || (g.category || '').toLowerCase().includes(searchQuery))) return false;
+      return true;
+    });
+    if (sortMode === 'alpha') list = list.slice().sort((a, b) => a.title.localeCompare(b.title));
+    else if (sortMode === 'most') list = list.slice().sort((a, b) => Arcade.getGamePlays(b.id) - Arcade.getGamePlays(a.id));
+    else if (sortMode === 'recent') list = list.slice().sort((a, b) => Arcade.getLastPlayed(b.id) - Arcade.getLastPlayed(a.id));
+    return list;
+  }
+
+  const gridEl = document.getElementById('gameGrid');
+  const gridLabel = document.getElementById('gridLabel');
+  const favSection = document.getElementById('favSection');
+  const favGrid = document.getElementById('favGrid');
+
+  function render(){
+    const list = getFilteredSorted();
+    gridLabel.textContent = activeFilter === 'all' ? 'All Games' : (activeFilter === 'favorites' ? 'Favorites' : activeFilter);
+    gridEl.innerHTML = list.length
+      ? list.map((g, i) => gameCardHTML(g, i)).join('')
+      : `<div class="empty-state">No games match “${searchQuery || activeFilter}”. Try clearing filters.</div>`;
+
+    const favs = GAMES.filter(g => Arcade.isFavorite(g.id));
+    if (favs.length && activeFilter !== 'favorites'){
+      favSection.hidden = false;
+      favGrid.innerHTML = favs.map((g, i) => gameCardHTML(g, i)).join('');
+    } else {
+      favSection.hidden = true;
+    }
+
+    wireFavButtons();
+    wireTilt();
+  }
+
+  function wireFavButtons(){
+    document.querySelectorAll('.fav-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault(); e.stopPropagation();
+        const id = btn.getAttribute('data-fav');
+        const nowFav = Arcade.toggleFavorite(id);
+        Arcade.toast(nowFav ? 'Added to favorites' : 'Removed from favorites');
+        render();
+      });
+    });
+  }
+
+  // ---- 3D tilt on hover (skipped under reduced motion) ----
+  function wireTilt(){
+    if (Arcade.getSettings().reducedMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll('.game-card').forEach(card => {
+      card.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'touch') return;
+        const r = card.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width - 0.5;
+        const py = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = `perspective(800px) rotateX(${(-py * 7).toFixed(2)}deg) rotateY(${(px * 9).toFixed(2)}deg) translateZ(0) translateY(-3px)`;
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateZ(0)';
+      });
+    });
+  }
+
+  render();
   Arcade.mountPanels({ gameId: null });
 
   // ---- Offline support ----
@@ -432,6 +713,102 @@
     window.addEventListener('resize', resize);
     raf = requestAnimationFrame(draw);
   })();
+
+  // ---- Mouse parallax on hero glow + mark ----
+  (function parallax(){
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const mark = document.getElementById('heroMark');
+    let raf = null;
+    window.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch') return;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        const px = (e.clientX / window.innerWidth - 0.5);
+        const py = (e.clientY / window.innerHeight - 0.5);
+        mark.style.transform = `translate(${(px * 10).toFixed(1)}px, ${(py * 8).toFixed(1)}px)`;
+        document.body.style.setProperty('--glow-x', (50 + px * 8).toFixed(1) + '%');
+        raf = null;
+      });
+    }, { passive: true });
+  })();
+
+  // ================= Command palette (Ctrl+K) =================
+  const cmdkOverlay = document.getElementById('cmdkOverlay');
+  const cmdkInput = document.getElementById('cmdkInput');
+  const cmdkListEl = document.getElementById('cmdkList');
+  let cmdkActive = -1;
+
+  function cmdkActions(){
+    return [
+      { id: 'action-settings', title: 'Open Settings', sub: 'Preferences', icon: '⚙', run: () => document.getElementById('arcadeSettingsBtn')?.click() },
+      { id: 'action-stats', title: 'Open Stats & Trophies', sub: 'Progress', icon: '🏆', run: () => document.getElementById('arcadeStatsBtn')?.click() },
+      { id: 'action-offline', title: 'Save For Offline Play', sub: 'PWA', icon: '⇩', run: () => offlineBtn.click() },
+      { id: 'action-portfolio', title: 'Back to Portfolio', sub: 'arpanlamsal.com.np', icon: '↩', run: () => window.location.href = 'https://arpanlamsal.com.np' },
+    ];
+  }
+
+  function cmdkItems(query){
+    const q = query.trim().toLowerCase();
+    const gameItems = GAMES
+      .filter(g => !q || g.title.toLowerCase().includes(q) || (g.category || '').toLowerCase().includes(q))
+      .map(g => ({ id: 'game-' + g.id, title: g.title, sub: g.category, icon: null, href: g.href }));
+    const actionItems = cmdkActions().filter(a => !q || a.title.toLowerCase().includes(q));
+    return gameItems.concat(actionItems);
+  }
+
+  function renderCmdk(){
+    const items = cmdkItems(cmdkInput.value);
+    cmdkActive = items.length ? 0 : -1;
+    cmdkListEl.innerHTML = items.length ? items.map((it, i) => `
+      <div class="cmdk-item${i === cmdkActive ? ' active' : ''}" data-idx="${i}">
+        ${it.href ? PLAY_ICON : `<span style="width:15px;text-align:center;">${it.icon}</span>`}
+        <span class="cmdk-item-title">${it.title}</span>
+        <span class="cmdk-item-sub">${it.sub || ''}</span>
+      </div>
+    `).join('') : `<div class="cmdk-empty">No matches.</div>`;
+    cmdkListEl.dataset.items = JSON.stringify(items.map(it => ({ href: it.href, id: it.id })));
+    Array.from(cmdkListEl.querySelectorAll('.cmdk-item')).forEach(el => {
+      el.addEventListener('click', () => runCmdkItem(items[Number(el.getAttribute('data-idx'))]));
+    });
+  }
+
+  function runCmdkItem(item){
+    if (!item) return;
+    if (item.href) window.location.href = item.href;
+    else { const a = cmdkActions().find(x => x.id === item.id); if (a) a.run(); closeCmdk(); }
+  }
+
+  function openCmdk(){
+    cmdkOverlay.classList.add('show');
+    cmdkInput.value = '';
+    renderCmdk();
+    setTimeout(() => cmdkInput.focus(), 30);
+  }
+  function closeCmdk(){ cmdkOverlay.classList.remove('show'); }
+
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
+      e.preventDefault();
+      cmdkOverlay.classList.contains('show') ? closeCmdk() : openCmdk();
+    } else if (e.key === '/' && document.activeElement !== searchInput && document.activeElement !== cmdkInput && !cmdkOverlay.classList.contains('show')){
+      e.preventDefault(); searchInput.focus();
+    } else if (e.key === 'Escape' && cmdkOverlay.classList.contains('show')){
+      closeCmdk();
+    }
+  });
+  cmdkOverlay.addEventListener('pointerdown', (e) => { if (e.target === cmdkOverlay) closeCmdk(); });
+  cmdkInput.addEventListener('input', renderCmdk);
+  cmdkInput.addEventListener('keydown', (e) => {
+    const items = JSON.parse(cmdkListEl.dataset.items || '[]');
+    if (e.key === 'ArrowDown'){ e.preventDefault(); cmdkActive = Math.min(cmdkActive + 1, items.length - 1); updateCmdkActive(); }
+    else if (e.key === 'ArrowUp'){ e.preventDefault(); cmdkActive = Math.max(cmdkActive - 1, 0); updateCmdkActive(); }
+    else if (e.key === 'Enter'){ e.preventDefault(); if (cmdkActive >= 0) runCmdkItem(items[cmdkActive]); }
+  });
+  function updateCmdkActive(){
+    cmdkListEl.querySelectorAll('.cmdk-item').forEach((el, i) => el.classList.toggle('active', i === cmdkActive));
+    const el = cmdkListEl.querySelector('.cmdk-item.active');
+    if (el) el.scrollIntoView({ block: 'nearest' });
+  }
 </script>
 </body>
 </html>
