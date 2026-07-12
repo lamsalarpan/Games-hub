@@ -44,6 +44,7 @@
   }
   .nav, .stage-wrap, .site-footer{ position:relative; z-index:1; }
   #starfield{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  html.no-particles #starfield{ display:none; }
 
   .stage-wrap{
     flex:1;
@@ -644,6 +645,7 @@
 
   render();
   Arcade.mountPanels({ gameId: null });
+  window.addEventListener('arcade:reset', render);
 
   // ---- Offline support ----
   const OFFLINE_FLAG = 'game_hub_offline_ready';
@@ -682,7 +684,7 @@
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let stars = [];
-    let w, h, dpr;
+    let w, h, dpr, raf = null;
     function resize(){
       dpr = Math.min(window.devicePixelRatio || 1, 2);
       w = canvas.clientWidth; h = canvas.clientHeight;
@@ -696,7 +698,6 @@
         phase: Math.random() * Math.PI * 2
       }));
     }
-    let raf;
     function draw(t){
       ctx.clearRect(0, 0, w, h);
       const reduced = document.documentElement.classList.contains('reduced-motion');
@@ -709,9 +710,11 @@
       });
       raf = requestAnimationFrame(draw);
     }
-    resize();
+    function start(){ if (raf) return; resize(); raf = requestAnimationFrame(draw); }
+    function stop(){ if (raf) cancelAnimationFrame(raf); raf = null; ctx.clearRect(0, 0, w, h); }
     window.addEventListener('resize', resize);
-    raf = requestAnimationFrame(draw);
+    window.addEventListener('arcade:settings', (e) => { e.detail.particles === false ? stop() : start(); });
+    if (Arcade.getSettings().particles !== false) start();
   })();
 
   // ---- Mouse parallax on hero glow + mark ----

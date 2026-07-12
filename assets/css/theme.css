@@ -215,6 +215,41 @@ html,body{
 .switch.on{ background:rgba(var(--gold-rgb),0.18); border-color:var(--gold); }
 .switch.on .switch-knob{ transform:translateX(19px); background:var(--gold-light); }
 
+/* ---- Volume range slider (Settings → master volume) ---- */
+.range-row{ padding:0.9rem 0; border-bottom:1px solid var(--border); text-align:left; }
+.range-row .setting-row{ padding:0 0 0.6rem; border:none; }
+.range-slider{
+  -webkit-appearance:none; appearance:none; width:100%; height:3px;
+  border-radius:100px; background:var(--border-strong); outline:none; cursor:pointer;
+  touch-action:manipulation;
+}
+.range-slider::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%;
+  background:var(--gold); border:2px solid var(--bg-card); cursor:pointer;
+  box-shadow:0 0 0 1px var(--gold); transition:transform .15s ease;
+}
+.range-slider::-webkit-slider-thumb:hover{ transform:scale(1.12); }
+.range-slider::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%; background:var(--gold);
+  border:2px solid var(--bg-card); cursor:pointer; box-shadow:0 0 0 1px var(--gold);
+}
+.range-slider::-moz-range-track{ background:var(--border-strong); height:3px; border-radius:100px; }
+.range-slider:disabled{ opacity:0.35; cursor:not-allowed; }
+
+/* ---- Danger / destructive action button (Reset Scores) ---- */
+.btn-danger{
+  display:block; width:100%; margin-top:1.4rem;
+  background:transparent; color:#e0665a;
+  border:1px solid rgba(224,102,90,0.4); border-radius:4px;
+  font-family:var(--font-mono); font-size:11px; font-weight:700;
+  letter-spacing:0.08em; text-transform:uppercase;
+  padding:0.75rem 1rem; cursor:pointer;
+  transition:background .2s ease, border-color .2s ease, color .2s ease;
+  touch-action:manipulation;
+}
+.btn-danger:hover{ border-color:#e0665a; background:rgba(224,102,90,0.08); }
+.btn-danger.confirm{ background:#e0665a; color:#0c0c0b; border-color:#e0665a; }
+
 .theme-swatch-row{ display:flex; gap:0.7rem; }
 .theme-swatch{
   width:32px; height:32px; border-radius:50%; cursor:pointer; touch-action:manipulation;

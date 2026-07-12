@@ -109,6 +109,8 @@ window.Arcade = (function () {
     const ac = audioCtx();
     if (!ac) return;
     opts = opts || {};
+    const vol = getSettings().masterVolume;
+    startGain = startGain * (vol == null ? 1 : vol);
     const t0 = ac.currentTime;
     const osc = ac.createOscillator();
     const gain = ac.createGain();
@@ -116,7 +118,7 @@ window.Arcade = (function () {
     osc.frequency.setValueAtTime(freq, t0);
     if (opts.sweepTo) osc.frequency.exponentialRampToValueAtTime(Math.max(1, opts.sweepTo), t0 + dur);
     gain.gain.setValueAtTime(0.0001, t0);
-    gain.gain.linearRampToValueAtTime(startGain, t0 + 0.012);
+    gain.gain.linearRampToValueAtTime(Math.max(0.0001, startGain), t0 + 0.012);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     osc.connect(gain).connect(ac.destination);
     osc.start(t0);
@@ -126,6 +128,8 @@ window.Arcade = (function () {
     if (getSettings().muted) return;
     const ac = audioCtx();
     if (!ac) return;
+    const vol = getSettings().masterVolume;
+    startGain = startGain * (vol == null ? 1 : vol);
     const t0 = ac.currentTime;
     const bufferSize = ac.sampleRate * duration;
     const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
@@ -134,13 +138,118 @@ window.Arcade = (function () {
     const noise = ac.createBufferSource();
     noise.buffer = buffer;
     const gain = ac.createGain();
-    gain.gain.setValueAtTime(startGain, t0);
+    gain.gain.setValueAtTime(Math.max(0.0001, startGain), t0);
     gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
     const filter = ac.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(lowpassFreq || 1200, t0);
     noise.connect(filter).connect(gain).connect(ac.destination);
     noise.start(t0);
+  }
+
+  /* ---- Ambient background music (synthesized, no audio files) ----
+     A soft detuned pad with a slow LFO on filter cutoff. Starts/stops
+     from the Settings panel's Music switch; volume follows masterVolume
+     live so dragging the slider affects it in real time. */
+  let musicNodes = null;
+  function startMusic() {
+    if (musicNodes) return;
+    const ac = audioCtx();
+    if (!ac) return;
+    const master = ac.createGain();
+    const vol = getSettings().masterVolume;
+    master.gain.setValueAtTime(0.0001, ac.currentTime);
+    master.gain.linearRampToValueAtTime(0.05 * (vol == null ? 1 : vol), ac.currentTime + 1.2);
+    const filter = ac.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 900;
+    const lfo = ac.createOscillator();
+    const lfoGain = ac.createGain();
+    lfo.frequency.value = 0.06;
+    lfoGain.gain.value = 320;
+    lfo.connect(lfoGain).connect(filter.frequency);
+    lfo.start();
+    const notes = [110, 164.81, 220, 277.18]; // A2, E3, A3, C#4 — soft major-ish drone
+    const oscs = notes.map((f, i) => {
+      const o = ac.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = f;
+      o.detune.value = (i % 2 === 0 ? -4 : 4);
+      const g = ac.createGain();
+      g.gain.value = i === 0 ? 1 : 0.55;
+      o.connect(g).connect(filter);
+      o.start();
+      return o;
+    });
+    filter.connect(master).connect(ac.destination);
+    musicNodes = { master: master, filter: filter, lfo: lfo, oscs: oscs };
+  }
+  function stopMusic() {
+    if (!musicNodes) return;
+    const ac = audioCtx();
+    const now = ac ? ac.currentTime : 0;
+    try {
+      musicNodes.master.gain.linearRampToValueAtTime(0.0001, now + 0.6);
+      const nodes = musicNodes;
+      setTimeout(() => {
+        nodes.oscs.forEach(o => { try { o.stop(); } catch (e) {} });
+        try { nodes.lfo.stop(); } catch (e) {}
+      }, 650);
+    } catch (e) {}
+    musicNodes = null;
+  }
+  function setMusicVolume(vol) {
+    if (!musicNodes) return;
+    const ac = audioCtx();
+    if (!ac) return;
+    musicNodes.master.gain.linearRampToValueAtTime(Math.max(0.0001, 0.05 * vol), ac.currentTime + 0.15);
+  }
+  function syncMusic() {
+    const s = getSettings();
+    if (s.musicOn && !s.muted) startMusic(); else stopMusic();
+    if (musicNodes) setMusicVolume(s.masterVolume == null ? 1 : s.masterVolume);
+  }
+
+  /* ---- Achievements registry (single source of truth) ----
+     Every achievement id any game or the hub can unlock, with display
+     copy, so the Stats panel can show a full locked/unlocked roster and
+     an accurate completion percentage instead of a guessed count. */
+  const ACHIEVEMENTS = [
+    { id: 'first_run', title: 'First Contact', desc: 'Play your first game in the hub' },
+    { id: 'ten_runs', title: 'Warming Up', desc: 'Complete 10 runs across any games' },
+    { id: 'fifty_runs', title: 'Arcade Regular', desc: 'Complete 50 runs across any games' },
+    { id: 'completionist', title: 'Completionist', desc: 'Play every game in the hub' },
+    { id: 'first_favorite', title: 'Picked A Favorite', desc: 'Favorite your first game' },
+    { id: 'offline_ready', title: 'Off The Grid', desc: 'Save the hub for offline play' },
+    { id: 'flappy_10', title: 'Pipe Dream', desc: 'Score 10 in Flappy Bird' },
+    { id: 'flappy_30', title: 'Sky Master', desc: 'Score 30 in Flappy Bird' },
+    { id: 'dino_300', title: 'Marathon Runner', desc: 'Score 300 in Dino Run' },
+    { id: 'dino_750', title: 'Prehistoric Legend', desc: 'Score 750 in Dino Run' },
+    { id: 'snake_10', title: 'Growing Pains', desc: 'Score 10 in Snake' },
+    { id: 'snake_25', title: 'Serpent King', desc: 'Score 25 in Snake' },
+    { id: 'ttt_beat_hard', title: 'Unbeatable, Beaten', desc: 'Win a round on Hard difficulty' },
+    { id: 'ttt_ten_wins', title: 'Three In A Row', desc: 'Win 10 rounds of Tic Tac Toe' },
+    { id: 'roadfighter_fuel', title: 'Fumes', desc: 'Run clean out of fuel in Road Fighter' },
+    { id: 'roadfighter_150', title: 'Long Haul', desc: 'Pass 150 cars in a single run of Road Fighter' },
+    { id: 'hard_try_flappy', title: 'Hard Mode', desc: 'Play Flappy Bird on Hard' },
+    { id: 'hard_try_dino', title: 'Hard Mode', desc: 'Play Dino Run on Hard' },
+    { id: 'hard_try_snake', title: 'Hard Mode', desc: 'Play Snake on Hard' },
+    { id: 'hard_try_roadfighter', title: 'Hard Mode', desc: 'Play Road Fighter on Hard' },
+    { id: 'hard_try_tictactoe', title: 'Hard Mode', desc: 'Play Tic Tac Toe on Hard' }
+  ];
+
+  /* ---- Estimated per-session seconds, used until a game passes a real
+     durationSec into logRun() — keeps "Total Play Time" meaningful from
+     day one instead of reading 0 until every game is wired for timing. */
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180 };
+  const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
+  function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
+  function formatDuration(sec) {
+    sec = Math.max(0, sec | 0);
+    if (sec < 60) return sec + 's';
+    const totalMin = Math.floor(sec / 60);
+    const h = Math.floor(totalMin / 60), m = totalMin % 60;
+    return h > 0 ? (h + 'h ' + m + 'm') : (m + 'm');
   }
 
   /* ---- Best-score storage ---- */
@@ -153,7 +262,7 @@ window.Arcade = (function () {
 
   /* ---- Difficulty pill wiring (Easy / Medium / Hard) ---- */
   function wireDifficulty(rowSelector, storageKey, defaultValue, onChange) {
-    let current = localStorage.getItem(storageKey) || defaultValue;
+    let current = localStorage.getItem(storageKey) || getSettings().difficulty || defaultValue;
     const buttons = Array.from(document.querySelectorAll(rowSelector + ' .diff-btn'));
     function applyUI() {
       buttons.forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === current));
@@ -240,7 +349,7 @@ window.Arcade = (function () {
   const PLAYS_KEY = 'arcade_total_plays_v1';
   const GAME_PLAYS_PREFIX = 'arcade_gameplays_';
   const LAST_PLAYED_PREFIX = 'arcade_lastplayed_';
-  function logRun(gameId, score, difficulty) {
+  function logRun(gameId, score, difficulty, durationSec) {
     const key = RUNS_PREFIX + gameId;
     let runs = [];
     try { runs = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
@@ -255,6 +364,9 @@ window.Arcade = (function () {
     const gamePlays = parseInt(localStorage.getItem(GAME_PLAYS_PREFIX + gameId) || '0', 10) + 1;
     localStorage.setItem(GAME_PLAYS_PREFIX + gameId, String(gamePlays));
     localStorage.setItem(LAST_PLAYED_PREFIX + gameId, String(Date.now()));
+
+    const addSeconds = (typeof durationSec === 'number' && durationSec > 0) ? durationSec : (AVG_SESSION_SECONDS[gameId] || 120);
+    localStorage.setItem(PLAYTIME_KEY, String(getTotalPlayTimeSec() + Math.round(addSeconds)));
 
     // A handful of cross-game milestones live here so every game gets them
     // for free just by calling logRun — no per-game wiring needed.
@@ -276,6 +388,46 @@ window.Arcade = (function () {
   function getLastPlayed(gameId) { return parseInt(localStorage.getItem(LAST_PLAYED_PREFIX + gameId) || '0', 10); }
   function gameLabel(id) { const g = GAMES.find(g => g.id === id); return g ? g.title : id; }
 
+  function getGamesPlayedCount() { return GAMES.filter(g => getRuns(g.id).length > 0).length; }
+  function getFavoriteGameLabel() {
+    let best = null, bestCount = 0;
+    GAMES.forEach(g => { const c = getGamePlays(g.id); if (c > bestCount) { bestCount = c; best = g; } });
+    return best ? best.title : '—';
+  }
+  function getHighestScoreOverall() {
+    return GAMES.reduce((max, g) => Math.max(max, getRuns(g.id)[0]?.score || 0), 0);
+  }
+  function getAverageScoreOverall() {
+    const all = GAMES.reduce((acc, g) => acc.concat(getRuns(g.id)), []);
+    if (!all.length) return 0;
+    return Math.round(all.reduce((s, r) => s + r.score, 0) / all.length);
+  }
+  function getCompletionPercent() {
+    return Math.round((Object.keys(getUnlocked()).length / ACHIEVEMENTS.length) * 100);
+  }
+
+  /* ---- Reset Scores (Settings → destructive action) ----
+     Clears every score, run, achievement, and play-count — everything
+     that represents "progress" — but intentionally leaves favorites and
+     preferences (theme, sound, difficulty) untouched. */
+  const GAME_BEST_KEYS = {
+    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best'
+  };
+  const EXTRA_SCORE_KEYS = ['ttt_al_pvc_scores', 'ttt_al_pvp_scores'];
+  function resetAllProgress() {
+    GAMES.forEach(g => {
+      localStorage.removeItem(RUNS_PREFIX + g.id);
+      localStorage.removeItem(GAME_PLAYS_PREFIX + g.id);
+      localStorage.removeItem(LAST_PLAYED_PREFIX + g.id);
+      if (GAME_BEST_KEYS[g.id]) localStorage.removeItem(GAME_BEST_KEYS[g.id]);
+    });
+    EXTRA_SCORE_KEYS.forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem(ACH_KEY);
+    localStorage.removeItem(PLAYS_KEY);
+    localStorage.removeItem(PLAYTIME_KEY);
+    try { window.dispatchEvent(new CustomEvent('arcade:reset')); } catch (e) {}
+  }
+
   /* ---- Favorites (hub grid "favorite" heart, saved locally) ---- */
   const FAV_KEY = 'arcade_favorites_v1';
   function getFavorites() {
@@ -296,7 +448,7 @@ window.Arcade = (function () {
      A single small store, applied on every page load so a choice made
      inside one game (or the hub) instantly affects every other page. */
   const SETTINGS_KEY = 'arcade_settings_v1';
-  const DEFAULT_SETTINGS = { muted: false, reducedMotion: false, theme: 'gold' };
+  const DEFAULT_SETTINGS = { muted: false, musicOn: false, masterVolume: 0.6, particles: true, reducedMotion: false, theme: 'gold', difficulty: 'medium' };
   function getSettings() {
     try { return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); }
     catch (e) { return Object.assign({}, DEFAULT_SETTINGS); }
@@ -306,12 +458,15 @@ window.Arcade = (function () {
     s[key] = value;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
     applySettings(s);
+    try { window.dispatchEvent(new CustomEvent('arcade:settings', { detail: s })); } catch (e) {}
     return s;
   }
   function applySettings(s) {
     s = s || getSettings();
     document.documentElement.setAttribute('data-theme', s.theme || 'gold');
     document.documentElement.classList.toggle('reduced-motion', !!s.reducedMotion);
+    document.documentElement.classList.toggle('no-particles', s.particles === false);
+    syncMusic();
   }
   // Apply immediately on script load so there's no flash of the wrong theme.
   applySettings();
@@ -354,13 +509,28 @@ window.Arcade = (function () {
     const themeSwatches = ['gold', 'crimson', 'azure', 'emerald'].map(t =>
       `<button type="button" class="theme-swatch theme-${t}${s.theme === t ? ' active' : ''}" data-theme="${t}" aria-label="${t} theme"></button>`
     ).join('');
+    const diffPills = ['easy', 'medium', 'hard'].map(d =>
+      `<button type="button" class="diff-btn${s.difficulty === d ? ' active' : ''}" data-default-diff="${d}">${d}</button>`
+    ).join('');
     settingsOverlay.innerHTML = `
       <div class="panel settings-panel">
         <div class="sub">Settings</div>
         <h1 style="font-size:1.9rem;">Tune it your way</h1>
         <div class="setting-row">
-          <span>Sound</span>
+          <span>Sound Effects</span>
           <button type="button" class="switch${s.muted ? '' : ' on'}" id="arcadeMuteSwitch" role="switch" aria-checked="${!s.muted}"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <span>Music</span>
+          <button type="button" class="switch${s.musicOn ? ' on' : ''}" id="arcadeMusicSwitch" role="switch" aria-checked="${!!s.musicOn}"><span class="switch-knob"></span></button>
+        </div>
+        <div class="range-row">
+          <div class="setting-row"><span>Master Volume</span><b style="color:var(--gold-light); font-family:var(--font-mono); font-size:11px;" id="arcadeVolumeLabel">${Math.round(s.masterVolume * 100)}%</b></div>
+          <input type="range" min="0" max="100" step="5" value="${Math.round(s.masterVolume * 100)}" class="range-slider" id="arcadeVolumeSlider" aria-label="Master volume">
+        </div>
+        <div class="setting-row">
+          <span>Particles</span>
+          <button type="button" class="switch${s.particles !== false ? ' on' : ''}" id="arcadeParticlesSwitch" role="switch" aria-checked="${s.particles !== false}"><span class="switch-knob"></span></button>
         </div>
         <div class="setting-row">
           <span>Reduced motion</span>
@@ -370,6 +540,11 @@ window.Arcade = (function () {
           <span>Accent theme</span>
           <div class="theme-swatch-row">${themeSwatches}</div>
         </div>
+        <div class="setting-row" style="flex-direction:column; align-items:flex-start; gap:0.7rem; border-bottom:none;">
+          <span>Default Difficulty</span>
+          <div class="diff-row" style="margin:0; width:100%;">${diffPills}</div>
+        </div>
+        <button type="button" class="btn-danger" id="arcadeResetBtn">Reset All Scores</button>
         <button type="button" class="back-link" id="arcadeSettingsClose">Close</button>
       </div>
     `;
@@ -388,14 +563,23 @@ window.Arcade = (function () {
     `;
     document.body.appendChild(statsOverlay);
 
-    const ACHIEVEMENT_COUNT_HINT = 9;
     function renderStats() {
       const body = statsOverlay.querySelector('#arcadeStatsBody');
       const unlocked = getUnlocked();
-      const unlockedList = Object.keys(unlocked)
-        .sort((a, b) => unlocked[b].date - unlocked[a].date)
-        .map(id => `<div class="ach-row"><span class="ach-row-title">${unlocked[id].title}</span><span class="ach-row-desc">${unlocked[id].desc || ''}</span></div>`)
-        .join('') || '<div class="ach-row empty">No trophies yet — go play something!</div>';
+      const trophyList = ACHIEVEMENTS
+        .slice()
+        .sort((a, b) => {
+          const au = !!unlocked[a.id], bu = !!unlocked[b.id];
+          if (au !== bu) return au ? -1 : 1;
+          return au && bu ? unlocked[b.id].date - unlocked[a.id].date : 0;
+        })
+        .map(a => {
+          const isUnlocked = !!unlocked[a.id];
+          return `<div class="ach-row${isUnlocked ? '' : ' locked'}" style="${isUnlocked ? '' : 'opacity:0.4;'}">
+            <span class="ach-row-title">${isUnlocked ? a.title : '🔒 ' + a.title}</span>
+            <span class="ach-row-desc">${a.desc}</span>
+          </div>`;
+        }).join('');
 
       const boardRows = GAMES.map(g => {
         const runs = getRuns(g.id);
@@ -404,12 +588,17 @@ window.Arcade = (function () {
       }).join('');
 
       body.innerHTML = `
+        <div class="stat-row"><span>Games Played</span><b>${getGamesPlayedCount()} / ${GAMES.length}</b></div>
         <div class="stat-row"><span>Total Runs</span><b>${getTotalPlays()}</b></div>
-        <div class="stat-row"><span>Trophies Unlocked</span><b>${Object.keys(unlocked).length} / ${ACHIEVEMENT_COUNT_HINT}</b></div>
+        <div class="stat-row"><span>Est. Play Time</span><b>${formatDuration(getTotalPlayTimeSec())}</b></div>
+        <div class="stat-row"><span>Average Score</span><b>${getAverageScoreOverall()}</b></div>
+        <div class="stat-row"><span>Highest Score</span><b>${getHighestScoreOverall()}</b></div>
+        <div class="stat-row"><span>Favorite Game</span><b>${getFavoriteGameLabel()}</b></div>
+        <div class="stat-row"><span>Trophies Unlocked</span><b>${Object.keys(unlocked).length} / ${ACHIEVEMENTS.length} (${getCompletionPercent()}%)</b></div>
         <div class="stats-section-label">Best Scores</div>
         ${boardRows}
         <div class="stats-section-label">Trophies</div>
-        <div class="ach-list">${unlockedList}</div>
+        <div class="ach-list">${trophyList}</div>
       `;
     }
 
@@ -430,6 +619,27 @@ window.Arcade = (function () {
       muteSwitch.classList.toggle('on', !next);
       muteSwitch.setAttribute('aria-checked', String(!next));
     });
+    const musicSwitch = document.getElementById('arcadeMusicSwitch');
+    musicSwitch.addEventListener('click', () => {
+      const next = !getSettings().musicOn;
+      setSetting('musicOn', next);
+      musicSwitch.classList.toggle('on', next);
+      musicSwitch.setAttribute('aria-checked', String(next));
+    });
+    const volumeSlider = document.getElementById('arcadeVolumeSlider');
+    const volumeLabel = document.getElementById('arcadeVolumeLabel');
+    volumeSlider.addEventListener('input', () => {
+      const v = Number(volumeSlider.value) / 100;
+      volumeLabel.textContent = volumeSlider.value + '%';
+      setSetting('masterVolume', v);
+    });
+    const particlesSwitch = document.getElementById('arcadeParticlesSwitch');
+    particlesSwitch.addEventListener('click', () => {
+      const next = !(getSettings().particles !== false);
+      setSetting('particles', next);
+      particlesSwitch.classList.toggle('on', next);
+      particlesSwitch.setAttribute('aria-checked', String(next));
+    });
     const motionSwitch = document.getElementById('arcadeMotionSwitch');
     motionSwitch.addEventListener('click', () => {
       const next = !getSettings().reducedMotion;
@@ -444,14 +654,49 @@ window.Arcade = (function () {
         sw.classList.add('active');
       });
     });
+    settingsOverlay.querySelectorAll('[data-default-diff]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        setSetting('difficulty', btn.getAttribute('data-default-diff'));
+        settingsOverlay.querySelectorAll('[data-default-diff]').forEach(x => x.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    const resetBtn = document.getElementById('arcadeResetBtn');
+    let resetArmed = false;
+    let resetArmTimer = null;
+    resetBtn.addEventListener('click', () => {
+      if (!resetArmed) {
+        resetArmed = true;
+        resetBtn.textContent = 'Tap again to confirm';
+        resetBtn.classList.add('confirm');
+        clearTimeout(resetArmTimer);
+        resetArmTimer = setTimeout(() => {
+          resetArmed = false;
+          resetBtn.textContent = 'Reset All Scores';
+          resetBtn.classList.remove('confirm');
+        }, 3200);
+        return;
+      }
+      resetAllProgress();
+      resetArmed = false;
+      resetBtn.textContent = 'Reset All Scores';
+      resetBtn.classList.remove('confirm');
+      renderStats();
+      toast('All scores and trophies reset.');
+    });
   }
 
   return {
-    GAMES: GAMES, tone: tone, noiseBurst: noiseBurst, audioCtx: audioCtx,
+    GAMES: GAMES, ACHIEVEMENTS: ACHIEVEMENTS, tone: tone, noiseBurst: noiseBurst, audioCtx: audioCtx,
     getBest: getBest, setBest: setBest, wireDifficulty: wireDifficulty, toast: toast,
     registerServiceWorker: registerServiceWorker, unlock: unlock, isUnlocked: isUnlocked,
     getUnlocked: getUnlocked, logRun: logRun, getRuns: getRuns, getTotalPlays: getTotalPlays,
-    getGamePlays: getGamePlays, getLastPlayed: getLastPlayed,
+    getGamePlays: getGamePlays, getLastPlayed: getLastPlayed, getTotalPlayTimeSec: getTotalPlayTimeSec,
+    formatDuration: formatDuration, getGamesPlayedCount: getGamesPlayedCount,
+    getFavoriteGameLabel: getFavoriteGameLabel, getHighestScoreOverall: getHighestScoreOverall,
+    getAverageScoreOverall: getAverageScoreOverall, getCompletionPercent: getCompletionPercent,
+    resetAllProgress: resetAllProgress,
     getFavorites: getFavorites, isFavorite: isFavorite, toggleFavorite: toggleFavorite,
     getSettings: getSettings, setSetting: setSetting, applySettings: applySettings, mountPanels: mountPanels
   };
