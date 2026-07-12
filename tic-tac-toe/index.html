@@ -22,7 +22,13 @@
     min-height:100vh; min-height:100dvh;
     display:flex; flex-direction:column;
     overscroll-behavior:none;
+    position:relative;
   }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 50% at 50% 38%, rgba(230,230,225,0.07), transparent 70%);
+  }
+  .nav, .stage-wrap, .site-footer{ position:relative; z-index:1; }
 
   /* ---- Stage ---- */
   .stage-wrap{
@@ -174,7 +180,7 @@
   <div class="nav-left">
     <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
       <img src="../logo.png" alt="Arpan Lamsal logo">
-      <span class="nav-title">Tic Tac Toe</span>
+      <span class="nav-title" style="color:#e6e6e1">Tic Tac Toe</span>
     </a>
     <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -613,6 +619,13 @@
     document.getElementById('finalScoreDraw').textContent = scores.draw;
 
     setTimeout(() => roundOverlay.classList.add('show'), 550);
+
+    if (mode === 'pvc'){
+      const outcome = result.winner === 'draw' ? 0 : (result.winner === HUMAN ? 1 : -1);
+      Arcade.logRun('tictactoe', outcome, difficulty);
+      if (result.winner === HUMAN && difficulty === 'hard') Arcade.unlock('ttt_beat_hard', 'Unbeatable, Beaten', 'Win a round on Hard difficulty');
+      if (scores.a >= 10) Arcade.unlock('ttt_ten_wins', 'Three In A Row', 'Win 10 rounds of Tic Tac Toe');
+    }
   }
 
   function renderScores(){
@@ -739,6 +752,7 @@
   });
 
   renderBoard();
+  Arcade.mountPanels({ gameId: 'tictactoe' });
 })();
 </script>
 </body>

@@ -6,6 +6,94 @@
    ========================================== */
 window.Arcade = (function () {
 
+  /* ---- Shared game registry (single source of truth) ----
+     The hub's grid, the stats/leaderboard panel, and the service
+     worker precache list all read from this instead of maintaining
+     their own copies — add a game here once and it shows up everywhere. */
+  const GAMES = [
+    {
+      id: 'flappy', title: 'Flappy Bird', href: 'flappy/index.html',
+      accent: '#e8b55a',
+      desc: 'Tap to flap. Weave the gold bird through the pipes.',
+      icon: `<defs><linearGradient id="g-flappy" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <ellipse cx="55" cy="52" rx="9" ry="17" fill="#9c7328" transform="rotate(28 55 52)"/>
+      <ellipse cx="48" cy="50" rx="30" ry="24" fill="url(#g-flappy)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+      <ellipse cx="38" cy="60" rx="17" ry="9" fill="rgba(240,237,230,0.16)"/>
+      <ellipse cx="68" cy="38" rx="16" ry="15" fill="url(#g-flappy)"/>
+      <path d="M80 32 L95 38 L80 44 Z" fill="#e8683a" stroke="rgba(12,12,11,0.3)" stroke-width="1"/>
+      <circle cx="74" cy="32" r="3.4" fill="#0c0c0b"/>
+      <circle cx="72.8" cy="30.8" r="1.2" fill="rgba(255,255,255,0.85)"/>`
+    },
+    {
+      id: 'dino', title: 'Dino Run', href: 'dino/index.html',
+      accent: '#7fd88f',
+      desc: 'Jump the thorns, duck the crows. Speed only goes up.',
+      icon: `<defs><linearGradient id="g-dino" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <path d="M40 54 Q18 60 8 80 Q22 74 36 65 Z" fill="#9c7328" stroke="rgba(12,12,11,0.35)" stroke-width="1"/>
+      <path d="M40 74 L36 92 M40 74 L46 91" stroke="#9c7328" stroke-width="6" stroke-linecap="round"/>
+      <path d="M56 76 L53 93 M56 76 L60 92" stroke="#9c7328" stroke-width="6" stroke-linecap="round"/>
+      <rect x="32" y="34" width="34" height="44" rx="15" fill="url(#g-dino)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+      <ellipse cx="42" cy="60" rx="11" ry="15" fill="rgba(240,237,230,0.16)"/>
+      <line x1="58" y1="62" x2="67" y2="67" stroke="#9c7328" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="68" cy="27" rx="17" ry="15" fill="url(#g-dino)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+      <path d="M79 30 L96 35 L94 44 L74 39 Z" fill="url(#g-dino)" stroke="rgba(12,12,11,0.3)" stroke-width="1"/>
+      <path d="M79 37 L82 41 L85 37 L88 41 L91 37" stroke="rgba(240,237,230,0.9)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <circle cx="73" cy="21" r="3" fill="#0c0c0b"/>
+      <circle cx="71.8" cy="19.8" r="1.1" fill="rgba(255,255,255,0.85)"/>`
+    },
+    {
+      id: 'tictactoe', title: 'Tic Tac Toe', href: 'tic-tac-toe/index.html',
+      accent: '#e6e6e1',
+      desc: 'Get three in a row to win.',
+      icon: `<defs><linearGradient id="g-ttt" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <line x1="38.3" y1="16" x2="38.3" y2="84" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="61.7" y1="16" x2="61.7" y2="84" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="16" y1="38.3" x2="84" y2="38.3" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="16" y1="61.7" x2="84" y2="61.7" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M20.5 20.5 L32.5 32.5 M32.5 20.5 L20.5 32.5" stroke="url(#g-ttt)" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="73" cy="27.3" r="8.3" fill="none" stroke="#f0ede6" stroke-width="5"/>
+      <path d="M67.5 67.5 L79.5 79.5 M79.5 67.5 L67.5 79.5" stroke="url(#g-ttt)" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="27.3" cy="73" r="8.3" fill="none" stroke="rgba(240,237,230,0.55)" stroke-width="5"/>`
+    },
+    {
+      id: 'roadfighter', title: 'Road Fighter', href: 'Road-fighter/index.html',
+      accent: '#e8683a',
+      desc: 'Race against the traffic and avoid collisions.',
+      icon: `<defs><linearGradient id="g-road" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <line x1="24" y1="18" x2="18" y2="30" stroke="#9c7328" stroke-width="3.5" stroke-linecap="round" opacity="0.6"/>
+      <line x1="34" y1="12" x2="28" y2="26" stroke="#9c7328" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
+      <rect x="32" y="16" width="36" height="68" rx="14" fill="url(#g-road)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+      <rect x="40" y="34" width="20" height="16" rx="5" fill="rgba(12,12,11,0.55)"/>
+      <rect x="22" y="38" width="10" height="10" rx="3" fill="rgba(12,12,11,0.4)"/>
+      <rect x="68" y="38" width="10" height="10" rx="3" fill="rgba(12,12,11,0.4)"/>
+      <circle cx="42" cy="27" r="3.6" fill="#f0ede6"/>
+      <circle cx="58" cy="27" r="3.6" fill="#f0ede6"/>
+      <circle cx="41.5" cy="76" r="3.4" fill="#c8432a"/>
+      <circle cx="58.5" cy="76" r="3.4" fill="#c8432a"/>`
+    },
+    {
+      id: 'snake', title: 'Snake', href: 'snake/index.html',
+      accent: '#6fd0a8',
+      desc: 'Eat, grow, don\u2019t bite yourself. Classic grid-snake.',
+      icon: `<defs><linearGradient id="g-snake" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#7fe0b0"/><stop offset="100%" stop-color="#3f9c74"/>
+      </linearGradient></defs>
+      <path d="M18 78 Q18 60 36 60 L54 60 Q72 60 72 42 Q72 24 54 24" fill="none" stroke="url(#g-snake)" stroke-width="14" stroke-linecap="round"/>
+      <circle cx="54" cy="24" r="11" fill="url(#g-snake)"/>
+      <circle cx="58" cy="20" r="1.8" fill="#0c0c0b"/>
+      <circle cx="58.6" cy="19.4" r="0.7" fill="rgba(255,255,255,0.85)"/>
+      <circle cx="30" cy="78" r="6" fill="#e8683a"/>`
+    }
+  ];
+
   /* ---- Synthesized SFX (no audio files needed) ---- */
   let actx = null;
   function audioCtx() {
@@ -17,6 +105,7 @@ window.Arcade = (function () {
     return actx;
   }
   function tone(freq, dur, type, startGain, opts) {
+    if (getSettings().muted) return;
     const ac = audioCtx();
     if (!ac) return;
     opts = opts || {};
@@ -34,6 +123,7 @@ window.Arcade = (function () {
     osc.stop(t0 + dur + 0.02);
   }
   function noiseBurst(duration, startGain, lowpassFreq) {
+    if (getSettings().muted) return;
     const ac = audioCtx();
     if (!ac) return;
     const t0 = ac.currentTime;
@@ -62,8 +152,6 @@ window.Arcade = (function () {
   }
 
   /* ---- Difficulty pill wiring (Easy / Medium / Hard) ---- */
-  // Wires up `.diff-btn[data-diff]` buttons, persists the choice, and
-  // keeps the `.active` class in sync. Returns a getter for the current value.
   function wireDifficulty(rowSelector, storageKey, defaultValue, onChange) {
     let current = localStorage.getItem(storageKey) || defaultValue;
     const buttons = Array.from(document.querySelectorAll(rowSelector + ' .diff-btn'));
@@ -71,9 +159,6 @@ window.Arcade = (function () {
       buttons.forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === current));
     }
     buttons.forEach(b => {
-      // Stop pointerdown/pointerup from ever reaching an ancestor overlay's
-      // "tap anywhere to start/flap/jump" handler — a tap on a difficulty
-      // pill should only ever select that difficulty, nothing else.
       ['pointerdown', 'pointerup', 'touchstart'].forEach(evt => {
         b.addEventListener(evt, (e) => e.stopPropagation());
       });
@@ -105,13 +190,243 @@ window.Arcade = (function () {
     toastTimer = setTimeout(() => el.classList.remove('show'), duration || 2600);
   }
 
+  /* ---- Achievement toast (distinct from the plain toast: trophy + glow) ---- */
+  let achToastTimer = null;
+  function showAchievementToast(title, desc) {
+    let el = document.getElementById('arcadeAchToast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'arcadeAchToast';
+      el.className = 'ach-toast';
+      el.innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a3 3 0 0 0 3 3M17 5h3a1 1 0 0 1 1 1v1a3 3 0 0 1-3 3"/></svg>
+        <span class="ach-toast-body"><b>Achievement Unlocked</b><span id="arcadeAchTitle"></span></span>
+      `;
+      document.body.appendChild(el);
+    }
+    el.querySelector('#arcadeAchTitle').textContent = title + (desc ? ' — ' + desc : '');
+    el.classList.remove('show'); void el.offsetWidth;
+    el.classList.add('show');
+    tone(660, 0.1, 'triangle', 0.16, { sweepTo: 990 });
+    setTimeout(() => tone(990, 0.14, 'triangle', 0.14, { sweepTo: 1320 }), 90);
+    clearTimeout(achToastTimer);
+    achToastTimer = setTimeout(() => el.classList.remove('show'), 3600);
+  }
+
+  /* ---- Achievements engine ----
+     A tiny generic unlock store, shared across every game. Each game calls
+     Arcade.unlock(id, title, desc) at the moment a condition is met;
+     duplicate unlocks are ignored so games can call it freely every run. */
+  const ACH_KEY = 'arcade_achievements_v1';
+  function getUnlocked() {
+    try { return JSON.parse(localStorage.getItem(ACH_KEY) || '{}'); }
+    catch (e) { return {}; }
+  }
+  function unlock(id, title, desc) {
+    const u = getUnlocked();
+    if (u[id]) return false;
+    u[id] = { title: title, desc: desc, date: Date.now() };
+    localStorage.setItem(ACH_KEY, JSON.stringify(u));
+    showAchievementToast(title, desc);
+    return true;
+  }
+  function isUnlocked(id) { return !!getUnlocked()[id]; }
+
+  /* ---- Stats & on-device leaderboard ----
+     Every completed run gets logged per game (score, difficulty, date).
+     Keeps the best 20 runs per game so the stats panel can show a
+     personal leaderboard without needing any server. */
+  const RUNS_PREFIX = 'arcade_runs_';
+  const PLAYS_KEY = 'arcade_total_plays_v1';
+  function logRun(gameId, score, difficulty) {
+    const key = RUNS_PREFIX + gameId;
+    let runs = [];
+    try { runs = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
+    runs.push({ score: score, difficulty: difficulty || 'medium', date: Date.now() });
+    runs.sort((a, b) => b.score - a.score);
+    runs = runs.slice(0, 20);
+    localStorage.setItem(key, JSON.stringify(runs));
+
+    const totalPlays = parseInt(localStorage.getItem(PLAYS_KEY) || '0', 10) + 1;
+    localStorage.setItem(PLAYS_KEY, String(totalPlays));
+
+    // A handful of cross-game milestones live here so every game gets them
+    // for free just by calling logRun — no per-game wiring needed.
+    if (totalPlays === 1) unlock('first_run', 'First Contact', 'Play your first game in the hub');
+    if (totalPlays === 10) unlock('ten_runs', 'Warming Up', 'Complete 10 runs across any games');
+    if (totalPlays === 50) unlock('fifty_runs', 'Arcade Regular', 'Complete 50 runs across any games');
+    if (difficulty === 'hard') unlock('hard_try_' + gameId, 'Hard Mode', 'Play ' + gameLabel(gameId) + ' on Hard');
+    const playedGames = GAMES.filter(g => getRuns(g.id).length > 0).map(g => g.id);
+    if (playedGames.length >= GAMES.length) unlock('completionist', 'Completionist', 'Play every game in the hub');
+
+    return runs;
+  }
+  function getRuns(gameId) {
+    try { return JSON.parse(localStorage.getItem(RUNS_PREFIX + gameId) || '[]'); }
+    catch (e) { return []; }
+  }
+  function getTotalPlays() { return parseInt(localStorage.getItem(PLAYS_KEY) || '0', 10); }
+  function gameLabel(id) { const g = GAMES.find(g => g.id === id); return g ? g.title : id; }
+
+  /* ---- Settings (mute / theme / reduced motion) ----
+     A single small store, applied on every page load so a choice made
+     inside one game (or the hub) instantly affects every other page. */
+  const SETTINGS_KEY = 'arcade_settings_v1';
+  const DEFAULT_SETTINGS = { muted: false, reducedMotion: false, theme: 'gold' };
+  function getSettings() {
+    try { return Object.assign({}, DEFAULT_SETTINGS, JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}')); }
+    catch (e) { return Object.assign({}, DEFAULT_SETTINGS); }
+  }
+  function setSetting(key, value) {
+    const s = getSettings();
+    s[key] = value;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+    applySettings(s);
+    return s;
+  }
+  function applySettings(s) {
+    s = s || getSettings();
+    document.documentElement.setAttribute('data-theme', s.theme || 'gold');
+    document.documentElement.classList.toggle('reduced-motion', !!s.reducedMotion);
+  }
+  // Apply immediately on script load so there's no flash of the wrong theme.
+  applySettings();
+
   /* ---- Offline / PWA support ---- */
-  // Registers the shared service worker (a no-op if unsupported or already
-  // registered) so games keep working once assets are cached.
   function registerServiceWorker(swPath) {
     if (!('serviceWorker' in navigator) || !navigator.serviceWorker) return Promise.resolve(null);
     return navigator.serviceWorker.register(swPath || '/sw.js').catch(() => null);
   }
 
-  return { tone, noiseBurst, audioCtx, getBest, setBest, wireDifficulty, toast, registerServiceWorker };
+  /* ---- Global UI: injects the Settings + Stats/Leaderboard buttons and
+     panels into any page that calls Arcade.mountPanels(). Keeps every game
+     page's own HTML tiny — the actual panel markup lives here, once. ---- */
+  let panelsMounted = false;
+  function mountPanels(opts) {
+    if (panelsMounted) return;
+    panelsMounted = true;
+    opts = opts || {};
+    const currentGameId = opts.gameId || null;
+
+    const nav = document.querySelector('.nav');
+    if (!nav) return;
+
+    const group = document.createElement('div');
+    group.className = 'nav-icon-group';
+    group.innerHTML = `
+      <button type="button" class="nav-icon-btn" id="arcadeStatsBtn" aria-label="Stats & achievements">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a3 3 0 0 0 3 3M17 5h3a1 1 0 0 1 1 1v1a3 3 0 0 1-3 3"/></svg>
+      </button>
+      <button type="button" class="nav-icon-btn" id="arcadeSettingsBtn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.35a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.65 15a1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.65 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.65a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.35 9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.04Z"/></svg>
+      </button>
+    `;
+    nav.appendChild(group);
+
+    const settingsOverlay = document.createElement('div');
+    settingsOverlay.className = 'overlay';
+    settingsOverlay.id = 'arcadeSettingsOverlay';
+    const s = getSettings();
+    const themeSwatches = ['gold', 'crimson', 'azure', 'emerald'].map(t =>
+      `<button type="button" class="theme-swatch theme-${t}${s.theme === t ? ' active' : ''}" data-theme="${t}" aria-label="${t} theme"></button>`
+    ).join('');
+    settingsOverlay.innerHTML = `
+      <div class="panel settings-panel">
+        <div class="sub">Settings</div>
+        <h1 style="font-size:1.9rem;">Tune it your way</h1>
+        <div class="setting-row">
+          <span>Sound</span>
+          <button type="button" class="switch${s.muted ? '' : ' on'}" id="arcadeMuteSwitch" role="switch" aria-checked="${!s.muted}"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <span>Reduced motion</span>
+          <button type="button" class="switch${s.reducedMotion ? ' on' : ''}" id="arcadeMotionSwitch" role="switch" aria-checked="${!!s.reducedMotion}"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row" style="flex-direction:column; align-items:flex-start; gap:0.7rem;">
+          <span>Accent theme</span>
+          <div class="theme-swatch-row">${themeSwatches}</div>
+        </div>
+        <button type="button" class="back-link" id="arcadeSettingsClose">Close</button>
+      </div>
+    `;
+    document.body.appendChild(settingsOverlay);
+
+    const statsOverlay = document.createElement('div');
+    statsOverlay.className = 'overlay';
+    statsOverlay.id = 'arcadeStatsOverlay';
+    statsOverlay.innerHTML = `
+      <div class="panel stats-panel">
+        <div class="sub">Your Progress</div>
+        <h1 style="font-size:1.9rem;">Stats &amp; Trophies</h1>
+        <div id="arcadeStatsBody"></div>
+        <button type="button" class="back-link" id="arcadeStatsClose">Close</button>
+      </div>
+    `;
+    document.body.appendChild(statsOverlay);
+
+    const ACHIEVEMENT_COUNT_HINT = 9;
+    function renderStats() {
+      const body = statsOverlay.querySelector('#arcadeStatsBody');
+      const unlocked = getUnlocked();
+      const unlockedList = Object.keys(unlocked)
+        .sort((a, b) => unlocked[b].date - unlocked[a].date)
+        .map(id => `<div class="ach-row"><span class="ach-row-title">${unlocked[id].title}</span><span class="ach-row-desc">${unlocked[id].desc || ''}</span></div>`)
+        .join('') || '<div class="ach-row empty">No trophies yet — go play something!</div>';
+
+      const boardRows = GAMES.map(g => {
+        const runs = getRuns(g.id);
+        const best = runs.length ? runs[0].score : 0;
+        return `<div class="stat-row"><span>${g.title}${g.id === currentGameId ? ' <b style="color:var(--gold)">(this game)</b>' : ''}</span><b>${best}</b></div>`;
+      }).join('');
+
+      body.innerHTML = `
+        <div class="stat-row"><span>Total Runs</span><b>${getTotalPlays()}</b></div>
+        <div class="stat-row"><span>Trophies Unlocked</span><b>${Object.keys(unlocked).length} / ${ACHIEVEMENT_COUNT_HINT}</b></div>
+        <div class="stats-section-label">Best Scores</div>
+        ${boardRows}
+        <div class="stats-section-label">Trophies</div>
+        <div class="ach-list">${unlockedList}</div>
+      `;
+    }
+
+    const statsBtn = document.getElementById('arcadeStatsBtn');
+    const settingsBtn = document.getElementById('arcadeSettingsBtn');
+    statsBtn.addEventListener('click', () => { renderStats(); statsOverlay.classList.add('show'); });
+    document.getElementById('arcadeStatsClose').addEventListener('click', () => statsOverlay.classList.remove('show'));
+    statsOverlay.addEventListener('pointerdown', (e) => { if (e.target === statsOverlay) statsOverlay.classList.remove('show'); });
+
+    settingsBtn.addEventListener('click', () => settingsOverlay.classList.add('show'));
+    document.getElementById('arcadeSettingsClose').addEventListener('click', () => settingsOverlay.classList.remove('show'));
+    settingsOverlay.addEventListener('pointerdown', (e) => { if (e.target === settingsOverlay) settingsOverlay.classList.remove('show'); });
+
+    const muteSwitch = document.getElementById('arcadeMuteSwitch');
+    muteSwitch.addEventListener('click', () => {
+      const next = !getSettings().muted;
+      setSetting('muted', next);
+      muteSwitch.classList.toggle('on', !next);
+      muteSwitch.setAttribute('aria-checked', String(!next));
+    });
+    const motionSwitch = document.getElementById('arcadeMotionSwitch');
+    motionSwitch.addEventListener('click', () => {
+      const next = !getSettings().reducedMotion;
+      setSetting('reducedMotion', next);
+      motionSwitch.classList.toggle('on', next);
+      motionSwitch.setAttribute('aria-checked', String(next));
+    });
+    settingsOverlay.querySelectorAll('.theme-swatch').forEach(function (sw) {
+      sw.addEventListener('click', function () {
+        setSetting('theme', sw.getAttribute('data-theme'));
+        settingsOverlay.querySelectorAll('.theme-swatch').forEach(function (x) { x.classList.remove('active'); });
+        sw.classList.add('active');
+      });
+    });
+  }
+
+  return {
+    GAMES: GAMES, tone: tone, noiseBurst: noiseBurst, audioCtx: audioCtx,
+    getBest: getBest, setBest: setBest, wireDifficulty: wireDifficulty, toast: toast,
+    registerServiceWorker: registerServiceWorker, unlock: unlock, isUnlocked: isUnlocked,
+    getUnlocked: getUnlocked, logRun: logRun, getRuns: getRuns, getTotalPlays: getTotalPlays,
+    getSettings: getSettings, setSetting: setSetting, applySettings: applySettings, mountPanels: mountPanels
+  };
 })();

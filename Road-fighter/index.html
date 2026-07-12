@@ -18,6 +18,12 @@
 
 <link rel="stylesheet" href="../assets/css/theme.css">
 <style>
+  html,body{ height:100%; }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 50% at 50% 38%, rgba(232,104,58,0.09), transparent 70%);
+  }
+  .nav, .stage-wrap, .hud{ position:relative; z-index:1; }
   html,body{
     height:100%;
     overflow:hidden;
@@ -91,7 +97,7 @@
   <div class="nav-left">
     <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
       <img src="../logo.png" alt="Arpan Lamsal logo">
-      <span class="nav-title">Road Fighter</span>
+      <span class="nav-title" style="color:#e8683a">Road Fighter</span>
     </a>
     <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -352,6 +358,9 @@
     document.getElementById('finalBest').textContent = best;
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
+    Arcade.logRun('roadfighter', score, difficulty);
+    if (reason === 'fuel') Arcade.unlock('roadfighter_fuel', 'Fumes', 'Run clean out of fuel in Road Fighter');
+    if (score >= 150) Arcade.unlock('roadfighter_150', 'Long Haul', 'Pass 150 cars in a single run of Road Fighter');
   }
 
   function steerInput(){
@@ -827,6 +836,7 @@
 
   reset();
   loop();
+  Arcade.mountPanels({ gameId: 'roadfighter' });
 })();
 </script>
 </body>

@@ -18,6 +18,12 @@
 
 <link rel="stylesheet" href="../assets/css/theme.css">
 <style>
+  html,body{ height:100%; }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 50% at 50% 38%, rgba(232,181,90,0.09), transparent 70%);
+  }
+  .nav, .stage-wrap, .hud{ position:relative; z-index:1; }
   html,body{
     height:100%;
     overflow:hidden;
@@ -48,7 +54,7 @@
   <div class="nav-left">
     <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
       <img src="../logo.png" alt="Arpan Lamsal logo">
-      <span class="nav-title">Flappy Bird</span>
+      <span class="nav-title" style="color:#e8b55a">Flappy Bird</span>
     </a>
     <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -258,6 +264,9 @@
     document.getElementById('finalBest').textContent = best;
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
+    Arcade.logRun('flappy', score, difficulty);
+    if (score >= 10) Arcade.unlock('flappy_10', 'Pipe Dream', 'Score 10 in Flappy Bird');
+    if (score >= 30) Arcade.unlock('flappy_30', 'Sky Master', 'Score 30 in Flappy Bird');
   }
 
   function spawnPipe(){
@@ -548,6 +557,7 @@
 
   reset();
   loop();
+  Arcade.mountPanels({ gameId: 'flappy' });
 })();
 
 </script>

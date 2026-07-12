@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Game Hub — Arpan Lamsal</title>
-<meta name="description" content="Game Hub — a small collection of mini games by Arpan Lamsal. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter.">
+<meta name="description" content="Game Hub — a small collection of mini games by Arpan Lamsal. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake.">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0c0c0b">
 
@@ -30,7 +30,7 @@
      minimal dark surface without ever reading as "colored" — stays black. */
   body::before{
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
-    background:radial-gradient(52% 42% at 50% 0%, rgba(200,151,58,0.10), transparent 68%);
+    background:radial-gradient(52% 42% at 50% 0%, rgba(var(--gold-rgb),0.10), transparent 68%);
   }
   body::after{
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:0.5;
@@ -42,6 +42,7 @@
     -webkit-mask-image:radial-gradient(60% 55% at 50% 15%, #000 0%, transparent 75%);
   }
   .nav, .stage-wrap, .site-footer{ position:relative; z-index:1; }
+  #starfield{ position:fixed; inset:0; z-index:0; pointer-events:none; }
 
   .stage-wrap{
     flex:1;
@@ -59,7 +60,7 @@
   .hero .mark{
     width:56px; height:56px; margin-bottom:1.4rem;
     animation:fadeUp 0.8s ease 0.05s both, float 4.5s ease-in-out 0.85s infinite;
-    filter:drop-shadow(0 6px 18px rgba(200,151,58,0.25));
+    filter:drop-shadow(0 6px 18px rgba(var(--gold-rgb),0.25));
   }
   .hero .kicker{
     margin-bottom:1.1rem;
@@ -124,8 +125,8 @@
     width:6px; height:6px; border-radius:50%;
     background:var(--text-muted); transition:background .2s ease;
   }
-  .offline-btn.ready .dot{ background:var(--gold); box-shadow:0 0 6px rgba(200,151,58,0.8); }
-  .offline-btn.ready{ color:var(--gold-light); border-color:var(--gold); background:rgba(200,151,58,0.06); }
+  .offline-btn.ready .dot{ background:var(--gold); box-shadow:0 0 6px rgba(var(--gold-rgb),0.8); }
+  .offline-btn.ready{ color:var(--gold-light); border-color:var(--gold); background:rgba(var(--gold-rgb),0.06); }
 
   /* ---- Section label above the line-up ---- */
   .section-label{
@@ -148,23 +149,24 @@
     opacity:0; animation:fadeUp 0.8s ease 0.54s both;
   }
   .game-row{
-    position:relative;
-    display:flex; align-items:center; gap:1.1rem;
-    padding:1.15rem 0.25rem 1.15rem 0.9rem;
-    border-bottom:1px solid var(--border);
-    text-decoration:none; color:inherit;
-    transition:padding-left .25s ease, background-color .25s ease;
-  }
-  .game-row::before{
+  position:relative;
+  display:flex; align-items:center; gap:1.1rem;
+  padding:1.15rem 0.25rem 1.15rem 0.9rem;
+  border-bottom:1px solid var(--border);
+  text-decoration:none; color:inherit;
+  transition:padding-left .25s ease, background-color .25s ease;
+  --row-accent: var(--gold);
+}
+.game-row::before{
     content:''; position:absolute; left:0; top:0; bottom:0; width:0;
-    background:linear-gradient(180deg, var(--gold-light), var(--gold));
+    background:var(--row-accent);
     transition:width .25s ease;
   }
   .game-row:hover, .game-row:focus-visible{
-    padding-left:1.3rem; background:rgba(200,151,58,0.045); outline:none;
+    padding-left:1.3rem; background:rgba(var(--gold-rgb),0.045); outline:none;
   }
   .game-row:hover::before, .game-row:focus-visible::before{ width:3px; }
-  .game-row:active{ background:rgba(200,151,58,0.08); }
+  .game-row:active{ background:rgba(var(--gold-rgb),0.08); }
 
   .row-index{
     font-family:var(--font-display); font-style:italic; font-weight:300;
@@ -179,7 +181,8 @@
   }
   .row-icon::before{
     content:''; position:absolute; inset:-6px; border-radius:50%;
-    background:radial-gradient(circle, rgba(200,151,58,0.18), transparent 72%);
+    background:radial-gradient(circle, rgba(var(--gold-rgb),0.18), transparent 72%);
+    background:radial-gradient(circle, color-mix(in srgb, var(--row-accent) 45%, transparent), transparent 72%);
     opacity:0; transition:opacity .3s ease;
   }
   .game-row:hover .row-icon::before{ opacity:1; }
@@ -243,13 +246,17 @@
 </style>
 </head>
 <body>
+<canvas id="starfield" aria-hidden="true"></canvas>
+
 
 <nav class="nav">
-  <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
-    <img class="mark" src="logo.png" alt="Arpan Lamsal logo">
-    <span class="nav-title">Game Hub</span>
-  </a>
-  <a href="https://arpanlamsal.com.np" class="nav-back">← Portfolio</a>
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img class="mark" src="logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Game Hub</span>
+    </a>
+    <a href="https://arpanlamsal.com.np" class="nav-back">← Portfolio</a>
+  </div>
 </nav>
 
 <div class="stage-wrap">
@@ -304,74 +311,10 @@
 
 <script src="assets/js/common.js"></script>
 <script>
-  // Data-driven grid: adding a future game is just pushing another entry
-  // here (folder, title, description, icon) — no markup duplication needed.
-  const GAMES = [
-    {
-      id: 'flappy', title: 'Flappy Bird', href: 'flappy/index.html',
-      desc: 'Tap to flap. Weave the gold bird through the pipes.',
-      icon: `<defs><linearGradient id="g-flappy" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
-      </linearGradient></defs>
-      <ellipse cx="55" cy="52" rx="9" ry="17" fill="#9c7328" transform="rotate(28 55 52)"/>
-      <ellipse cx="48" cy="50" rx="30" ry="24" fill="url(#g-flappy)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <ellipse cx="38" cy="60" rx="17" ry="9" fill="rgba(240,237,230,0.16)"/>
-      <ellipse cx="68" cy="38" rx="16" ry="15" fill="url(#g-flappy)"/>
-      <path d="M80 32 L95 38 L80 44 Z" fill="#e8683a" stroke="rgba(12,12,11,0.3)" stroke-width="1"/>
-      <circle cx="74" cy="32" r="3.4" fill="#0c0c0b"/>
-      <circle cx="72.8" cy="30.8" r="1.2" fill="rgba(255,255,255,0.85)"/>`
-    },
-    {
-      id: 'dino', title: 'Dino Run', href: 'dino/index.html',
-      desc: 'Jump the thorns, duck the crows. Speed only goes up.',
-      icon: `<defs><linearGradient id="g-dino" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
-      </linearGradient></defs>
-      <path d="M40 54 Q18 60 8 80 Q22 74 36 65 Z" fill="#9c7328" stroke="rgba(12,12,11,0.35)" stroke-width="1"/>
-      <path d="M40 74 L36 92 M40 74 L46 91" stroke="#9c7328" stroke-width="6" stroke-linecap="round"/>
-      <path d="M56 76 L53 93 M56 76 L60 92" stroke="#9c7328" stroke-width="6" stroke-linecap="round"/>
-      <rect x="32" y="34" width="34" height="44" rx="15" fill="url(#g-dino)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <ellipse cx="42" cy="60" rx="11" ry="15" fill="rgba(240,237,230,0.16)"/>
-      <line x1="58" y1="62" x2="67" y2="67" stroke="#9c7328" stroke-width="4" stroke-linecap="round"/>
-      <ellipse cx="68" cy="27" rx="17" ry="15" fill="url(#g-dino)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <path d="M79 30 L96 35 L94 44 L74 39 Z" fill="url(#g-dino)" stroke="rgba(12,12,11,0.3)" stroke-width="1"/>
-      <path d="M79 37 L82 41 L85 37 L88 41 L91 37" stroke="rgba(240,237,230,0.9)" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-      <circle cx="73" cy="21" r="3" fill="#0c0c0b"/>
-      <circle cx="71.8" cy="19.8" r="1.1" fill="rgba(255,255,255,0.85)"/>`
-    },
-    {
-      id: 'tictactoe', title: 'Tic Tac Toe', href: 'tic-tac-toe/index.html',
-      desc: 'Get three in a row to win.',
-      icon: `<defs><linearGradient id="g-ttt" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
-      </linearGradient></defs>
-      <line x1="38.3" y1="16" x2="38.3" y2="84" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
-      <line x1="61.7" y1="16" x2="61.7" y2="84" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
-      <line x1="16" y1="38.3" x2="84" y2="38.3" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
-      <line x1="16" y1="61.7" x2="84" y2="61.7" stroke="url(#g-ttt)" stroke-width="4.5" stroke-linecap="round"/>
-      <path d="M20.5 20.5 L32.5 32.5 M32.5 20.5 L20.5 32.5" stroke="url(#g-ttt)" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="73" cy="27.3" r="8.3" fill="none" stroke="#f0ede6" stroke-width="5"/>
-      <path d="M67.5 67.5 L79.5 79.5 M79.5 67.5 L67.5 79.5" stroke="url(#g-ttt)" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="27.3" cy="73" r="8.3" fill="none" stroke="rgba(240,237,230,0.55)" stroke-width="5"/>`
-    },
-    {
-      id: 'roadfighter', title: 'Road Fighter', href: 'Road-fighter/index.html',
-      desc: 'Race against the traffic and avoid collisions.',
-      icon: `<defs><linearGradient id="g-road" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
-      </linearGradient></defs>
-      <line x1="24" y1="18" x2="18" y2="30" stroke="#9c7328" stroke-width="3.5" stroke-linecap="round" opacity="0.6"/>
-      <line x1="34" y1="12" x2="28" y2="26" stroke="#9c7328" stroke-width="3.5" stroke-linecap="round" opacity="0.4"/>
-      <rect x="32" y="16" width="36" height="68" rx="14" fill="url(#g-road)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <rect x="40" y="34" width="20" height="16" rx="5" fill="rgba(12,12,11,0.55)"/>
-      <rect x="22" y="38" width="10" height="10" rx="3" fill="rgba(12,12,11,0.4)"/>
-      <rect x="68" y="38" width="10" height="10" rx="3" fill="rgba(12,12,11,0.4)"/>
-      <circle cx="42" cy="27" r="3.6" fill="#f0ede6"/>
-      <circle cx="58" cy="27" r="3.6" fill="#f0ede6"/>
-      <circle cx="41.5" cy="76" r="3.4" fill="#c8432a"/>
-      <circle cx="58.5" cy="76" r="3.4" fill="#c8432a"/>`
-    }
-  ];
+  // Data-driven grid, sourced from the single shared registry in common.js —
+  // add a game there once and it shows up here, in the stats panel, and
+  // in the service worker's precache list automatically.
+  const GAMES = Arcade.GAMES;
 
   const list = document.getElementById('gameList');
   GAMES.forEach((g, i) => {
@@ -379,6 +322,7 @@
     a.className = 'game-row';
     a.href = g.href;
     a.id = g.id + 'Card';
+    a.style.setProperty('--row-accent', g.accent);
     a.setAttribute('aria-label', 'Play ' + g.title);
     a.innerHTML = `
       <span class="row-index">${String(i+1).padStart(2,'0')}</span>
@@ -391,8 +335,10 @@
     `;
     list.appendChild(a);
   });
+  document.getElementById('statCount').textContent = GAMES.length;
+
   // A dashed placeholder row signals there's room for more without
-  // looking like a broken layout when a fifth game shows up.
+  // looking like a broken layout when a next game shows up.
   const more = document.createElement('div');
   more.className = 'game-row more';
   more.innerHTML = `
@@ -415,6 +361,8 @@
       window.location.href = cards[focusIdx].getAttribute('href');
     }
   });
+
+  Arcade.mountPanels({ gameId: null });
 
   // ---- Offline support ----
   const OFFLINE_FLAG = 'game_hub_offline_ready';
@@ -441,10 +389,49 @@
       localStorage.setItem(OFFLINE_FLAG, '1');
       setOfflineReadyUI(true);
       Arcade.toast('Saved — Game Hub now works offline.');
+      Arcade.unlock('offline_ready', 'Off The Grid', 'Save the hub for offline play');
     } catch (e) {
       Arcade.toast('Could not save for offline right now.');
     }
   });
+
+  // ---- Starfield background ----
+  (function starfield(){
+    const canvas = document.getElementById('starfield');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+    let w, h, dpr;
+    function resize(){
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = canvas.clientWidth; h = canvas.clientHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const count = Math.round((w * h) / 9000);
+      stars = Array.from({ length: count }, () => ({
+        x: Math.random() * w, y: Math.random() * h,
+        r: Math.random() * 1.1 + 0.2,
+        speed: Math.random() * 0.15 + 0.02,
+        phase: Math.random() * Math.PI * 2
+      }));
+    }
+    let raf;
+    function draw(t){
+      ctx.clearRect(0, 0, w, h);
+      const reduced = document.documentElement.classList.contains('reduced-motion');
+      stars.forEach(s => {
+        const twinkle = reduced ? 0.6 : 0.4 + 0.6 * Math.abs(Math.sin(t * 0.0006 * s.speed * 10 + s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(232,181,90,${0.5 * twinkle})`;
+        ctx.fill();
+      });
+      raf = requestAnimationFrame(draw);
+    }
+    resize();
+    window.addEventListener('resize', resize);
+    raf = requestAnimationFrame(draw);
+  })();
 </script>
 </body>
 </html>

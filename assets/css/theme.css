@@ -17,9 +17,33 @@
   --gold:          #c8973a;
   --gold-light:    #e8b55a;
   --gold-dark:     #9c7328;
+  --gold-rgb:      200,151,58;
+  --gold-light-rgb:232,181,90;
   --font-display:  'Cormorant Garamond', Georgia, serif;
   --font-mono:     'Space Mono', monospace;
   --nav-h: 68px;
+}
+/* ---- Alternate accent themes (Settings → Accent theme) ----
+   Everything above reads from --gold/--gold-light/--gold-dark/--gold-rgb,
+   so swapping these four values re-skins the whole shared shell —
+   buttons, borders, HUD, kickers, glows — with zero per-component edits. */
+:root[data-theme="crimson"]{
+  --gold:#c1483f; --gold-light:#e2685c; --gold-dark:#8f342d;
+  --gold-rgb:193,72,63; --gold-light-rgb:226,104,92;
+}
+:root[data-theme="azure"]{
+  --gold:#3d84c8; --gold-light:#63a6e6; --gold-dark:#2a5f92;
+  --gold-rgb:61,132,200; --gold-light-rgb:99,166,230;
+}
+:root[data-theme="emerald"]{
+  --gold:#3f9c74; --gold-light:#5fc496; --gold-dark:#2c7355;
+  --gold-rgb:63,156,116; --gold-light-rgb:95,196,150;
+}
+/* ---- Reduced motion (manual toggle in Settings, in addition to the
+   prefers-reduced-motion media query further down) ---- */
+html.reduced-motion *{
+  animation-duration:0.001s !important; animation-iteration-count:1 !important;
+  transition-duration:0.001s !important; scroll-behavior:auto !important;
 }
 *{ box-sizing:border-box; margin:0; padding:0; }
 html,body{
@@ -46,10 +70,10 @@ html,body{
 .nav-logo{ display:flex; align-items:center; gap:0.65rem; text-decoration:none; min-width:0; flex-shrink:0; }
 .nav-logo img{
   width:38px; height:38px; display:block; flex-shrink:0;
-  filter:drop-shadow(0 2px 10px rgba(200,151,58,0.35));
+  filter:drop-shadow(0 2px 10px rgba(var(--gold-rgb),0.35));
   transition:filter .25s ease, transform .25s ease;
 }
-.nav-logo:hover img{ filter:drop-shadow(0 2px 16px rgba(200,151,58,0.55)); transform:translateY(-1px); }
+.nav-logo:hover img{ filter:drop-shadow(0 2px 16px rgba(var(--gold-light-rgb),0.55)); transform:translateY(-1px); }
 .nav-title{
   font-family:var(--font-display); font-style:italic; font-weight:600;
   font-size:16px; letter-spacing:0.01em; color:var(--text-primary);
@@ -80,13 +104,27 @@ html,body{
 .nav-home-btn svg{ width:13px; height:13px; display:block; flex-shrink:0; }
 .nav-home-btn:hover{
   border-color:var(--gold); color:var(--gold-light);
-  background:rgba(200,151,58,0.08); transform:translateX(-2px);
+  background:rgba(var(--gold-rgb),0.08); transform:translateX(-2px);
 }
 .nav-home-btn:active{ transform:translateX(-1px); }
 @media (max-width:400px){
   .nav-home-btn span{ display:none; }
   .nav-home-btn{ padding:0; width:32px; justify-content:center; }
 }
+
+/* ---- Nav icon buttons (Settings / Stats — injected by Arcade.mountPanels) ---- */
+.nav-icon-group{ display:flex; align-items:center; gap:0.5rem; flex-shrink:0; }
+.nav-icon-btn{
+  display:flex; align-items:center; justify-content:center;
+  width:32px; height:32px; flex-shrink:0;
+  background:none; border:1px solid var(--border-strong); border-radius:50%;
+  color:var(--text-secondary); cursor:pointer;
+  transition:border-color .22s ease, color .22s ease, transform .18s ease;
+  touch-action:manipulation;
+}
+.nav-icon-btn svg{ width:15px; height:15px; display:block; }
+.nav-icon-btn:hover{ border-color:var(--gold); color:var(--gold-light); transform:translateY(-1px); }
+.nav-icon-btn:active{ transform:translateY(0); }
 
 /* ---- HUD / score readout ---- */
 .hud{
@@ -105,7 +143,7 @@ html,body{
 .score.pulse{ animation:scorePulse .5s ease; }
 @keyframes scorePulse{
   0%{ transform:scale(1); text-shadow:0 2px 20px rgba(0,0,0,0.6); }
-  35%{ transform:scale(1.22); text-shadow:0 0 28px rgba(232,181,90,0.75); }
+  35%{ transform:scale(1.22); text-shadow:0 0 28px rgba(var(--gold-light-rgb),0.75); }
   100%{ transform:scale(1); text-shadow:0 2px 20px rgba(0,0,0,0.6); }
 }
 
@@ -156,6 +194,80 @@ html,body{
 }
 .stat-row:last-of-type{ border-bottom:none; }
 .stat-row b{ color:var(--gold-light); font-size:15px; letter-spacing:0.02em; }
+
+/* ---- Settings panel: toggle switches + accent theme swatches ---- */
+.settings-panel, .stats-panel{ max-width:380px; max-height:min(88vh, 640px); overflow-y:auto; }
+.setting-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0.9rem 0; border-bottom:1px solid var(--border);
+  font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.03em;
+  color:var(--text-primary); text-align:left;
+}
+.switch{
+  position:relative; width:44px; height:25px; flex-shrink:0;
+  background:var(--bg-2); border:1px solid var(--border-strong); border-radius:100px;
+  cursor:pointer; touch-action:manipulation; transition:border-color .2s ease, background .2s ease;
+}
+.switch .switch-knob{
+  position:absolute; top:2px; left:2px; width:19px; height:19px; border-radius:50%;
+  background:var(--text-muted); transition:transform .22s ease, background .22s ease;
+}
+.switch.on{ background:rgba(var(--gold-rgb),0.18); border-color:var(--gold); }
+.switch.on .switch-knob{ transform:translateX(19px); background:var(--gold-light); }
+
+.theme-swatch-row{ display:flex; gap:0.7rem; }
+.theme-swatch{
+  width:32px; height:32px; border-radius:50%; cursor:pointer; touch-action:manipulation;
+  border:2px solid var(--border-strong); position:relative;
+  transition:transform .18s ease, border-color .18s ease;
+}
+.theme-swatch:hover{ transform:translateY(-1px); }
+.theme-swatch.active{ border-color:var(--text-primary); }
+.theme-swatch.active::after{
+  content:''; position:absolute; inset:-5px; border-radius:50%;
+  border:1px solid var(--border-strong);
+}
+.theme-swatch.theme-gold{ background:linear-gradient(135deg,#e8b55a,#9c7328); }
+.theme-swatch.theme-crimson{ background:linear-gradient(135deg,#e2685c,#8f342d); }
+.theme-swatch.theme-azure{ background:linear-gradient(135deg,#63a6e6,#2a5f92); }
+.theme-swatch.theme-emerald{ background:linear-gradient(135deg,#5fc496,#2c7355); }
+
+/* ---- Stats & Achievements panel ---- */
+.stats-section-label{
+  font-family:var(--font-mono); font-size:10px; letter-spacing:0.14em;
+  text-transform:uppercase; color:var(--text-muted);
+  margin:1.4rem 0 0.3rem; text-align:left;
+}
+.ach-list{ display:flex; flex-direction:column; }
+.ach-row{
+  display:flex; flex-direction:column; gap:0.15rem; text-align:left;
+  padding:0.7rem 0; border-bottom:1px solid var(--border);
+  font-family:var(--font-mono);
+}
+.ach-row:last-child{ border-bottom:none; }
+.ach-row-title{ font-size:12px; letter-spacing:0.04em; color:var(--gold-light); font-weight:700; }
+.ach-row-desc{ font-size:10.5px; color:var(--text-secondary); }
+.ach-row.empty{ color:var(--text-muted); font-size:11.5px; padding:1rem 0; }
+
+/* ---- Achievement unlock toast (trophy + gold glow, distinct from the
+   plain utility toast used for "saved offline" etc.) ---- */
+.ach-toast{
+  position:fixed; top:calc(var(--nav-h) + 14px); left:50%;
+  transform:translate(-50%, -14px); z-index:90;
+  display:flex; align-items:center; gap:0.7rem;
+  background:var(--bg-card); border:1px solid var(--gold);
+  border-radius:8px; padding:0.75rem 1.15rem;
+  box-shadow:0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(var(--gold-rgb),0.15);
+  color:var(--gold-light);
+  opacity:0; pointer-events:none;
+  transition:opacity .3s ease, transform .3s ease;
+  max-width:min(92vw, 380px);
+}
+.ach-toast.show{ opacity:1; transform:translate(-50%, 0); }
+.ach-toast svg{ width:22px; height:22px; flex-shrink:0; }
+.ach-toast-body{ display:flex; flex-direction:column; gap:0.15rem; text-align:left; font-family:var(--font-mono); }
+.ach-toast-body b{ font-size:9.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-muted); }
+.ach-toast-body span{ font-size:12px; color:var(--text-primary); letter-spacing:0.01em; }
 
 /* ---- Buttons ---- */
 .btn-primary{
@@ -248,12 +360,12 @@ html,body{
   display:inline-flex; align-items:center; gap:0.5rem;
   font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.18em;
   text-transform:uppercase; color:var(--gold);
-  border:1px solid rgba(200,151,58,0.35); border-radius:100px;
-  padding:0.4rem 0.9rem; background:rgba(200,151,58,0.06);
+  border:1px solid rgba(var(--gold-rgb),0.35); border-radius:100px;
+  padding:0.4rem 0.9rem; background:rgba(var(--gold-rgb),0.06);
 }
 .kicker .kicker-dot{
   width:5px; height:5px; border-radius:50%; background:var(--gold);
-  box-shadow:0 0 6px rgba(200,151,58,0.9);
+  box-shadow:0 0 6px rgba(var(--gold-rgb),0.9);
 }
 
 /* ---- Tiny toast (used for "Ready to play offline" etc.) ---- */
@@ -295,7 +407,7 @@ html,body{
 }
 
 @media (prefers-reduced-motion: reduce){
-  .overlay, .panel, .score, .btn-primary, .option-btn{ transition:none !important; }
+  .overlay, .panel, .score, .btn-primary, .option-btn, .ach-toast, .switch, .switch-knob, .theme-swatch{ transition:none !important; }
   .new-best.show{ animation:none !important; }
 }
 
