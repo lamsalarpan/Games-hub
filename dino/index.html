@@ -7,11 +7,10 @@
 <meta name="description" content="A Dino Run clone built by Arpan Lamsal, styled to match his portfolio and Flappy Bird game.">
 
 <link rel="icon" href="../faviconset/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32.png">
-<link rel="icon" type="image/png" sizes="48x48" href="../faviconset/favicon-48.png">
-<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/favicon-192.png">
-<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/favicon-180.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,7 +46,7 @@
 
 <nav class="nav">
   <div class="nav-left">
-    <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
       <img src="../logo.png" alt="Arpan Lamsal logo">
       <span class="nav-title">Dino Run</span>
     </a>
@@ -266,7 +265,9 @@
 
   function setDuck(on){
     if (state !== 'playing') return;
+    const wasDucking = dino.ducking;
     dino.ducking = on && dino.onGround;
+    if (dino.ducking && !wasDucking) sfxDuck();
   }
 
   function startGame(diff){
@@ -840,6 +841,7 @@
   function audioCtx(){ return Arcade.audioCtx(); }
   function tone(freq, dur, type, startGain, opts){ Arcade.tone(freq, dur, type, startGain, opts); }
   function sfxJump(){ tone(420, 0.14, 'triangle', 0.18, { sweepTo: 720 }); }
+  function sfxDuck(){ tone(260, 0.08, 'triangle', 0.11, { sweepTo: 170 }); }
   let lastScoreTick = 0;
   function maybeScoreTick(){
     if (Math.floor(score/100) > lastScoreTick){

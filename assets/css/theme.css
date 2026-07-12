@@ -1,7 +1,7 @@
 /* ==========================================
    GAME HUB — shared theme
    Dark minimal + gold accent, matching
-   lamsalarpan.com.np design language.
+   arpanlamsal.com.np design language.
    Loaded by the hub and every game page.
    ========================================== */
 :root{
@@ -60,6 +60,7 @@ html,body{
   border:1px solid var(--border-strong); border-radius:100px;
   padding:0.5rem 1rem; transition:color .25s ease, border-color .25s ease;
   background:none; cursor:pointer;
+  touch-action:manipulation;
 }
 .nav-back:hover{ color:var(--gold); border-color:var(--gold); }
 
@@ -72,6 +73,7 @@ html,body{
   color:var(--text-secondary); text-decoration:none;
   font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
   transition:border-color .22s ease, color .22s ease, background .22s ease, transform .18s ease;
+  touch-action:manipulation;
 }
 .nav-home-btn svg{ width:13px; height:13px; display:block; flex-shrink:0; }
 .nav-home-btn:hover{
@@ -162,6 +164,7 @@ html,body{
   letter-spacing:0.1em; text-transform:uppercase;
   padding:0.9rem 1rem; cursor:pointer;
   transition:background .25s ease, transform .2s ease;
+  touch-action:manipulation;
 }
 .btn-primary:hover{ background:var(--gold-light); transform:translateY(-1px); }
 .btn-primary:active{ transform:translateY(0); }
@@ -174,6 +177,7 @@ html,body{
   letter-spacing:0.1em; text-transform:uppercase; text-decoration:none;
   padding:0.85rem 1rem; text-align:center; cursor:pointer;
   transition:color .25s ease, border-color .25s ease;
+  touch-action:manipulation;
 }
 .btn-secondary:hover{ color:var(--gold); border-color:var(--gold); }
 
@@ -188,6 +192,7 @@ html,body{
   letter-spacing:0.08em; text-transform:uppercase;
   padding:0.55rem 0.4rem; cursor:pointer;
   transition:background .2s ease, color .2s ease, border-color .2s ease;
+  touch-action:manipulation;
 }
 .diff-btn:hover{ border-color:var(--gold); color:var(--gold-light); }
 .diff-btn.active{
@@ -203,6 +208,7 @@ html,body{
   font-family:var(--font-mono); cursor:pointer;
   padding:0.85rem 1rem;
   transition:border-color .2s ease, background .2s ease, transform .15s ease;
+  touch-action:manipulation;
 }
 .option-btn:hover{ border-color:var(--gold); transform:translateY(-1px); }
 .option-btn:active{ transform:translateY(0); }
@@ -220,6 +226,7 @@ html,body{
   font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em;
   text-transform:uppercase; color:var(--text-muted);
   transition:color .2s ease;
+  touch-action:manipulation;
 }
 .back-link:hover{ color:var(--gold); }
 
@@ -259,7 +266,7 @@ html,body{
 }
 .toast.show{ opacity:1; transform:translate(-50%, 0); }
 
-/* ---- Footer (mirrors lamsalarpan.com.np) ---- */
+/* ---- Footer (mirrors arpanlamsal.com.np) ---- */
 .site-footer{ border-top:1px solid var(--border); padding:2rem 1.5rem; margin-top:auto; }
 .footer-inner{
   max-width:1200px; margin:0 auto;
@@ -276,6 +283,7 @@ html,body{
   border:1px solid var(--border-strong); border-radius:50%;
   color:var(--text-muted); text-decoration:none;
   transition:border-color .25s ease, color .25s ease, transform .25s ease;
+  touch-action:manipulation;
 }
 .social-icon svg{ width:14px; height:14px; fill:currentColor; display:block; }
 .social-icon:hover{ border-color:var(--gold); color:var(--gold); transform:translateY(-2px); }

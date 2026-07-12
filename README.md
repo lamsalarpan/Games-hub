@@ -1,6 +1,6 @@
 # Game Hub — Arpan Lamsal
 
-A small, growing collection of mini games, styled to match [lamsalarpan.com.np](https://lamsalarpan.com.np).
+A small, growing collection of mini games, styled to match [arpanlamsal.com.np](https://arpanlamsal.com.np).
 
 ## Structure
 

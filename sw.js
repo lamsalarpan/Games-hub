@@ -9,7 +9,7 @@
 
    Bump CACHE_NAME whenever this list changes so old caches get swept. */
 
-const CACHE_NAME = 'game-hub-v3';
+const CACHE_NAME = 'game-hub-v4';
 const NETWORK_TIMEOUT_MS = 3500;
 
 const PRECACHE_URLS = [
@@ -20,11 +20,11 @@ const PRECACHE_URLS = [
   './assets/css/theme.css',
   './assets/js/common.js',
   './faviconset/favicon.ico',
-  './faviconset/favicon-16.png',
-  './faviconset/favicon-32.png',
-  './faviconset/favicon-48.png',
-  './faviconset/favicon-192.png',
-  './faviconset/favicon-180.png',
+  './faviconset/favicon-16x16.png',
+  './faviconset/favicon-32x32.png',
+  './faviconset/android-chrome-192x192.png',
+  './faviconset/android-chrome-512x512.png',
+  './faviconset/apple-touch-icon.png',
   './flappy/index.html',
   './dino/index.html',
   './Road-fighter/index.html',
