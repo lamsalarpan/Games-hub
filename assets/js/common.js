@@ -71,6 +71,12 @@ window.Arcade = (function () {
       buttons.forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === current));
     }
     buttons.forEach(b => {
+      // Stop pointerdown/pointerup from ever reaching an ancestor overlay's
+      // "tap anywhere to start/flap/jump" handler — a tap on a difficulty
+      // pill should only ever select that difficulty, nothing else.
+      ['pointerdown', 'pointerup', 'touchstart'].forEach(evt => {
+        b.addEventListener(evt, (e) => e.stopPropagation());
+      });
       b.addEventListener('click', (e) => {
         e.stopPropagation();
         current = b.getAttribute('data-diff');
@@ -103,7 +109,7 @@ window.Arcade = (function () {
   // Registers the shared service worker (a no-op if unsupported or already
   // registered) so games keep working once assets are cached.
   function registerServiceWorker(swPath) {
-    if (!('serviceWorker' in navigator)) return Promise.resolve(null);
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker) return Promise.resolve(null);
     return navigator.serviceWorker.register(swPath || '/sw.js').catch(() => null);
   }
 

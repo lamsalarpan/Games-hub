@@ -68,9 +68,9 @@
     <h1>Tap to run.</h1>
     <div class="sub">Space / Up · Click · Tap</div>
     <div class="diff-row" id="diffRow">
-      <button class="diff-btn" data-diff="easy">Easy</button>
-      <button class="diff-btn" data-diff="medium">Medium</button>
-      <button class="diff-btn" data-diff="hard">Hard</button>
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
     </div>
     <div class="stat-row"><span>Best Score</span><b id="startBest">0</b></div>
     <div class="hint">Jump the thorns, duck the crows, dodge the boulders.<br>Down arrow · swipe down to duck.</div>
@@ -85,7 +85,7 @@
     <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
     <div class="stat-row"><span>Best</span><b id="finalBest">0</b></div>
     <span class="new-best" id="newBestTag">New Best</span>
-    <button class="btn-primary" id="retryBtn">Run Again</button>
+    <button type="button" class="btn-primary" id="retryBtn">Run Again</button>
     <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
     <div class="hint">Space · Click · Tap to retry</div>
   </div>
@@ -162,27 +162,12 @@
     hard:   { speedMul: 1.34, rampDist: 4200,  intervalBase: 64, intervalMin: 34, crowBias: 0.11,   boulderUnlock: 2600  },
   };
   const DIFF_KEY = 'dino_al_difficulty';
-  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
-  if (!DIFFICULTY_PRESETS[difficulty]) difficulty = 'medium';
-  function preset(){ return DIFFICULTY_PRESETS[difficulty]; }
+  const diffCtl = Arcade.wireDifficulty('#diffRow', DIFF_KEY, 'medium');
+  function preset(){ return DIFFICULTY_PRESETS[diffCtl.get()] || DIFFICULTY_PRESETS.medium; }
 
   const STORAGE_KEY = 'dino_al_best';
   let best = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
   document.getElementById('startBest').textContent = best;
-
-  const diffButtons = Array.from(document.querySelectorAll('.diff-btn'));
-  function applyDifficultyUI(){
-    diffButtons.forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === difficulty));
-  }
-  diffButtons.forEach(b => {
-    b.addEventListener('click', (e) => {
-      e.stopPropagation();
-      difficulty = b.getAttribute('data-diff');
-      localStorage.setItem(DIFF_KEY, difficulty);
-      applyDifficultyUI();
-    });
-  });
-  applyDifficultyUI();
 
   let state = 'start';
   let dino, obstacles, score, frame, groundOffset, distance;
@@ -859,7 +844,10 @@
   canvas.addEventListener('pointerdown', onPointerDown, { passive:false });
   canvas.addEventListener('pointermove', onPointerMove, { passive:false });
   window.addEventListener('pointerup', onPointerUp, { passive:false });
-  document.getElementById('startOverlay').addEventListener('pointerdown', onPointerDown, { passive:false });
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn')) return;
+    onPointerDown(e);
+  }, { passive:false });
   document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
     if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
     onPointerDown(e);

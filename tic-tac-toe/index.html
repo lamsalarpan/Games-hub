@@ -184,9 +184,9 @@
     </div>
 
     <div class="controls">
-      <button class="btn btn-gold" id="newRoundBtn">New Round</button>
-      <button class="btn btn-ghost" id="clearBtn">Clear</button>
-      <button class="btn btn-ghost" id="changeModeBtn">Change Mode</button>
+      <button type="button" class="btn btn-gold" id="newRoundBtn">New Round</button>
+      <button type="button" class="btn btn-ghost" id="clearBtn">Clear</button>
+      <button type="button" class="btn btn-ghost" id="changeModeBtn">Change Mode</button>
     </div>
   </div>
 </div>
@@ -198,11 +198,11 @@
     <h1>Choose a mode.</h1>
     <div class="sub">Tic Tac Toe</div>
     <div class="option-list">
-      <button class="option-btn" id="pvpBtn">
+      <button type="button" class="option-btn" id="pvpBtn">
         <div class="opt-title">Player vs Player</div>
         <div class="opt-desc">Two players share the board and take turns.</div>
       </button>
-      <button class="option-btn" id="pvcBtn">
+      <button type="button" class="option-btn" id="pvcBtn">
         <div class="opt-title">Player vs Computer</div>
         <div class="opt-desc">Pick a difficulty and challenge the computer.</div>
       </button>
@@ -216,20 +216,20 @@
     <h1>Pick a difficulty.</h1>
     <div class="sub">Player vs Computer</div>
     <div class="option-list">
-      <button class="option-btn" data-difficulty="easy">
+      <button type="button" class="option-btn" data-difficulty="easy">
         <div class="opt-title">Easy</div>
         <div class="opt-desc">The computer moves at random. Great for a relaxed round.</div>
       </button>
-      <button class="option-btn" data-difficulty="medium">
+      <button type="button" class="option-btn" data-difficulty="medium">
         <div class="opt-title">Medium</div>
         <div class="opt-desc">Wins, blocks, and sets up forks. Genuinely tough — mistakes get punished.</div>
       </button>
-      <button class="option-btn" data-difficulty="hard">
+      <button type="button" class="option-btn" data-difficulty="hard">
         <div class="opt-title">Hard</div>
         <div class="opt-desc">Plays perfectly, every move. It's mathematically unbeatable — the best you can do is draw.</div>
       </button>
     </div>
-    <button class="back-link" id="difficultyBackBtn">← Back</button>
+    <button type="button" class="back-link" id="difficultyBackBtn">← Back</button>
   </div>
 </div>
 
@@ -241,7 +241,7 @@
     <div class="stat-row"><span id="scoreLabelA2">Player 1</span><b id="finalScoreA">0</b></div>
     <div class="stat-row"><span>Draws</span><b id="finalScoreDraw">0</b></div>
     <div class="stat-row"><span id="scoreLabelB2">Player 2</span><b id="finalScoreB">0</b></div>
-    <button class="btn-primary" id="nextRoundBtn">Next Game</button>
+    <button type="button" class="btn-primary" id="nextRoundBtn">Next Game</button>
     <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
     <div class="hint">Space or Enter to continue</div>
   </div>
@@ -320,6 +320,7 @@
     cells = [];
     for (let i=0;i<9;i++){
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'cell';
       btn.setAttribute('aria-label', 'Cell ' + (i+1));
       btn.addEventListener('click', () => onCellClick(i));
