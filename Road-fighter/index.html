@@ -19,19 +19,6 @@
 
 <link rel="stylesheet" href="../assets/css/theme.css">
 <style>
-  :root{ --game-accent: #d9663f; --game-accent-glow: rgba(217,102,63,0.10); }
-
-  /* ---- Per-game accent touches (kept subtle so the shared shell stays consistent) ---- */
-  .stage-wrap{
-    background:radial-gradient(60% 45% at 50% 38%, var(--game-accent-glow), transparent 72%);
-  }
-  .nav-title{ color:var(--game-accent); opacity:0.9; }
-  .panel{ position:relative; }
-  .panel::before{
-    content:''; position:absolute; top:-1px; left:14%; right:14%; height:2px;
-    border-radius:2px;
-    background:linear-gradient(90deg, transparent, var(--game-accent), transparent);
-  }
   html,body{
     height:100%;
     overflow:hidden;
@@ -102,14 +89,16 @@
 <body>
 
 <nav class="nav">
-  <a href="../index.html" class="nav-back" aria-label="Back to Game Hub">
-    <svg viewBox="0 0 24 24" style="fill:none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
-    <span>Home</span>
-  </a>
-  <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
-    <img src="../logo.png" alt="Arpan Lamsal logo">
-    <span class="nav-title">Road Fighter</span>
-  </a>
+  <div class="nav-left">
+    <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Road Fighter</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
 </nav>
 
 <div class="hud">
@@ -135,7 +124,6 @@
     <img class="mark" src="../logo.png" alt="">
     <h1>Choose your speed.</h1>
     <div class="sub">Arrows / A·D · Hold Left or Right Side</div>
-    <div class="stat-row"><span>Best Score</span><b id="startBest">0</b></div>
     <div class="option-list">
       <button type="button" class="option-btn" data-difficulty="easy">
         <div class="opt-title">Easy</div>
@@ -150,6 +138,7 @@
         <div class="opt-desc">Smaller cars packed tighter across the road. Fast and unforgiving.</div>
       </button>
     </div>
+    <div class="stat-row"><span>Best Score</span><b id="startBest">0</b></div>
     <div class="hint">Dodge traffic. Stay on the road.<br>Hit a gold ramp for a speed boost. Watch your fuel.</div>
   </div>
 </div>
@@ -808,7 +797,7 @@
   window.addEventListener('pointercancel', onPointerUp, { passive:false });
 
   document.getElementById('startOverlay').addEventListener('pointerdown', (e)=>{
-    if (e.target.closest('.option-list, button, a')) return;
+    if (e.target.closest('.option-btn')) return;
     e.preventDefault(); focusCanvas(); audioCtx(); if (state !== 'playing') startGame();
   }, { passive:false });
   document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
@@ -820,7 +809,7 @@
     });
   });
   document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
-    if (e.target.closest('button, a')) return;
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
     e.preventDefault(); focusCanvas(); audioCtx(); startGame();
   }, { passive:false });
   document.getElementById('retryBtn').addEventListener('click', (e)=>{

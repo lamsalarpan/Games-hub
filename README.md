@@ -5,13 +5,13 @@ A small, growing collection of mini games, styled to match [lamsalarpan.com.np](
 ## Structure
 
 ```
-index.html              ← the hub (game picker + Play Offline)
-manifest.json, sw.js     ← PWA / offline support
+index.html               ← the hub (numbered game line-up + Play Offline)
+manifest.json, sw.js      ← PWA / offline support (network-first, always fresh)
 assets/
-  css/theme.css          ← shared design tokens + components (nav, overlays,
-                            buttons, HUD, difficulty pills, footer...)
-  js/common.js            ← shared helpers (synthesized SFX, best-score
-                            storage, difficulty-pill wiring, toasts, SW registration)
+  css/theme.css           ← shared design tokens + components (nav, overlays,
+                             buttons, HUD, option cards, footer...)
+  js/common.js             ← shared helpers (synthesized SFX, best-score
+                             storage, toasts, SW registration)
 flappy/index.html
 dino/index.html
 tic-tac-toe/index.html
@@ -25,6 +25,24 @@ code in each file. Each game's `<style>` block only keeps what's actually
 unique to that game (the canvas frame, a fuel bar, the tic-tac-toe board grid,
 etc).
 
+## Design consistency (strict, across every page)
+
+- **Nav**: identical everywhere — logo (`logo.png`, 38px, given visual
+  priority) + game title on the left, immediately followed by a "← Hub"
+  pill that always links to `../index.html`. Nothing on the right.
+- **Difficulty / mode selection**: every game that has one uses the same
+  `.option-list` / `.option-btn` card pattern (title + one-line description),
+  and **picking an option starts the game immediately** — there is no
+  separate "now tap to start" step. This is deliberate: an earlier version
+  used small pill buttons for Flappy/Dino that required a second tap to
+  begin, which read as the game being "stuck." Do not reintroduce a
+  two-step start flow.
+- **Panels**: `.overlay` / `.panel`, same max-width (360px), same
+  `.stat-row` for Best Score, same `.btn-primary` / `.btn-secondary` /
+  `.back-link` for actions.
+- **Fonts/colors**: only the shared CSS variables in `theme.css` — never
+  hardcode a color or font that isn't already a variable there.
+
 ## Adding a new game
 
 1. Create `your-game/index.html`, link the two shared assets:
@@ -32,22 +50,29 @@ etc).
    <link rel="stylesheet" href="../assets/css/theme.css">
    <script src="../assets/js/common.js"></script>
    ```
-2. Reuse the existing building blocks: `.nav`/`.nav-back`, `.overlay`/`.panel`,
-   `.btn-primary`/`.btn-secondary`, `.diff-row`/`.diff-btn` (or `.option-list`/`.option-btn`
-   for a fuller difficulty menu), `.stat-row`, `.new-best`.
-3. Use `Arcade.tone(...)`, `Arcade.noiseBurst(...)` for sound,
-   `Arcade.getBest/setBest` for high scores, and `Arcade.wireDifficulty(...)`
-   for an Easy/Medium/Hard selector.
-4. Add a "Back to Home" link (`<a class="btn-secondary" href="../index.html">Back to Home</a>`)
-   on the game-over screen.
-5. Add an entry to the `GAMES` array in the hub's `index.html` (folder, title,
-   description, small inline SVG icon) — the grid, keyboard navigation, and
-   offline caching all pick it up automatically. Also add the new page's path
-   to `PRECACHE_URLS` in `sw.js` so it's available offline.
+2. Copy the nav block verbatim from any existing game page (logo + Hub
+   button) — do not redesign it.
+3. Reuse the existing building blocks: `.overlay`/`.panel`,
+   `.btn-primary`/`.btn-secondary`, `.option-list`/`.option-btn` for
+   difficulty or mode selection, `.stat-row`, `.new-best`.
+4. If the game has a score, use `Arcade.tone(...)` / `Arcade.noiseBurst(...)`
+   for sound and `Arcade.getBest`/`setBest` for the high score.
+5. Add a "Back to Home" link/button (`<a class="btn-secondary" href="../index.html">Back to Home</a>`)
+   on the game-over screen, in addition to the nav's Hub button.
+6. Add an entry to the `GAMES` array in the hub's `index.html` (folder,
+   title, description, small inline SVG icon) — the numbered list,
+   keyboard navigation, and offline caching all pick it up automatically.
+   Also add the new page's path to `PRECACHE_URLS` in `sw.js`.
+7. Bump `CACHE_NAME` in `sw.js` so returning visitors pick up the change —
+   the service worker is network-first, so this mostly matters for anyone
+   currently offline, but it's still good hygiene.
 
 ## Offline play
 
 Tapping **Play Offline** on the hub registers a service worker and caches the
 hub, all four games, and the shared assets, so everything keeps working with
-no connection. Bump `CACHE_NAME` in `sw.js` whenever game files change so
-returning visitors pick up the new version.
+no connection. The worker is **network-first**: online visitors always get
+the latest files straight from the server (and the cache is refreshed
+silently in the background); only when the network is unreachable does it
+fall back to whatever was last cached. Bump `CACHE_NAME` in `sw.js` whenever
+game files change.

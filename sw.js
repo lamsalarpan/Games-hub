@@ -1,10 +1,16 @@
 /* Game Hub — offline service worker.
-   Cache-first for everything same-origin, so once a visit has warmed
-   the cache (or the person taps "Play Offline"), every game keeps
-   working with no connection at all. Bump CACHE_NAME when files change
-   so returning visitors pick up the new versions. */
+
+   Strategy: network-first for everything same-origin, falling back to
+   cache only when the network is unavailable. This means:
+     - Online: you always get the latest files (no more "stuck on an old
+       broken build" — the classic failure mode of cache-first SWs).
+     - Offline: whatever was last successfully fetched (or precached via
+       "Play Offline") still works, with zero network required.
+
+   Bump CACHE_NAME whenever this list changes so old caches get swept. */
 
 const CACHE_NAME = 'game-hub-v3';
+const NETWORK_TIMEOUT_MS = 3500;
 
 const PRECACHE_URLS = [
   './',
@@ -30,6 +36,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(PRECACHE_URLS))
       .then(() => self.skipWaiting())
+      .catch(() => {}) // don't let a single missing asset block install
   );
 });
 
@@ -41,6 +48,10 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+function timeoutPromise(ms) {
+  return new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms));
+}
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
@@ -49,16 +60,15 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return; // let cross-origin (fonts, CDN) pass through normally
 
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((res) => {
+    Promise.race([fetch(req), timeoutPromise(NETWORK_TIMEOUT_MS)])
+      .then((res) => {
         if (res && res.ok) {
           const copy = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
         }
         return res;
-      }).catch(() => cached);
-    })
+      })
+      .catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
   );
 });
 

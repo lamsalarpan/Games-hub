@@ -19,19 +19,6 @@
 
 <link rel="stylesheet" href="../assets/css/theme.css">
 <style>
-  :root{ --game-accent: #d8d0bd; --game-accent-glow: rgba(216,208,189,0.08); }
-
-  /* ---- Per-game accent touches (kept subtle so the shared shell stays consistent) ---- */
-  .stage-wrap{
-    background:radial-gradient(60% 45% at 50% 38%, var(--game-accent-glow), transparent 72%);
-  }
-  .nav-title{ color:var(--game-accent); opacity:0.9; }
-  .panel{ position:relative; }
-  .panel::before{
-    content:''; position:absolute; top:-1px; left:14%; right:14%; height:2px;
-    border-radius:2px;
-    background:linear-gradient(90deg, transparent, var(--game-accent), transparent);
-  }
   body{
     min-height:100vh; min-height:100dvh;
     display:flex; flex-direction:column;
@@ -160,19 +147,41 @@
     border:1px solid var(--border-strong);
   }
   .btn-ghost:hover{ color:var(--gold); border-color:var(--gold); }
+
+  /* ---- Player-name form (PvP setup) ---- */
+  .name-form{ display:flex; flex-direction:column; gap:0.9rem; margin:1.4rem 0 0.4rem; text-align:left; }
+  .name-field{ display:flex; flex-direction:column; gap:0.45rem; }
+  .name-label{
+    display:flex; align-items:center; gap:0.5rem;
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--text-secondary);
+  }
+  .name-label .turn-dot{ width:7px; height:7px; }
+  .name-field input{
+    background:var(--bg-2); color:var(--text-primary);
+    border:1px solid var(--border-strong); border-radius:6px;
+    font-family:var(--font-mono); font-size:14px;
+    padding:0.75rem 0.9rem; outline:none;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .name-field input::placeholder{ color:var(--text-muted); }
+  .name-field input:focus{ border-color:var(--gold); background:var(--bg-3); }
+  .name-form .btn-primary{ margin-top:0.3rem; }
 </style>
 </head>
 <body>
 
 <nav class="nav">
-  <a href="../index.html" class="nav-back" aria-label="Back to Game Hub">
-    <svg viewBox="0 0 24 24" style="fill:none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
-    <span>Home</span>
-  </a>
-  <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
-    <img src="../logo.png" alt="Arpan Lamsal logo">
-    <span class="nav-title">Tic Tac Toe</span>
-  </a>
+  <div class="nav-left">
+    <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Tic Tac Toe</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
 </nav>
 
 <div class="stage-wrap">
@@ -226,6 +235,26 @@
   </div>
 </div>
 
+<!-- Player names overlay (Player vs Player only) -->
+<div class="overlay" id="namesOverlay">
+  <div class="panel">
+    <h1>Who's playing?</h1>
+    <div class="sub">Player vs Player</div>
+    <form class="name-form" id="nameForm">
+      <label class="name-field">
+        <span class="name-label"><span class="turn-dot"></span>Player 1 (X)</span>
+        <input type="text" id="nameInputA" maxlength="14" autocomplete="off" placeholder="Player 1">
+      </label>
+      <label class="name-field">
+        <span class="name-label"><span class="turn-dot o"></span>Player 2 (O)</span>
+        <input type="text" id="nameInputB" maxlength="14" autocomplete="off" placeholder="Player 2">
+      </label>
+      <button type="submit" class="btn-primary" id="namesStartBtn">Start Match</button>
+    </form>
+    <button type="button" class="back-link" id="namesBackBtn">← Back</button>
+  </div>
+</div>
+
 <!-- Difficulty select overlay -->
 <div class="overlay" id="difficultyOverlay">
   <div class="panel">
@@ -262,6 +291,7 @@
     <div class="hint">Space or Enter to continue</div>
   </div>
 </div>
+
 
 <script src="../assets/js/common.js"></script>
 <script>
@@ -302,6 +332,18 @@
   const COMPUTER = 'O';
 
   let scores = { a:0, b:0, draw:0 };
+  let playerNames = { a:'Player 1', b:'Player 2' };
+
+  function loadNames(){
+    try{
+      const raw = localStorage.getItem('ttt_al_names');
+      if (raw){ const n = JSON.parse(raw); playerNames.a = n.a || 'Player 1'; playerNames.b = n.b || 'Player 2'; }
+    }catch(e){}
+  }
+  function saveNames(){
+    try{ localStorage.setItem('ttt_al_names', JSON.stringify(playerNames)); }catch(e){}
+  }
+  loadNames();
 
   // ---- Sound — thin wrappers around the shared Arcade audio engine ----
   function audioCtx(){ return Arcade.audioCtx(); }
@@ -557,9 +599,9 @@
         if (result.winner === HUMAN){ scores.a++; titleText = 'You win.'; subText = 'Nicely played.'; }
         else { scores.b++; titleText = 'Computer wins.'; subText = 'It found the gap.'; }
       } else {
-        if (result.winner === 'X'){ scores.a++; titleText = 'Player 1 wins.'; }
-        else { scores.b++; titleText = 'Player 2 wins.'; }
-        subText = (result.winner === 'X' ? 'Player 1' : 'Player 2') + ' takes the round.';
+        if (result.winner === 'X'){ scores.a++; titleText = playerNames.a + ' wins.'; }
+        else { scores.b++; titleText = playerNames.b + ' wins.'; }
+        subText = (result.winner === 'X' ? playerNames.a : playerNames.b) + ' takes the round.';
       }
     }
     saveScores();
@@ -578,8 +620,8 @@
     document.getElementById('scoreA').textContent = scores.a;
     document.getElementById('scoreB').textContent = scores.b;
     document.getElementById('scoreDraw').textContent = scores.draw;
-    const labelA = mode === 'pvc' ? 'You' : 'Player 1';
-    const labelB = mode === 'pvc' ? 'Computer' : 'Player 2';
+    const labelA = mode === 'pvc' ? 'You' : playerNames.a;
+    const labelB = mode === 'pvc' ? 'Computer' : playerNames.b;
     document.getElementById('scoreLabelA').textContent = labelA;
     document.getElementById('scoreLabelB').textContent = labelB;
     document.getElementById('scoreLabelA2').textContent = labelA;
@@ -623,9 +665,29 @@
   }
 
   // ---- Menu / navigation ----
+  const namesOverlay = document.getElementById('namesOverlay');
+  const nameInputA = document.getElementById('nameInputA');
+  const nameInputB = document.getElementById('nameInputB');
+
   document.getElementById('pvpBtn').addEventListener('click', () => {
-    mode = 'pvp';
+    audioCtx();
+    nameInputA.value = playerNames.a === 'Player 1' ? '' : playerNames.a;
+    nameInputB.value = playerNames.b === 'Player 2' ? '' : playerNames.b;
     menuOverlay.classList.remove('show');
+    namesOverlay.classList.add('show');
+    setTimeout(() => nameInputA.focus(), 350);
+  });
+  document.getElementById('namesBackBtn').addEventListener('click', () => {
+    namesOverlay.classList.remove('show');
+    menuOverlay.classList.add('show');
+  });
+  document.getElementById('nameForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    playerNames.a = nameInputA.value.trim().slice(0,14) || 'Player 1';
+    playerNames.b = nameInputB.value.trim().slice(0,14) || 'Player 2';
+    saveNames();
+    mode = 'pvp';
+    namesOverlay.classList.remove('show');
     beginGame();
   });
   document.getElementById('pvcBtn').addEventListener('click', () => {

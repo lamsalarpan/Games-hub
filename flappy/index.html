@@ -19,19 +19,6 @@
 
 <link rel="stylesheet" href="../assets/css/theme.css">
 <style>
-  :root{ --game-accent: #e8b55a; --game-accent-glow: rgba(232,181,90,0.10); }
-
-  /* ---- Per-game accent touches (kept subtle so the shared shell stays consistent) ---- */
-  .stage-wrap{
-    background:radial-gradient(60% 45% at 50% 38%, var(--game-accent-glow), transparent 72%);
-  }
-  .nav-title{ color:var(--game-accent); opacity:0.9; }
-  .panel{ position:relative; }
-  .panel::before{
-    content:''; position:absolute; top:-1px; left:14%; right:14%; height:2px;
-    border-radius:2px;
-    background:linear-gradient(90deg, transparent, var(--game-accent), transparent);
-  }
   html,body{
     height:100%;
     overflow:hidden;
@@ -59,14 +46,16 @@
 <body>
 
 <nav class="nav">
-  <a href="../index.html" class="nav-back" aria-label="Back to Game Hub">
-    <svg viewBox="0 0 24 24" style="fill:none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>
-    <span>Home</span>
-  </a>
-  <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
-    <img src="../logo.png" alt="Arpan Lamsal logo">
-    <span class="nav-title">Flappy Bird</span>
-  </a>
+  <div class="nav-left">
+    <a href="https://lamsalarpan.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Flappy Bird</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
 </nav>
 
 <div class="hud">
@@ -81,12 +70,21 @@
 <div class="overlay show" id="startOverlay">
   <div class="panel">
     <img class="mark" src="../logo.png" alt="">
-    <h1>Tap to start.</h1>
+    <h1>Choose your flight.</h1>
     <div class="sub">Space · Click · Tap</div>
-    <div class="diff-row" id="diffRow">
-      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
-      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
-      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    <div class="option-list" id="diffRow">
+      <button type="button" class="option-btn" data-diff="easy">
+        <div class="opt-title">Easy</div>
+        <div class="opt-desc">Wider gaps, gentler pace. A relaxed flap.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="medium">
+        <div class="opt-title">Medium</div>
+        <div class="opt-desc">The standard run. Balanced gaps and speed.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="hard">
+        <div class="opt-title">Hard</div>
+        <div class="opt-desc">Tight gaps, quick pipes. Ramps up fast.</div>
+      </button>
     </div>
     <div class="stat-row"><span>Best Score</span><b id="startBest">0</b></div>
     <div class="hint">Guide the bird through the gaps.<br>Don't touch the pipes or the ground.</div>
@@ -204,12 +202,13 @@
   // Three selectable tiers layered on top of the score-based ramp above —
   // Hard starts with a smaller gap and faster pipes, and also ramps harder.
   const DIFFICULTY_PRESETS = {
-    easy:   { gapMul: 1.12, speedMul: 0.86, rampMul: 0.75 },
-    medium: { gapMul: 1.00, speedMul: 1.00, rampMul: 1.00 },
-    hard:   { gapMul: 0.88, speedMul: 1.18, rampMul: 1.35 },
+    easy:   { gapMul: 1.14, speedMul: 0.85, rampMul: 0.72 },
+    medium: { gapMul: 1.00, speedMul: 1.02, rampMul: 1.05 },
+    hard:   { gapMul: 0.85, speedMul: 1.24, rampMul: 1.48 },
   };
-  const diffCtl = Arcade.wireDifficulty('#diffRow', 'flappy_al_difficulty', 'medium');
-  function preset(){ return DIFFICULTY_PRESETS[diffCtl.get()] || DIFFICULTY_PRESETS.medium; }
+  const DIFF_KEY = 'flappy_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
 
   function difficultyT(){
     return Math.max(0, Math.min(1, (score - DIFFICULTY_START) / DIFFICULTY_SPAN)) * preset().rampMul;
@@ -230,16 +229,18 @@
   }
 
   function flap(){
-    if (state === 'start' || state === 'over'){
+    if (state === 'over'){
       startGame();
       return;
     }
+    if (state !== 'playing') return;
     bird.vy = flapForce();
     bird.flapKick = 1;
     sfxFlap();
   }
 
-  function startGame(){
+  function startGame(diff){
+    if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
     reset();
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
@@ -505,7 +506,8 @@
     if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'ArrowUp'){
       e.preventDefault();
       audioCtx();
-      flap();
+      if (state === 'start') startGame();
+      else flap();
     }
   }
   window.addEventListener('keydown', handleFlapKey);
@@ -518,11 +520,19 @@
   }
   canvas.addEventListener('pointerdown', onPointer, { passive:false });
   document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
-    if (e.target.closest('.diff-row, button, a')) return;
-    onPointer(e);
+    if (e.target.closest('.option-btn')) return;
+    e.preventDefault();
   }, { passive:false });
+  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      focusCanvas();
+      audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
   document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
-    if (e.target.closest('button, a')) return;
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
     onPointer(e);
   }, { passive:false });
   document.getElementById('retryBtn').addEventListener('click', (e)=>{
