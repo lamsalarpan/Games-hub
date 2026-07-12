@@ -29,6 +29,15 @@ html,body{
   -webkit-tap-highlight-color:transparent;
 }
 
+/* Interactive controls must always register taps, even inside a game
+   page that sets touch-action:none on html/body to block scroll/zoom
+   during play — some mobile browsers otherwise suppress click synthesis
+   for descendants of a none ancestor. */
+button, a, .diff-btn, .option-btn, .btn-primary, .btn-secondary,
+.offline-btn, .social-icon, .game-card, .cell, .nav-back, .back-link{
+  touch-action: manipulation;
+}
+
 /* ---- Nav (shared shell across hub + every game) ---- */
 .nav{
   position:fixed; top:0; left:0; right:0; height:var(--nav-h);
@@ -45,12 +54,14 @@ html,body{
   color:var(--text-secondary); text-transform:uppercase;
 }
 .nav-back{
+  display:inline-flex; align-items:center; gap:0.4rem;
   font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em;
   color:var(--text-secondary); text-decoration:none; text-transform:uppercase;
   border:1px solid var(--border-strong); border-radius:100px;
   padding:0.5rem 1rem; transition:color .25s ease, border-color .25s ease;
   background:none; cursor:pointer;
 }
+.nav-back svg{ width:12px; height:12px; flex-shrink:0; }
 .nav-back:hover{ color:var(--gold); border-color:var(--gold); }
 
 /* ---- HUD / score readout ---- */
@@ -249,4 +260,12 @@ html,body{
   .panel{ padding:2rem 1.5rem; }
   .panel h1{ font-size:2.2rem; }
   .score{ font-size:34px; }
+  .nav{ padding:0 0.9rem; padding-top:env(safe-area-inset-top); }
+  .nav-back{ padding:0.55rem; gap:0; }
+  .nav-back span{ display:none; }
+  .nav-title{ font-size:10px; }
+}
+
+@media (max-width:340px){
+  .nav-logo img, .nav-logo .mark{ width:24px; height:24px; }
 }

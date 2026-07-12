@@ -4,7 +4,7 @@
    working with no connection at all. Bump CACHE_NAME when files change
    so returning visitors pick up the new versions. */
 
-const CACHE_NAME = 'game-hub-v2';
+const CACHE_NAME = 'game-hub-v3';
 
 const PRECACHE_URLS = [
   './',
