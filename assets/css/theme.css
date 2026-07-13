@@ -505,7 +505,7 @@ html,body{
 .device-stage{
   min-height:100vh;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:1.1rem; padding:2.5rem 1.5rem;
+  gap:1.1rem; padding:2rem 1.5rem;
   background:
     radial-gradient(60% 50% at 50% 0%, rgba(var(--gold-rgb),0.08), transparent 70%),
     var(--bg);
@@ -516,31 +516,45 @@ html,body{
 }
 .device-phone{
   position:relative;
-  width:393px; height:852px; max-width:92vw; max-height:82vh;
+  width:460px; height:960px; max-width:94vw; max-height:92vh;
   background:#000;
-  border-radius:52px;
-  padding:14px;
+  border-radius:56px;
+  /* Extra room top/bottom is real bezel — the notch and home-indicator
+     live in it, so neither one sits on top of the actual page content. */
+  padding:40px 12px 26px;
   box-shadow:0 40px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 2px rgba(255,255,255,0.04);
 }
 .device-notch{
-  position:absolute; top:14px; left:50%; transform:translateX(-50%);
-  width:120px; height:26px; background:#000; border-radius:0 0 18px 18px;
+  position:absolute; top:12px; left:50%; transform:translateX(-50%);
+  width:130px; height:22px; background:#000; border-radius:0 0 18px 18px;
   z-index:2;
 }
 .device-screen{
-  width:100%; height:100%; border:none; border-radius:38px;
+  width:100%; height:100%; border:none; border-radius:34px;
   background:var(--bg); display:block;
 }
 .device-home{
-  position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
-  width:120px; height:4px; border-radius:100px;
+  position:absolute; bottom:9px; left:50%; transform:translateX(-50%);
+  width:130px; height:4px; border-radius:100px;
   background:rgba(255,255,255,0.35); z-index:2;
 }
 .device-fullscreen{
   font-size:11px; letter-spacing:0.06em; color:var(--text-muted);
   text-decoration:none; transition:color .2s ease;
+  border-bottom:1px solid transparent;
 }
-.device-fullscreen:hover{ color:var(--gold-light); }
+.device-fullscreen:hover{ color:var(--gold-light); border-bottom-color:var(--gold-light); }
+.device-reenable{
+  position:fixed; bottom:1.2rem; right:1.2rem; z-index:200;
+  font-size:11px; letter-spacing:0.06em; color:var(--text-secondary);
+  text-decoration:none; padding:0.55rem 0.9rem; border-radius:20px;
+  background:rgba(20,20,19,0.9); border:1px solid var(--border-strong);
+  backdrop-filter:blur(8px); transition:border-color .2s ease, color .2s ease;
+}
+.device-reenable:hover{ border-color:var(--gold); color:var(--gold-light); }
 @media (max-width:900px){
-  .device-phone{ width:360px; height:780px; }
+  .device-phone{ width:400px; height:840px; }
+}
+@media (max-height:760px){
+  .device-phone{ height:82vh; width:auto; aspect-ratio:460/960; }
 }

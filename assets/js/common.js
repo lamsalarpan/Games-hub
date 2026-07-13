@@ -16,7 +16,18 @@
   try {
     if (window.self !== window.top) return;           // already the framed copy
     if (window.__arcadeNoFrame) return;                // manual escape hatch
+    var regularView = /[?&]noframe=1(&|$)/.test(window.location.search);
     if (!window.matchMedia('(min-width: 861px)').matches) return;
+    if (regularView) {
+      window.addEventListener('DOMContentLoaded', function () {
+        var back = document.createElement('a');
+        back.className = 'device-reenable mono';
+        back.href = window.location.href.replace(/[?&]noframe=1/, '');
+        back.textContent = 'Preview in phone frame';
+        document.body.appendChild(back);
+      });
+      return;
+    }
     document.documentElement.style.visibility = 'hidden';
     window.addEventListener('DOMContentLoaded', function () {
       try { buildDeviceFrame(); }
@@ -24,8 +35,13 @@
     });
   } catch (e) {}
 
+  function addParam(url, key, value) {
+    return url + (url.indexOf('?') === -1 ? '?' : '&') + key + '=' + value;
+  }
+
   function buildDeviceFrame() {
     var url = window.location.href;
+    var regularUrl = addParam(url, 'noframe', '1');
     var stage = document.createElement('div');
     stage.className = 'device-stage';
     stage.innerHTML =
@@ -35,7 +51,7 @@
         '<iframe class="device-screen" src="' + url + '" title="Game Hub"></iframe>' +
         '<div class="device-home"></div>' +
       '</div>' +
-      '<a class="device-fullscreen mono" href="' + url + '" target="_blank" rel="noopener">Open without the frame &rarr;</a>';
+      '<a class="device-fullscreen mono" href="' + regularUrl + '">View regular (non-mobile) layout &rarr;</a>';
     document.body.innerHTML = '';
     document.body.appendChild(stage);
     document.documentElement.style.visibility = 'visible';

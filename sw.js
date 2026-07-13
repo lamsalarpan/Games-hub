@@ -9,7 +9,7 @@
 
    Bump CACHE_NAME whenever this list changes so old caches get swept. */
 
-const CACHE_NAME = 'game-hub-v7';
+const CACHE_NAME = 'game-hub-v8';
 const NETWORK_TIMEOUT_MS = 3500;
 
 const PRECACHE_URLS = [
