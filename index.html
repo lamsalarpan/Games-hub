@@ -121,6 +121,24 @@
   .cta-btn.ghost:hover{ color:var(--gold-light); border-color:var(--gold); transform:translateY(-2px); }
   .cta-btn svg{ width:14px; height:14px; flex-shrink:0; }
 
+  /* ---- Profile summary pill (hero) — avatar, name, level, XP sliver ---- */
+  .profile-summary{
+    display:inline-flex; align-items:center; gap:0.65rem;
+    background:rgba(255,255,255,0.02); border:1px solid var(--border-strong);
+    border-radius:100px; padding:0.5rem 1.1rem 0.5rem 0.5rem; margin-bottom:1.6rem;
+    cursor:pointer; transition:border-color .2s ease, transform .2s ease;
+    touch-action:manipulation;
+    opacity:0; animation:fadeUp 0.8s ease 0.4s both;
+  }
+  .profile-summary:hover{ border-color:var(--gold); transform:translateY(-1px); }
+  .profile-summary .avatar-circle{ width:34px; height:34px; }
+  .profile-summary .avatar-circle svg{ width:18px; height:18px; }
+  .profile-summary-text{ display:flex; flex-direction:column; align-items:flex-start; text-align:left; }
+  .profile-summary-text b{ font-family:var(--font-display); font-style:italic; font-weight:600; font-size:14px; color:var(--text-primary); line-height:1.2; }
+  .profile-summary-text span{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.05em; text-transform:uppercase; color:var(--gold); }
+  .profile-summary-xp{ width:56px; height:5px; border-radius:100px; background:var(--bg-2); border:1px solid var(--border); overflow:hidden; flex-shrink:0; }
+  .profile-summary-xp span{ display:block; height:100%; background:linear-gradient(90deg, var(--gold-dark), var(--gold-light)); }
+
   /* ---- Stat strip (games count / offline / updated) ---- */
   .stat-strip{
     display:flex; align-items:center; justify-content:center;
@@ -423,6 +441,15 @@
     <div class="title-rule"></div>
     <p class="sub">A collection of beautifully recreated classic games built with modern web technologies.</p>
 
+    <button type="button" class="profile-summary" id="profileSummaryBtn" aria-label="Open your profile">
+      <span class="avatar-circle" id="summaryAvatar"></span>
+      <span class="profile-summary-text">
+        <b id="summaryName">Player One</b>
+        <span id="summaryLevel">Level 1</span>
+      </span>
+      <span class="profile-summary-xp"><span id="summaryXpFill"></span></span>
+    </button>
+
     <div class="hero-ctas">
       <a href="#gameGrid" class="cta-btn primary" id="playNowBtn">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -647,6 +674,27 @@
   Arcade.mountPanels({ gameId: null });
   window.addEventListener('arcade:reset', render);
 
+  // ---- Hero profile summary pill ----
+  function renderProfileSummary(){
+    const p = Arcade.getProfile();
+    const info = Arcade.getLevelInfo();
+    document.getElementById('summaryAvatar').innerHTML = Arcade.avatarSvg(p.avatar);
+    document.getElementById('summaryName').textContent = p.name;
+    document.getElementById('summaryLevel').textContent = `Level ${info.level} — ${info.title}`;
+    document.getElementById('summaryXpFill').style.width = Math.round(info.progress * 100) + '%';
+  }
+  renderProfileSummary();
+  document.getElementById('profileSummaryBtn').addEventListener('click', () => {
+    document.getElementById('arcadeProfileBtn')?.click();
+  });
+  // Keep it live while the profile panel is open (name edits, avatar picks, XP gain).
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#arcadeProfileOverlay') || e.target.id === 'arcadeProfileClose') {
+      setTimeout(renderProfileSummary, 30);
+    }
+  });
+  window.addEventListener('arcade:reset', renderProfileSummary);
+
   // ---- Offline support ----
   const OFFLINE_FLAG = 'game_hub_offline_ready';
   const offlineBtn = document.getElementById('offlineBtn');
@@ -744,7 +792,7 @@
   function cmdkActions(){
     return [
       { id: 'action-settings', title: 'Open Settings', sub: 'Preferences', icon: '⚙', run: () => document.getElementById('arcadeSettingsBtn')?.click() },
-      { id: 'action-stats', title: 'Open Stats & Trophies', sub: 'Progress', icon: '🏆', run: () => document.getElementById('arcadeStatsBtn')?.click() },
+      { id: 'action-profile', title: 'Open Profile & Leaderboard', sub: 'Progress', icon: '🏆', run: () => document.getElementById('arcadeProfileBtn')?.click() },
       { id: 'action-offline', title: 'Save For Offline Play', sub: 'PWA', icon: '⇩', run: () => offlineBtn.click() },
       { id: 'action-portfolio', title: 'Back to Portfolio', sub: 'arpanlamsal.com.np', icon: '↩', run: () => window.location.href = 'https://arpanlamsal.com.np' },
     ];
