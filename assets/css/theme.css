@@ -420,17 +420,17 @@ html,body{
 .footer-inner{
   max-width:1200px; margin:0 auto;
   display:flex; justify-content:space-between; align-items:center;
-  color:var(--text-muted); font-family:var(--font-mono); font-size:11px;
+  color:#808080; font-family:var(--font-mono); font-size:11px;
   letter-spacing:0.04em; flex-wrap:wrap; gap:1rem;
 }
-.footer-inner a{ color:var(--text-muted); text-decoration:none; transition:color .2s ease; }
+.footer-inner a{ color:#808080; text-decoration:none; transition:color .2s ease; }
 .footer-inner a:hover{ color:var(--gold); }
 .footer-social-icons{ display:flex; gap:0.7rem; }
 .social-icon{
   display:flex; align-items:center; justify-content:center;
   width:36px; height:36px;
   border:1px solid var(--border-strong); border-radius:50%;
-  color:var(--text-muted); text-decoration:none;
+  color:#808080; text-decoration:none;
   transition:border-color .25s ease, color .25s ease, transform .25s ease;
   touch-action:manipulation;
 }
@@ -457,10 +457,8 @@ html,body{
 ══════════════════════════════ */
 .nav-avatar-btn{ padding:0; overflow:hidden; background:var(--bg-2); }
 .nav-avatar-btn img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
-.nav-avatar-fallback{
-  font-family:var(--font-mono); font-size:11px; font-weight:700;
-  color:var(--gold-light); letter-spacing:0.02em;
-}
+.nav-avatar-fallback{ width:16px; height:16px; color:var(--text-secondary); }
+.nav-avatar-btn:hover .nav-avatar-fallback{ color:var(--gold-light); }
 
 /* ══════════════════════════════
    PROFILE PANEL
@@ -477,6 +475,7 @@ html,body{
 .avatar-preview:hover{ border-color:var(--gold); }
 .avatar-preview img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .avatar-preview span{ font-family:var(--font-mono); font-size:22px; font-weight:700; color:var(--gold-light); }
+.avatar-preview .nav-avatar-fallback{ width:32px; height:32px; color:var(--text-secondary); }
 .avatar-edit-badge{
   position:absolute; bottom:-2px; right:-2px; width:26px; height:26px;
   display:flex; align-items:center; justify-content:center;

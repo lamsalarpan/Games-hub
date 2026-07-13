@@ -23,7 +23,7 @@
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
     background:radial-gradient(60% 50% at 50% 38%, rgba(111,208,168,0.09), transparent 70%);
   }
-  .nav, .stage-wrap, .hud{ position:relative; z-index:1; }
+  .stage-wrap, .hud{ position:relative; z-index:1; }
   html,body{
     height:100%;
     overflow:hidden;
@@ -92,7 +92,7 @@
         <div class="opt-desc">Fast from the start and only gets faster. Solid walls.</div>
       </button>
     </div>
-    <div class="stat-row"><span>Best Score</span><b id="startBest">0</b></div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
     <div class="hint">Guide the snake to the food.<br>Don't hit the walls or yourself.</div>
   </div>
 </div>
@@ -103,7 +103,7 @@
     <h1 id="overTitle">Game over.</h1>
     <div class="sub" id="overSub">It never gets easier — only more familiar</div>
     <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
-    <div class="stat-row"><span>Best</span><b id="finalBest">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
     <span class="new-best" id="newBestTag">New Best</span>
     <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
     <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
@@ -151,8 +151,6 @@
   resize();
 
   const STORAGE_KEY = 'snake_al_best';
-  let best = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
-  document.getElementById('startBest').textContent = best;
 
   // Three tiers layered the same way as every other game in the hub:
   // Hard isn't just "faster" — it also removes the forgiving wrap-around
@@ -165,6 +163,16 @@
   const DIFF_KEY = 'snake_al_difficulty';
   let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
   function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
+
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const tag = document.getElementById('startBestDiff'); if (tag) tag.textContent = diffLabel();
+  }
+  refreshBest();
 
   function currentTick(){
     const t = Math.min(1, score / 26) * preset().rampMul;
@@ -197,6 +205,7 @@
 
   function startGame(diff){
     if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
     reset();
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
@@ -209,9 +218,10 @@
     sfxCrash();
     document.getElementById('score').classList.remove('show');
     const isNewBest = score > best;
-    if (isNewBest){ best = score; localStorage.setItem(STORAGE_KEY, String(best)); }
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
     document.getElementById('finalScore').textContent = score;
     document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
 

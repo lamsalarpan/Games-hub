@@ -457,7 +457,10 @@ window.Arcade = (function () {
       localStorage.removeItem(RUNS_PREFIX + g.id);
       localStorage.removeItem(GAME_PLAYS_PREFIX + g.id);
       localStorage.removeItem(LAST_PLAYED_PREFIX + g.id);
-      if (GAME_BEST_KEYS[g.id]) localStorage.removeItem(GAME_BEST_KEYS[g.id]);
+      if (GAME_BEST_KEYS[g.id]) {
+        ['easy', 'medium', 'hard'].forEach(d => localStorage.removeItem(GAME_BEST_KEYS[g.id] + '_' + d));
+        localStorage.removeItem(GAME_BEST_KEYS[g.id]); // legacy flat key, pre-difficulty split
+      }
     });
     EXTRA_SCORE_KEYS.forEach(k => localStorage.removeItem(k));
     localStorage.removeItem(ACH_KEY);
@@ -510,6 +513,7 @@ window.Arcade = (function () {
     if (!parts.length) return 'P1';
     return (parts[0][0] + (parts[1] ? parts[1][0] : parts[0][1] || '')).toUpperCase();
   }
+  const AVATAR_FALLBACK_ICON = '<svg class="nav-avatar-fallback" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="11" rx="4"/><path d="M7 10v4M5 12h4"/><circle cx="16" cy="10.7" r="1"/><circle cx="18.2" cy="12.9" r="1"/></svg>';
 
   /* ---- Favorites (hub grid "favorite" heart, saved locally) ---- */
   const FAV_KEY = 'arcade_favorites_v1';
@@ -578,7 +582,7 @@ window.Arcade = (function () {
     const prof = getProfile();
     group.innerHTML = `
       <button type="button" class="nav-icon-btn nav-avatar-btn" id="arcadeProfileBtn" aria-label="Player profile">
-        ${prof.avatar ? `<img src="${prof.avatar}" alt="">` : `<span class="nav-avatar-fallback">${initials(prof.username)}</span>`}
+        ${prof.avatar ? `<img src="${prof.avatar}" alt="">` : AVATAR_FALLBACK_ICON}
       </button>
       <button type="button" class="nav-icon-btn" id="arcadeStatsBtn" aria-label="Stats & achievements">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a3 3 0 0 0 3 3M17 5h3a1 1 0 0 1 1 1v1a3 3 0 0 1-3 3"/></svg>
@@ -598,7 +602,7 @@ window.Arcade = (function () {
         <h1 style="font-size:1.9rem;">You, in the hub</h1>
         <div class="avatar-editor">
           <button type="button" class="avatar-preview" id="arcadeAvatarPreview" aria-label="Change avatar">
-            ${prof.avatar ? `<img src="${prof.avatar}" alt="">` : `<span>${initials(prof.username)}</span>`}
+            ${prof.avatar ? `<img src="${prof.avatar}" alt="">` : AVATAR_FALLBACK_ICON}
             <span class="avatar-edit-badge">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
             </span>
@@ -749,9 +753,9 @@ window.Arcade = (function () {
       const p = getProfile();
       const preview = document.getElementById('arcadeAvatarPreview');
       const btn = document.getElementById('arcadeProfileBtn');
-      const inner = p.avatar ? `<img src="${p.avatar}" alt="">` : `<span>${initials(p.username)}</span>`;
+      const inner = p.avatar ? `<img src="${p.avatar}" alt="">` : AVATAR_FALLBACK_ICON;
       preview.innerHTML = inner + `<span class="avatar-edit-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></span>`;
-      btn.innerHTML = p.avatar ? `<img src="${p.avatar}" alt="">` : `<span class="nav-avatar-fallback">${initials(p.username)}</span>`;
+      btn.innerHTML = p.avatar ? `<img src="${p.avatar}" alt="">` : AVATAR_FALLBACK_ICON;
     }
     document.getElementById('arcadeProfileSave').addEventListener('click', () => {
       const nameInput = document.getElementById('arcadeUsernameInput');

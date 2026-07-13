@@ -23,7 +23,7 @@
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
     background:radial-gradient(60% 50% at 50% 38%, rgba(232,181,90,0.09), transparent 70%);
   }
-  .nav, .stage-wrap, .hud{ position:relative; z-index:1; }
+  .stage-wrap, .hud{ position:relative; z-index:1; }
   html,body{
     height:100%;
     overflow:hidden;
@@ -91,7 +91,7 @@
         <div class="opt-desc">Tight gaps, quick pipes. Ramps up fast.</div>
       </button>
     </div>
-    <div class="stat-row"><span>Best Score</span><b id="startBest">0</b></div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
     <div class="hint">Guide the bird through the gaps.<br>Don't touch the pipes or the ground.</div>
   </div>
 </div>
@@ -102,7 +102,7 @@
     <h1>Game over.</h1>
     <div class="sub">It never gets easier — only more familiar</div>
     <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
-    <div class="stat-row"><span>Best</span><b id="finalBest">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
     <span class="new-best" id="newBestTag">New Best</span>
     <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
     <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
@@ -156,8 +156,17 @@
   if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
 
   const STORAGE_KEY = 'flappy_al_best';
-  let best = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
-  document.getElementById('startBest').textContent = best;
+  const DIFF_KEY = 'flappy_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  let best = 0;
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    document.getElementById('startBestDiff').textContent = diffLabel();
+  }
+  refreshBest();
 
   let state = 'start';
   let bird, pipes, score, frame, groundOffset;
@@ -211,8 +220,6 @@
     medium: { gapMul: 1.00, speedMul: 1.02, rampMul: 1.05 },
     hard:   { gapMul: 0.85, speedMul: 1.24, rampMul: 1.48 },
   };
-  const DIFF_KEY = 'flappy_al_difficulty';
-  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
   function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
 
   function difficultyT(){
@@ -246,6 +253,7 @@
 
   function startGame(diff){
     if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
     reset();
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
@@ -259,9 +267,10 @@
     sfxHit();
     document.getElementById('score').classList.remove('show');
     const isNewBest = score > best;
-    if (isNewBest){ best = score; localStorage.setItem(STORAGE_KEY, String(best)); }
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
     document.getElementById('finalScore').textContent = score;
     document.getElementById('finalBest').textContent = best;
+    document.getElementById('finalBestDiff').textContent = diffLabel();
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
     Arcade.logRun('flappy', score, difficulty);

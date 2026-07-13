@@ -127,18 +127,20 @@ em { font-style: italic; color: var(--gold-light); }
   border-radius: 20px;
 }
 
-/* Favorite heart — top-right of the card, backed by Arcade.toggleFavorite() */
+/* Favorite heart — grouped with the cart code on the left of the plate
+   row, not absolutely overlapping it, so it never collides with the
+   genre tag on narrow screens. Backed by Arcade.toggleFavorite(). */
+.cart-plate-left { display: flex; align-items: center; gap: 0.55rem; }
 .cart-fav {
-  position: absolute; top: 0.7rem; right: 0.7rem; z-index: 4;
-  width: 30px; height: 30px; border-radius: 50%;
+  flex: 0 0 auto;
+  width: 24px; height: 24px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(12,12,11,0.55); border: 1px solid var(--border-strong);
+  background: transparent; border: 1px solid var(--border-strong);
   color: var(--text-secondary); cursor: pointer;
-  backdrop-filter: blur(4px);
   transition: color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
   touch-action: manipulation;
 }
-.cart-fav svg { width: 14px; height: 14px; }
+.cart-fav svg { width: 12px; height: 12px; }
 .cart-fav:hover { border-color: var(--gold); color: var(--gold-light); transform: scale(1.06); }
 .cart-fav.active { color: var(--gold); border-color: var(--gold); }
 .cart-fav.active svg { fill: var(--gold); }
@@ -187,7 +189,7 @@ em { font-style: italic; color: var(--gold-light); }
 .p-flappy .pB.top { height: 14%; animation: pipeMove 3.2s linear infinite 1.6s; }
 @keyframes pipeMove { from { transform: translateX(0); } to { transform: translateX(-420%); } }
 .p-flappy .bird {
-  position: absolute; left: 26%; top: 46%; width: 11px; height: 11px; border-radius: 50%;
+  position: absolute; left: 26%; top: 46%; width: 6%; aspect-ratio: 1/1; border-radius: 50%;
   background: var(--gold-light); box-shadow: 0 0 8px rgba(var(--gold-rgb),0.3);
   animation: flap 1.1s ease-in-out infinite;
 }
@@ -195,14 +197,14 @@ em { font-style: italic; color: var(--gold-light); }
 
 /* — Dino Run — */
 .p-dino .ground { position: absolute; left: 0; right: 0; bottom: 30%; height: 1px; background: var(--border-strong); }
-.p-dino .dino { position: absolute; left: 20%; bottom: 30%; width: 16px; height: 18px; background: var(--gold-light); border-radius: 2px 2px 0 0; animation: dinoHop 1s ease-in-out infinite; }
+.p-dino .dino { position: absolute; left: 20%; bottom: 30%; width: 7%; aspect-ratio: 8/9; background: var(--gold-light); border-radius: 2px 2px 0 0; animation: dinoHop 1s ease-in-out infinite; }
 @keyframes dinoHop { 0%, 55%, 100% { transform: translateY(0); } 30% { transform: translateY(-13px); } }
-.p-dino .cactus { position: absolute; bottom: 30%; width: 6px; height: 16px; background: rgba(var(--gold-rgb),0.18); border: 1px solid rgba(var(--gold-rgb),0.3); animation: worldMove 2.4s linear infinite; }
+.p-dino .cactus { position: absolute; bottom: 30%; width: 2.6%; aspect-ratio: 3/8; background: rgba(var(--gold-rgb),0.18); border: 1px solid rgba(var(--gold-rgb),0.3); animation: worldMove 2.4s linear infinite; }
 .p-dino .c1 { left: 100%; animation-delay: 0s; }
 .p-dino .c2 { left: 100%; animation-delay: 1.2s; }
 @keyframes worldMove { from { transform: translateX(0); } to { transform: translateX(-780%); } }
 
-/* — Tic Tac Toe — */
+.p-ttt { aspect-ratio: 1 / 1 !important; }
 .p-ttt .board { position: absolute; inset: 22%; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); }
 .p-ttt .board div { border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center; }
 .p-ttt .mark { font-family: var(--font-mono); font-size: 15px; color: var(--gold-light); opacity: 0; animation: mark 6s ease-in-out infinite; }
@@ -221,9 +223,9 @@ em { font-style: italic; color: var(--gold-light); }
 .p-road { background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); }
 .p-road .lane { position: absolute; left: 50%; top: -100%; width: 2px; height: 300%; background: repeating-linear-gradient(to bottom, var(--border-strong) 0 10px, transparent 10px 22px); animation: laneMove 0.9s linear infinite; }
 @keyframes laneMove { from { transform: translate(-50%, 0); } to { transform: translate(-50%, 22px); } }
-.p-road .car { position: absolute; bottom: 16%; width: 14px; height: 20px; background: var(--gold-light); border-radius: 3px; animation: weave 2.4s ease-in-out infinite; }
+.p-road .car { position: absolute; bottom: 16%; width: 6%; aspect-ratio: 7/10; background: var(--gold-light); border-radius: 3px; animation: weave 2.4s ease-in-out infinite; }
 @keyframes weave { 0%, 100% { left: 38%; } 50% { left: 58%; } }
-.p-road .rival { position: absolute; top: -20%; width: 12px; height: 18px; background: rgba(var(--gold-rgb),0.18); border: 1px solid rgba(var(--gold-rgb),0.3); border-radius: 3px; animation: rivalMove 2.2s linear infinite; }
+.p-road .rival { position: absolute; top: -20%; width: 5%; aspect-ratio: 2/3; background: rgba(var(--gold-rgb),0.18); border: 1px solid rgba(var(--gold-rgb),0.3); border-radius: 3px; animation: rivalMove 2.2s linear infinite; }
 .p-road .r1 { left: 44%; animation-delay: 0s; }
 .p-road .r2 { left: 30%; animation-delay: 1.1s; }
 @keyframes rivalMove { from { transform: translateY(0); } to { transform: translateY(560%); } }

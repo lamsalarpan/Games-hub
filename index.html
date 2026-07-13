@@ -34,7 +34,6 @@
       <span class="nav-title">Game Hub</span>
     </a>
   </div>
-  <a href="https://arpanlamsal.com.np" class="nav-back">Portfolio</a>
 </nav>
 
 <main>
@@ -50,7 +49,7 @@
       <div class="divider"></div>
       <div class="stat"><b>0</b><span>Ads &amp; installs</span></div>
       <div class="divider"></div>
-      <div class="stat"><b>PWA</b><span>Works offline</span></div>
+      <div class="stat"><b>&check;</b><span>Works offline</span></div>
     </div>
 
     <button type="button" class="btn-secondary" id="offlineBtn" style="width:auto; display:inline-block; margin-top:2.2rem; padding:0.7rem 1.4rem;">Save for offline play</button>
@@ -127,9 +126,11 @@
       const code = String(i + 1).padStart(2, '0');
       return `
         <a class="cart" href="${g.href}" data-game-id="${g.id}">
-          <button type="button" class="cart-fav${fav ? ' active' : ''}" data-fav="${g.id}" aria-label="Toggle favorite">${heartIcon(fav)}</button>
           <div class="cart-plate">
-            <span class="cart-code">CART.&nbsp;${code}</span>
+            <div class="cart-plate-left">
+              <button type="button" class="cart-fav${fav ? ' active' : ''}" data-fav="${g.id}" aria-label="Toggle favorite">${heartIcon(fav)}</button>
+              <span class="cart-code">CART.&nbsp;${code}</span>
+            </div>
             <span class="cart-genre">${g.category}</span>
           </div>
           <div class="screen ${PREVIEW_CLASS[g.id] || ''}">${PREVIEWS[g.id] || ''}</div>

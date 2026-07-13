@@ -23,7 +23,7 @@
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
     background:radial-gradient(60% 50% at 50% 38%, rgba(232,104,58,0.09), transparent 70%);
   }
-  .nav, .stage-wrap, .hud{ position:relative; z-index:1; }
+  .stage-wrap, .hud{ position:relative; z-index:1; }
   html,body{
     height:100%;
     overflow:hidden;
@@ -143,7 +143,7 @@
         <div class="opt-desc">Smaller cars packed tighter across the road. Fast and unforgiving.</div>
       </button>
     </div>
-    <div class="stat-row"><span>Best Score</span><b id="startBest">0</b></div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
     <div class="hint">Dodge traffic. Stay on the road.<br>Hit a gold ramp for a speed boost. Watch your fuel.</div>
   </div>
 </div>
@@ -154,7 +154,7 @@
     <h1 id="overTitle">Crashed.</h1>
     <div class="sub" id="overSub">It never gets easier — only more familiar</div>
     <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
-    <div class="stat-row"><span>Best</span><b id="finalBest">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
     <span class="new-best" id="newBestTag">New Best</span>
     <button type="button" class="btn-primary" id="retryBtn">Drive Again</button>
     <button type="button" class="btn-secondary" id="homeBtn">Back to Home</button>
@@ -224,11 +224,17 @@
 
   // ---- State ----
   const STORAGE_KEY = 'roadfighter_al_best';
-  let best = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
-  document.getElementById('startBest').textContent = best;
-
   let state = 'start'; // start | playing | over
   let difficulty = 'medium'; // easy | medium | hard
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const tag = document.getElementById('startBestDiff'); if (tag) tag.textContent = diffLabel();
+  }
+  refreshBest();
   let player, traffic, pickups, ramps, score, frame, roadOffset, fuel, lowFuelWarned;
   let heldDir = 0;      // -1 left, 0 none, 1 right (keyboard)
   let touchDir = 0;     // -1 left, 0 none, 1 right (touch)
@@ -324,6 +330,7 @@
 
   function startGame(chosenDifficulty){
     if (chosenDifficulty) difficulty = chosenDifficulty;
+    refreshBest();
     reset();
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
@@ -349,13 +356,14 @@
     document.getElementById('fuelWrap').classList.remove('show');
     document.getElementById('steerHint').classList.remove('show');
     const isNewBest = score > best;
-    if (isNewBest){ best = score; localStorage.setItem(STORAGE_KEY, String(best)); }
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
     document.getElementById('overTitle').textContent = reason === 'fuel' ? 'Out of fuel.' : 'Crashed.';
     document.getElementById('overSub').textContent = reason === 'fuel'
       ? 'You made it a long way on that tank.'
       : 'It never gets easier — only more familiar';
     document.getElementById('finalScore').textContent = score;
     document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
     Arcade.logRun('roadfighter', score, difficulty);
