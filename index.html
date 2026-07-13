@@ -50,23 +50,66 @@
     flex:1;
     display:flex; flex-direction:column; align-items:center;
     padding: calc(var(--nav-h) + 28px) 1.5rem 3rem;
+    position:relative;
+  }
+  /* Extra ambient glow specifically behind the hero medallion — layered
+     on top of the page-wide vignette in body::before for more depth right
+     where the eye lands first. */
+  .stage-wrap::before{
+    content:''; position:absolute; top:calc(var(--nav-h) - 40px); left:50%;
+    width:640px; height:420px; transform:translateX(-50%);
+    background:radial-gradient(ellipse at 50% 0%, rgba(var(--gold-rgb),0.16), transparent 70%);
+    pointer-events:none; z-index:0;
   }
   .hero{
     width:100%; max-width:640px;
-    text-align:center;
+    text-align:center; position:relative; z-index:1;
   }
   @keyframes fadeUp{
     from{ opacity:0; transform:translateY(14px); }
     to{ opacity:1; transform:translateY(0); }
   }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @keyframes shimmer{
+    0%{ background-position:-120% 0; }
+    60%,100%{ background-position:220% 0; }
+  }
+  /* ---- Logo medallion — ring + glow behind the mark, instead of a bare img ---- */
+  .hero-mark-wrap{
+    position:relative; width:78px; height:78px; margin:0 auto 1.5rem;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; animation:fadeUp 0.8s ease 0.05s both;
+  }
+  .hero-mark-glow{
+    position:absolute; inset:-16px; border-radius:50%;
+    background:radial-gradient(circle, rgba(var(--gold-rgb),0.4), transparent 72%);
+    filter:blur(4px); animation:pulse 3.2s ease-in-out infinite;
+  }
+  .hero-mark-ring{
+    position:absolute; inset:0; border-radius:50%;
+    background:conic-gradient(from 0deg, transparent 0%, rgba(var(--gold-rgb),0.75) 18%, transparent 40%, transparent 60%, rgba(var(--gold-rgb),0.4) 78%, transparent 100%);
+    animation:spin 7s linear infinite;
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+    mask:radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  }
+  .hero-mark-plate{
+    position:relative; width:60px; height:60px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, var(--bg-3), var(--bg));
+    border:1px solid rgba(var(--gold-rgb),0.35);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:inset 0 0 14px rgba(0,0,0,0.5);
+  }
   .hero .mark{
-    width:56px; height:56px; margin-bottom:1.4rem;
-    animation:fadeUp 0.8s ease 0.05s both, float 4.5s ease-in-out 0.85s infinite;
-    filter:drop-shadow(0 6px 18px rgba(var(--gold-rgb),0.25));
+    width:34px; height:34px;
+    animation:float 4.5s ease-in-out 0.85s infinite;
+    filter:drop-shadow(0 4px 10px rgba(var(--gold-rgb),0.35));
     will-change:transform;
   }
   .hero .kicker{
-    margin-bottom:1.1rem;
+    display:inline-flex; align-items:center; gap:0.5rem;
+    margin-bottom:1.3rem; padding:0.4rem 0.95rem 0.4rem 0.7rem;
+    border:1px solid rgba(var(--gold-rgb),0.3); border-radius:100px;
+    background:rgba(var(--gold-rgb),0.06);
     opacity:0; animation:fadeUp 0.8s ease 0s both;
   }
   @keyframes float{
@@ -76,20 +119,28 @@
   .nav-logo .mark{ width:30px; height:30px; display:block; }
   .hero h1{
     font-family:var(--font-display); font-weight:300; font-style:italic;
-    font-size:clamp(2.6rem, 6.8vw, 4.1rem); color:var(--gold-light);
-    line-height:1.06; margin-bottom:0.7rem;
-    opacity:0; animation:fadeUp 0.8s ease 0.16s both;
+    font-size:clamp(2.8rem, 7.2vw, 4.6rem); line-height:1.06; margin-bottom:0.8rem;
+    letter-spacing:-0.01em;
+    background:linear-gradient(100deg, var(--gold-dark) 10%, var(--gold-light) 30%, #fff5da 45%, var(--gold-light) 60%, var(--gold-dark) 85%);
+    background-size:280% 100%;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:fadeUp 0.8s ease 0.16s both, shimmer 6.5s ease-in-out 1.2s infinite;
   }
   .hero .title-rule{
-    width:64px; height:2px; margin:0 auto 1.1rem;
-    background:linear-gradient(90deg, transparent, var(--gold), transparent);
-    border-radius:1px;
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    margin:0 auto 1.2rem;
     opacity:0; animation:fadeUp 0.8s ease 0.24s both;
   }
+  .hero .title-rule::before, .hero .title-rule::after{
+    content:''; width:46px; height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold));
+  }
+  .hero .title-rule::after{ background:linear-gradient(90deg, var(--gold), transparent); }
+  .hero .title-rule-dot{ width:5px; height:5px; border-radius:50%; background:var(--gold); box-shadow:0 0 8px rgba(var(--gold-rgb),0.8); flex-shrink:0; }
   .hero .sub{
-    font-family:var(--font-mono); font-size:12px; letter-spacing:0.03em;
-    color:var(--text-secondary); line-height:1.6;
-    max-width:460px; margin:0 auto 1.9rem;
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:0.03em;
+    color:var(--text-secondary); line-height:1.7;
+    max-width:440px; margin:0 auto 2rem;
     opacity:0; animation:fadeUp 0.8s ease 0.3s both;
   }
 
@@ -100,41 +151,51 @@
     opacity:0; animation:fadeUp 0.8s ease 0.36s both;
   }
   .cta-btn{
+    position:relative; overflow:hidden;
     display:inline-flex; align-items:center; gap:0.5rem;
     font-family:var(--font-mono); font-size:11.5px; font-weight:700;
     letter-spacing:0.08em; text-transform:uppercase;
-    border-radius:100px; padding:0.85rem 1.5rem;
+    border-radius:100px; padding:0.9rem 1.6rem;
     cursor:pointer; text-decoration:none;
     transition:transform .2s ease, box-shadow .25s ease, background .2s ease, color .2s ease, border-color .2s ease;
     touch-action:manipulation; border:1px solid transparent;
   }
+  .cta-btn::before{
+    content:''; position:absolute; inset:0; border-radius:inherit;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.35) 48%, transparent 66%);
+    background-size:220% 100%; background-position:150% 0;
+    opacity:0; transition:opacity .2s ease;
+    pointer-events:none;
+  }
+  .cta-btn:hover::before{ opacity:1; animation:shimmer 1.1s ease forwards; }
   .cta-btn.primary{
     background:var(--gold); color:#0c0c0b;
     box-shadow:0 8px 28px rgba(var(--gold-rgb),0.28);
   }
-  .cta-btn.primary:hover{ background:var(--gold-light); transform:translateY(-2px); box-shadow:0 12px 34px rgba(var(--gold-rgb),0.4); }
+  .cta-btn.primary:hover{ background:var(--gold-light); transform:translateY(-2px); box-shadow:0 14px 38px rgba(var(--gold-rgb),0.45); }
   .cta-btn.primary:active{ transform:translateY(0); }
   .cta-btn.ghost{
     background:rgba(255,255,255,0.02); color:var(--text-secondary);
     border-color:var(--border-strong);
   }
   .cta-btn.ghost:hover{ color:var(--gold-light); border-color:var(--gold); transform:translateY(-2px); }
-  .cta-btn svg{ width:14px; height:14px; flex-shrink:0; }
+  .cta-btn svg{ width:14px; height:14px; flex-shrink:0; z-index:1; }
+  .cta-btn span{ position:relative; z-index:1; }
 
   /* ---- Profile summary pill (hero) — avatar, name, level, XP sliver ---- */
   .profile-summary{
     display:inline-flex; align-items:center; gap:0.65rem;
     background:rgba(255,255,255,0.02); border:1px solid var(--border-strong);
-    border-radius:100px; padding:0.5rem 1.1rem 0.5rem 0.5rem; margin-bottom:1.6rem;
-    cursor:pointer; transition:border-color .2s ease, transform .2s ease;
+    border-radius:100px; padding:0.5rem 1.2rem 0.5rem 0.5rem; margin-bottom:1.7rem;
+    cursor:pointer; transition:border-color .2s ease, transform .2s ease, box-shadow .25s ease;
     touch-action:manipulation;
     opacity:0; animation:fadeUp 0.8s ease 0.4s both;
   }
-  .profile-summary:hover{ border-color:var(--gold); transform:translateY(-1px); }
-  .profile-summary .avatar-circle{ width:34px; height:34px; }
-  .profile-summary .avatar-circle svg{ width:18px; height:18px; }
+  .profile-summary:hover{ border-color:var(--gold); transform:translateY(-1px); box-shadow:0 10px 26px -10px rgba(var(--gold-rgb),0.35); }
+  .profile-summary .avatar-circle{ width:36px; height:36px; box-shadow:0 0 0 3px rgba(var(--gold-rgb),0.1); }
+  .profile-summary .avatar-circle svg{ width:19px; height:19px; }
   .profile-summary-text{ display:flex; flex-direction:column; align-items:flex-start; text-align:left; }
-  .profile-summary-text b{ font-family:var(--font-display); font-style:italic; font-weight:600; font-size:14px; color:var(--text-primary); line-height:1.2; }
+  .profile-summary-text b{ font-family:var(--font-display); font-style:italic; font-weight:600; font-size:14.5px; color:var(--text-primary); line-height:1.2; }
   .profile-summary-text span{ font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.05em; text-transform:uppercase; color:var(--gold); }
   .profile-summary-xp{ width:56px; height:5px; border-radius:100px; background:var(--bg-2); border:1px solid var(--border); overflow:hidden; flex-shrink:0; }
   .profile-summary-xp span{ display:block; height:100%; background:linear-gradient(90deg, var(--gold-dark), var(--gold-light)); }
@@ -142,16 +203,19 @@
   /* ---- Stat strip (games count / offline / updated) ---- */
   .stat-strip{
     display:flex; align-items:center; justify-content:center;
-    gap:0.9rem; flex-wrap:wrap; margin-bottom:2.6rem;
+    gap:0.6rem; flex-wrap:wrap; margin-bottom:2.6rem;
     opacity:0; animation:fadeUp 0.8s ease 0.42s both;
   }
   .stat-chip{
-    display:inline-flex; align-items:baseline; gap:0.4rem;
-    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.06em;
+    display:inline-flex; align-items:center; gap:0.45rem;
+    font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.05em;
     color:var(--text-muted); text-transform:uppercase;
+    background:rgba(255,255,255,0.02); border:1px solid var(--border);
+    border-radius:100px; padding:0.45rem 0.9rem 0.45rem 0.7rem;
   }
-  .stat-chip b{ color:var(--gold-light); font-size:13px; letter-spacing:0.02em; }
-  .stat-sep{ width:3px; height:3px; border-radius:50%; background:var(--border-strong); }
+  .stat-chip svg{ width:12px; height:12px; color:var(--gold-light); flex-shrink:0; }
+  .stat-chip b{ color:var(--gold-light); font-size:12.5px; letter-spacing:0.02em; }
+  .stat-sep{ display:none; }
 
   /* ================= Toolbar (search / filter / sort) ================= */
   .hub-body{ width:100%; max-width:1180px; }
@@ -413,9 +477,12 @@
   }
 
   @media (prefers-reduced-motion: reduce){
-    .hero .mark, .hero h1, .hero .title-rule, .hero .sub, .hero-ctas, .stat-strip, .game-card{
+    .hero .mark, .hero h1, .hero .title-rule, .hero .sub, .hero-ctas, .stat-strip, .game-card,
+    .hero-mark-wrap, .hero-mark-glow, .hero-mark-ring, .hero .kicker, .profile-summary{
       animation:none !important; opacity:1 !important; transform:none !important;
     }
+    .hero h1{ background-position:0 0 !important; }
+    .cta-btn::before{ display:none; }
     .game-card{ transition:none; }
   }
 </style>
@@ -436,9 +503,15 @@
 <div class="stage-wrap">
   <div class="hero">
     <span class="kicker"><span class="kicker-dot"></span>Arpan Lamsal — Arcade</span>
-    <img class="mark" src="logo.png" alt="" aria-hidden="true" id="heroMark">
+    <div class="hero-mark-wrap">
+      <span class="hero-mark-glow" aria-hidden="true"></span>
+      <span class="hero-mark-ring" aria-hidden="true"></span>
+      <span class="hero-mark-plate">
+        <img class="mark" src="logo.png" alt="" aria-hidden="true" id="heroMark">
+      </span>
+    </div>
     <h1>Game Hub</h1>
-    <div class="title-rule"></div>
+    <div class="title-rule"><span class="title-rule-dot"></span></div>
     <p class="sub">A collection of beautifully recreated classic games built with modern web technologies.</p>
 
     <button type="button" class="profile-summary" id="profileSummaryBtn" aria-label="Open your profile">
@@ -453,20 +526,18 @@
     <div class="hero-ctas">
       <a href="#gameGrid" class="cta-btn primary" id="playNowBtn">
         <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-        Play Now
+        <span>Play Now</span>
       </a>
       <a href="https://github.com/lamsalarpan" class="cta-btn ghost" target="_blank" rel="noopener">
         <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
-        View Source
+        <span>View Source</span>
       </a>
     </div>
 
     <div class="stat-strip">
-      <span class="stat-chip"><b id="statCount">5</b> Games</span>
-      <span class="stat-sep"></span>
-      <span class="stat-chip">Works <b>Offline</b></span>
-      <span class="stat-sep"></span>
-      <span class="stat-chip">No <b>Install</b> Needed</span>
+      <span class="stat-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="5"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg><b id="statCount">5</b> Games</span>
+      <span class="stat-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0"/><path d="M12 20h.01"/></svg>Works <b>Offline</b></span>
+      <span class="stat-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/></svg>No <b>Install</b> Needed</span>
     </div>
   </div>
 
@@ -553,7 +624,7 @@
     const best = Arcade.getRuns(g.id)[0]?.score || 0;
     const fav = Arcade.isFavorite(g.id);
     return `
-      <a href="${g.href}" class="game-card" id="card-${g.id}" style="--card-accent:${g.accent}; --card-accent-rgb:${hexToRgb(g.accent)}; animation-delay:${Math.min(i * 0.05, 0.4)}s">
+      <a href="${g.href}" class="game-card" id="card-${g.id}" style="--card-accent:var(--gold); --card-accent-rgb:var(--gold-rgb); animation-delay:${Math.min(i * 0.05, 0.4)}s">
         <div class="game-card-thumb">
           <span class="diff-badge"><span class="diff-dot ${diffClass(g.difficulty)}"></span>${g.difficulty || 'Medium'}</span>
           <button type="button" class="fav-btn${fav ? ' active' : ''}" data-fav="${g.id}" aria-label="Toggle favorite for ${g.title}" aria-pressed="${fav}">${HEART_ICON}</button>
