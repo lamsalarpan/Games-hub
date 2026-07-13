@@ -379,10 +379,10 @@
       e.preventDefault();
       Arcade.audioCtx();
     }
-    if (k === 'ArrowUp' || k === 'w' || k === 'W' || Arcade.matchControl('snake', 'up', e)) setDir(0,-1);
-    else if (k === 'ArrowDown' || k === 's' || k === 'S' || Arcade.matchControl('snake', 'down', e)) setDir(0,1);
-    else if (k === 'ArrowLeft' || k === 'a' || k === 'A' || Arcade.matchControl('snake', 'left', e)) setDir(-1,0);
-    else if (k === 'ArrowRight' || k === 'd' || k === 'D' || Arcade.matchControl('snake', 'right', e)) setDir(1,0);
+    if (k === 'ArrowUp' || k === 'w' || k === 'W') setDir(0,-1);
+    else if (k === 'ArrowDown' || k === 's' || k === 'S') setDir(0,1);
+    else if (k === 'ArrowLeft' || k === 'a' || k === 'A') setDir(-1,0);
+    else if (k === 'ArrowRight' || k === 'd' || k === 'D') setDir(1,0);
     else if (k === ' '){ if (state !== 'playing') startGame(); }
   }
   window.addEventListener('keydown', handleKey);

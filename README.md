@@ -5,17 +5,22 @@ A small, growing collection of mini games, styled to match [arpanlamsal.com.np](
 ## Structure
 
 ```
-index.html               ← the hub (numbered game line-up + Play Offline)
+index.html               ← the hub (dynamic game grid, read from Arcade.GAMES,
+                             favorites, "Save for offline play")
 manifest.json, sw.js      ← PWA / offline support (network-first, always fresh)
 assets/
   css/theme.css           ← shared design tokens + components (nav, overlays,
-                             buttons, HUD, option cards, footer...)
+                             buttons, HUD, option cards, footer, profile panel,
+                             desktop phone-mockup frame...)
   js/common.js             ← shared helpers (synthesized SFX, best-score
-                             storage, toasts, SW registration)
+                             storage, toasts, achievements, player profile,
+                             favorites, settings, SW registration, and the
+                             desktop phone-mockup frame builder)
 flappy/index.html
 dino/index.html
 tic-tac-toe/index.html
 Road-fighter/index.html
+snake/index.html
 faviconset/, logo.png
 ```
 
@@ -24,6 +29,33 @@ instead of redefining the same nav/overlay/button/HUD styles and sound-synthesis
 code in each file. Each game's `<style>` block only keeps what's actually
 unique to that game (the canvas frame, a fuel bar, the tic-tac-toe board grid,
 etc).
+
+## Player profile
+
+`Arcade.getProfile()` / `Arcade.setProfile(patch)` read/write a small
+`{ username, avatar, createdAt }` record in `localStorage` — nothing ever
+leaves the device. `Arcade.mountPanels()` (already called by every page)
+adds a round avatar button to the nav; tapping it opens a panel to set a
+username and upload a photo, which is downscaled to a 160×160 JPEG on a
+canvas before being stored so it stays small. The hub's hero personalizes
+itself ("Welcome back, ‹name›") once a profile is set.
+
+## Favorites
+
+`Arcade.toggleFavorite(gameId)` / `Arcade.isFavorite(gameId)` back the heart
+button on each cartridge in the hub grid — purely local, no UI elsewhere
+depends on it yet, but it's there for a future "Favorites only" filter.
+
+## Desktop phone-mockup frame
+
+On any viewport ≥861px wide (`assets/js/common.js`, runs on every page
+automatically), the page hides itself, then rebuilds as a phone-shaped
+bezel containing an `<iframe>` pointed at that same URL. The framed copy
+gets a genuinely small real viewport (measures itself against the phone's
+dimensions, not the desktop window), so canvas games size themselves
+correctly with no per-game changes. Actual phones/tablets are under the
+width threshold and always render natively, full-bleed. A "Open without
+the frame" link next to the mockup opens the real page in a new tab.
 
 ## Design consistency (strict, across every page)
 

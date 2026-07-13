@@ -882,18 +882,18 @@
   focusCanvas();
 
   function handleKeyDown(e){
-    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'ArrowUp' || e.key === 'ArrowUp' || Arcade.matchControl('dino', 'jump', e)){
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'ArrowUp' || e.key === 'ArrowUp'){
       e.preventDefault();
       audioCtx();
       if (state === 'start') startGame();
       else jump();
-    } else if (e.code === 'ArrowDown' || e.key === 'ArrowDown' || Arcade.matchControl('dino', 'duck', e)){
+    } else if (e.code === 'ArrowDown' || e.key === 'ArrowDown'){
       e.preventDefault();
       setDuck(true);
     }
   }
   function handleKeyUp(e){
-    if (e.code === 'ArrowDown' || e.key === 'ArrowDown' || Arcade.matchControl('dino', 'duck', e)){
+    if (e.code === 'ArrowDown' || e.key === 'ArrowDown'){
       e.preventDefault();
       setDuck(false);
     }

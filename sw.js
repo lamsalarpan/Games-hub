@@ -17,6 +17,7 @@ const PRECACHE_URLS = [
   './index.html',
   './manifest.json',
   './logo.png',
+  './style.css',
   './assets/css/theme.css',
   './assets/js/common.js',
   './faviconset/favicon.ico',

@@ -511,7 +511,7 @@
   focusCanvas();
 
   function handleFlapKey(e){
-    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'ArrowUp' || Arcade.matchControl('flappy', 'flap', e)){
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'ArrowUp'){
       e.preventDefault();
       audioCtx();
       if (state === 'start') startGame();

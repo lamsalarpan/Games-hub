@@ -764,12 +764,12 @@
       if (state !== 'playing') startGame();
       return;
     }
-    if (e.code === 'ArrowLeft' || e.code === 'KeyA' || Arcade.matchControl('roadfighter', 'left', e)){ e.preventDefault(); heldDir = -1; }
-    if (e.code === 'ArrowRight' || e.code === 'KeyD' || Arcade.matchControl('roadfighter', 'right', e)){ e.preventDefault(); heldDir = 1; }
+    if (e.code === 'ArrowLeft' || e.code === 'KeyA'){ e.preventDefault(); heldDir = -1; }
+    if (e.code === 'ArrowRight' || e.code === 'KeyD'){ e.preventDefault(); heldDir = 1; }
   }
   function handleKeyUp(e){
-    if ((e.code === 'ArrowLeft' || e.code === 'KeyA' || Arcade.matchControl('roadfighter', 'left', e)) && heldDir === -1) heldDir = 0;
-    if ((e.code === 'ArrowRight' || e.code === 'KeyD' || Arcade.matchControl('roadfighter', 'right', e)) && heldDir === 1) heldDir = 0;
+    if ((e.code === 'ArrowLeft' || e.code === 'KeyA') && heldDir === -1) heldDir = 0;
+    if ((e.code === 'ArrowRight' || e.code === 'KeyD') && heldDir === 1) heldDir = 0;
   }
   window.addEventListener('keydown', handleKeyDown);
   document.addEventListener('keydown', handleKeyDown);
