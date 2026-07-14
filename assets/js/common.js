@@ -166,6 +166,18 @@ window.Arcade = (function () {
       <rect x="30" y="50" width="40" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.92"/>
       <rect x="36" y="32" width="28" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.85"/>
       <rect x="41" y="14" width="18" height="16" rx="3" fill="#f0ede6" stroke="rgba(12,12,11,0.3)" stroke-width="1.5" opacity="0.9"/>`
+    },
+    {
+      id: 'brickbreaker', title: 'Brick Breaker', href: 'brick-breaker/index.html',
+      accent: '#e0a63c', category: 'Skill', difficulty: 'Medium', playTime: '2–4 min',
+      desc: 'Time each drop. Perfect landings keep your width and build combo.',
+      icon: `<defs><linearGradient id="g-stack" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="22" y="68" width="56" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+      <rect x="30" y="50" width="40" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.92"/>
+      <rect x="36" y="32" width="28" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.85"/>
+      <rect x="41" y="14" width="18" height="16" rx="3" fill="#f0ede6" stroke="rgba(12,12,11,0.3)" stroke-width="1.5" opacity="0.9"/>`
     }
   ];
 
