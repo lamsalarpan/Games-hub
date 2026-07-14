@@ -170,7 +170,7 @@ em { font-style: italic; color: var(--gold-light); }
 .cart-fav.active svg { fill: var(--gold); }
 
 /* Bezel / mini screen */
-.screen { position: relative; aspect-ratio: 16 / 10; overflow: hidden; background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); }
+.screen { position: relative; aspect-ratio: 16 / 10; max-height: 210px; overflow: hidden; background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); }
 .screen::after {
   content: ""; position: absolute; inset: 0;
   background: repeating-linear-gradient(to bottom, rgba(0,0,0,0.16) 0px, rgba(0,0,0,0.16) 1px, transparent 1px, transparent 3px);
@@ -205,12 +205,14 @@ em { font-style: italic; color: var(--gold-light); }
    MINI GAMEPLAY PREVIEWS
 ══════════════════════════════ */
 /* — Flappy Bird — */
-.p-flappy .pipe { position: absolute; bottom: 0; width: 16%; background: linear-gradient(180deg, rgba(var(--gold-rgb),0.14), transparent); border: 1px solid rgba(var(--gold-rgb),0.25); border-bottom: none; }
-.p-flappy .pipe.top { top: 0; bottom: auto; border-top: none; border-bottom: 1px solid rgba(var(--gold-rgb),0.25); }
-.p-flappy .pA { left: 30%; height: 34%; animation: pipeMove 3.2s linear infinite; }
-.p-flappy .pA.top { height: 22%; animation: pipeMove 3.2s linear infinite; }
-.p-flappy .pB { left: 78%; height: 46%; animation: pipeMove 3.2s linear infinite 1.6s; }
-.p-flappy .pB.top { height: 14%; animation: pipeMove 3.2s linear infinite 1.6s; }
+.p-flappy { background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 78%, rgba(var(--gold-rgb),0.1) 100%); }
+.p-flappy .ground { position: absolute; left: 0; right: 0; bottom: 0; height: 10%; background: rgba(var(--gold-rgb),0.1); border-top: 1px solid rgba(var(--gold-rgb),0.3); }
+.p-flappy .pipe { position: absolute; bottom: 10%; width: 15%; background: linear-gradient(180deg, rgba(var(--gold-rgb),0.28), rgba(var(--gold-rgb),0.12)); border: 1px solid rgba(var(--gold-rgb),0.45); border-bottom: none; border-radius: 2px 2px 0 0; }
+.p-flappy .pipe.top { top: 0; bottom: auto; border-top: none; border-bottom: 1px solid rgba(var(--gold-rgb),0.45); border-radius: 0 0 2px 2px; }
+.p-flappy .pA { left: 30%; height: 30%; animation: pipeMove 3.2s linear infinite; }
+.p-flappy .pA.top { height: 26%; animation: pipeMove 3.2s linear infinite; }
+.p-flappy .pB { left: 78%; height: 42%; animation: pipeMove 3.2s linear infinite 1.6s; }
+.p-flappy .pB.top { height: 18%; animation: pipeMove 3.2s linear infinite 1.6s; }
 @keyframes pipeMove { from { transform: translateX(0); } to { transform: translateX(-420%); } }
 .p-flappy .bird {
   position: absolute; left: 26%; top: 46%; width: 6%; aspect-ratio: 1/1; border-radius: 50%;
@@ -220,15 +222,18 @@ em { font-style: italic; color: var(--gold-light); }
 @keyframes flap { 0%, 100% { transform: translateY(-6px) rotate(-8deg); } 50% { transform: translateY(10px) rotate(14deg); } }
 
 /* — Dino Run — */
-.p-dino .ground { position: absolute; left: 0; right: 0; bottom: 30%; height: 1px; background: var(--border-strong); }
-.p-dino .dino { position: absolute; left: 20%; bottom: 30%; width: 7%; aspect-ratio: 8/9; background: var(--gold-light); border-radius: 2px 2px 0 0; animation: dinoHop 1s ease-in-out infinite; }
+.p-dino { background: linear-gradient(180deg, var(--bg-3) 0%, var(--bg-2) 78%, rgba(var(--gold-rgb),0.1) 100%); }
+.p-dino .ground { position: absolute; left: 0; right: 0; bottom: 30%; height: 2px; background: rgba(var(--gold-rgb),0.35); }
+.p-dino .dino { position: absolute; left: 20%; bottom: 30%; width: 7%; aspect-ratio: 8/9; background: var(--gold-light); border-radius: 2px 6px 2px 2px; animation: dinoHop 1s ease-in-out infinite; }
+.p-dino .dino::after { content: ""; position: absolute; top: 14%; right: -22%; width: 44%; height: 34%; background: var(--gold-light); border-radius: 1px 4px 1px 1px; }
+.p-dino .dino::before { content: ""; position: absolute; top: 24%; right: -8%; width: 16%; height: 16%; background: var(--bg-3); border-radius: 50%; z-index: 1; }
 @keyframes dinoHop { 0%, 55%, 100% { transform: translateY(0); } 30% { transform: translateY(-13px); } }
-.p-dino .cactus { position: absolute; bottom: 30%; width: 2.6%; aspect-ratio: 3/8; background: rgba(var(--gold-rgb),0.18); border: 1px solid rgba(var(--gold-rgb),0.3); animation: worldMove 2.4s linear infinite; }
+.p-dino .cactus { position: absolute; bottom: 30%; width: 2.6%; aspect-ratio: 3/8; background: rgba(var(--gold-rgb),0.22); border: 1px solid rgba(var(--gold-rgb),0.4); border-radius: 1px; animation: worldMove 2.4s linear infinite; }
 .p-dino .c1 { left: 100%; animation-delay: 0s; }
 .p-dino .c2 { left: 100%; animation-delay: 1.2s; }
 @keyframes worldMove { from { transform: translateX(0); } to { transform: translateX(-780%); } }
 
-.p-ttt { aspect-ratio: 1 / 1 !important; }
+.p-ttt { aspect-ratio: 1 / 1 !important; max-height: 210px; }
 .p-ttt .board { position: absolute; inset: 22%; display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr); }
 .p-ttt .board div { border: 1px solid var(--border-strong); display: flex; align-items: center; justify-content: center; }
 .p-ttt .mark { font-family: var(--font-mono); font-size: 15px; color: var(--gold-light); opacity: 0; animation: mark 6s ease-in-out infinite; }
@@ -260,8 +265,9 @@ em { font-style: italic; color: var(--gold-light); }
 .p-snake .seg.s3 { animation-delay: -0.56s; background: var(--gold); opacity: 0.65; }
 .p-snake .seg.s4 { animation-delay: -0.84s; background: var(--gold); opacity: 0.45; }
 .p-snake .food { position: absolute; width: 7%; height: 7%; border-radius: 50%; background: var(--text-primary); left: 84%; top: 42%; box-shadow: 0 0 6px rgba(240,237,230,0.5); }
+
 /* — Stack Tower — */
-.p-stacktower { background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); }
+.p-stacktower { background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); max-height: 210px; }
 .p-stacktower .tower { position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%); display: flex; flex-direction: column-reverse; align-items: center; }
 .p-stacktower .tblock { height: 12%; border-radius: 2px; margin-bottom: 2px; background: var(--gold); border: 1px solid rgba(var(--gold-rgb),0.35); }
 .p-stacktower .b1 { width: 48%; background: var(--gold-light); }
@@ -281,7 +287,6 @@ em { font-style: italic; color: var(--gold-light); }
   85%  { opacity: 0; }
   100% { left: 18%; bottom: 62%; opacity: 1; }
 }
-
 @keyframes slither {
   0%   { left: 14%; top: 76%; }
   22%  { left: 14%; top: 20%; }

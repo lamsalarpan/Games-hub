@@ -490,7 +490,7 @@ window.Arcade = (function () {
      that represents "progress" — but intentionally leaves favorites and
      preferences (theme, sound, difficulty) untouched. */
   const GAME_BEST_KEYS = {
-    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best'
+    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best'
   };
   const EXTRA_SCORE_KEYS = ['ttt_al_pvc_scores', 'ttt_al_pvp_scores'];
   function resetAllProgress() {
@@ -892,106 +892,122 @@ window.Arcade = (function () {
   function isPaused() { return paused; }
 
   function mountPauseMenu() {
-    const homeBtn = document.querySelector('.nav-home-btn');
-    if (!homeBtn) return;
-    const hubHref = homeBtn.getAttribute('href') || '../index.html';
+    try {
+      const homeBtn = document.querySelector('.nav-home-btn');
+      if (!homeBtn) return;
+      const hubHref = homeBtn.getAttribute('href') || '../index.html';
 
-    const wrap = document.createElement('div');
-    wrap.className = 'pause-wrap';
-    wrap.innerHTML = `
-      <button type="button" class="nav-home-btn" id="arcadePauseBtn" aria-haspopup="true" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-        <span>Pause</span>
-      </button>
-      <div class="pause-dropdown" id="arcadePauseDropdown">
-        <button type="button" class="pause-dd-item" id="arcadeResumeBtn">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Resume
+      const wrap = document.createElement('div');
+      wrap.className = 'pause-wrap';
+      wrap.innerHTML = `
+        <button type="button" class="nav-home-btn" id="arcadePauseBtn" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          <span>Pause</span>
         </button>
-        <button type="button" class="pause-dd-item" id="arcadeMuteToggleBtn"></button>
-        <button type="button" class="pause-dd-item danger" id="arcadeExitBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Exit to Hub
-        </button>
-      </div>`;
-    homeBtn.replaceWith(wrap);
+        <div class="pause-dropdown" id="arcadePauseDropdown">
+          <button type="button" class="pause-dd-item" id="arcadeResumeBtn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Resume
+          </button>
+          <button type="button" class="pause-dd-item" id="arcadeMuteToggleBtn"></button>
+          <button type="button" class="pause-dd-item danger" id="arcadeExitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Exit to Hub
+          </button>
+        </div>`;
+      homeBtn.replaceWith(wrap);
 
-    const confirmOverlay = document.createElement('div');
-    confirmOverlay.className = 'overlay';
-    confirmOverlay.id = 'arcadeExitConfirmOverlay';
-    confirmOverlay.innerHTML = `
-      <div class="panel" style="text-align:center;">
-        <div class="sub">Exit Game</div>
-        <h1 style="font-size:1.8rem;">Are you sure?</h1>
-        <p class="hint">Leaving now ends your current run.</p>
-        <button type="button" class="btn-primary" id="arcadeExitConfirmYes">Exit to Hub</button>
-        <button type="button" class="back-link" id="arcadeExitConfirmNo" style="margin-top:0.8rem;">Keep Playing</button>
-      </div>`;
-    document.body.appendChild(confirmOverlay);
+      const confirmOverlay = document.createElement('div');
+      confirmOverlay.className = 'overlay';
+      confirmOverlay.id = 'arcadeExitConfirmOverlay';
+      confirmOverlay.innerHTML = `
+        <div class="panel" style="text-align:center;">
+          <div class="sub">Exit Game</div>
+          <h1 style="font-size:1.8rem;">Are you sure?</h1>
+          <p class="hint">Leaving now ends your current run.</p>
+          <button type="button" class="btn-primary" id="arcadeExitConfirmYes">Exit to Hub</button>
+          <button type="button" class="back-link" id="arcadeExitConfirmNo" style="margin-top:0.8rem;">Keep Playing</button>
+        </div>`;
+      document.body.appendChild(confirmOverlay);
 
-    const pauseBtn = document.getElementById('arcadePauseBtn');
-    const dropdown = document.getElementById('arcadePauseDropdown');
-    const muteBtn = document.getElementById('arcadeMuteToggleBtn');
+      const pauseBtn = document.getElementById('arcadePauseBtn');
+      const dropdown = document.getElementById('arcadePauseDropdown');
+      const muteBtn = document.getElementById('arcadeMuteToggleBtn');
 
-    function refreshMuteLabel() {
-      const muted = getSettings().muted;
-      muteBtn.innerHTML = muted
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/></svg> Play Sound'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Stop Sound';
-    }
-    refreshMuteLabel();
-
-    function openMenu() {
-      paused = true;
-      dropdown.classList.add('show');
-      pauseBtn.setAttribute('aria-expanded', 'true');
-      try { window.dispatchEvent(new CustomEvent('arcade:pause')); } catch (e) {}
-    }
-    function closeMenu(resume) {
-      dropdown.classList.remove('show');
-      pauseBtn.setAttribute('aria-expanded', 'false');
-      if (resume) {
-        paused = false;
-        try { window.dispatchEvent(new CustomEvent('arcade:resume')); } catch (e) {}
+      function refreshMuteLabel() {
+        const muted = getSettings().muted;
+        muteBtn.innerHTML = muted
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/></svg> Play Sound'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Stop Sound';
       }
-    }
-
-    pauseBtn.addEventListener('click', () => {
-      if (dropdown.classList.contains('show')) closeMenu(true);
-      else openMenu();
-    });
-    document.getElementById('arcadeResumeBtn').addEventListener('click', () => closeMenu(true));
-    document.addEventListener('pointerdown', (e) => {
-      if (dropdown.classList.contains('show') && !wrap.contains(e.target)) closeMenu(true);
-    });
-    muteBtn.addEventListener('click', () => {
-      setSetting('muted', !getSettings().muted);
       refreshMuteLabel();
-    });
-    document.getElementById('arcadeExitBtn').addEventListener('click', () => {
-      dropdown.classList.remove('show');
-      confirmOverlay.classList.add('show');
-    });
-    document.getElementById('arcadeExitConfirmNo').addEventListener('click', () => {
-      confirmOverlay.classList.remove('show');
-      closeMenu(true);
-    });
-    document.getElementById('arcadeExitConfirmYes').addEventListener('click', () => {
-      window.location.href = hubHref;
-    });
 
-    // The very first screen a player sees (difficulty picker, or the
-    // mode menu in tic-tac-toe) gets its own direct Exit link too — no
-    // confirmation needed since no run is in progress yet.
-    const introOverlay = document.querySelector('.overlay.show');
-    if (introOverlay) {
-      const introPanel = introOverlay.querySelector('.panel');
-      if (introPanel && !introPanel.querySelector('.intro-exit-btn')) {
-        const introExit = document.createElement('button');
-        introExit.type = 'button';
-        introExit.className = 'back-link intro-exit-btn';
-        introExit.textContent = 'Exit to Hub';
-        introExit.addEventListener('click', () => { window.location.href = hubHref; });
-        introPanel.appendChild(introExit);
+      function openMenu() {
+        paused = true;
+        dropdown.classList.add('show');
+        pauseBtn.setAttribute('aria-expanded', 'true');
+        try { window.dispatchEvent(new CustomEvent('arcade:pause')); } catch (e) {}
       }
+      function closeMenu(resume) {
+        dropdown.classList.remove('show');
+        pauseBtn.setAttribute('aria-expanded', 'false');
+        if (resume) {
+          paused = false;
+          try { window.dispatchEvent(new CustomEvent('arcade:resume')); } catch (e) {}
+        }
+      }
+
+      pauseBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dropdown.classList.contains('show')) closeMenu(true);
+        else openMenu();
+      });
+      document.getElementById('arcadeResumeBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeMenu(true);
+      });
+      // Click-outside-to-close, using the click event (not pointerdown) so it
+      // fires strictly after the pause button's own click has already been
+      // processed — pointerdown fires earlier in the sequence and can race
+      // with the button's own toggle logic on some browsers/devices.
+      document.addEventListener('click', (e) => {
+        if (dropdown.classList.contains('show') && !wrap.contains(e.target)) closeMenu(true);
+      });
+      muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setSetting('muted', !getSettings().muted);
+        refreshMuteLabel();
+      });
+      document.getElementById('arcadeExitBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.remove('show');
+        confirmOverlay.classList.add('show');
+      });
+      confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) { confirmOverlay.classList.remove('show'); closeMenu(true); } });
+      document.getElementById('arcadeExitConfirmNo').addEventListener('click', () => {
+        confirmOverlay.classList.remove('show');
+        closeMenu(true);
+      });
+      document.getElementById('arcadeExitConfirmYes').addEventListener('click', () => {
+        window.location.href = hubHref;
+      });
+
+      // The very first screen a player sees (difficulty picker, or the
+      // mode menu in tic-tac-toe) gets its own direct Exit link too — no
+      // confirmation needed since no run is in progress yet.
+      const introOverlay = document.querySelector('.overlay.show');
+      if (introOverlay) {
+        const introPanel = introOverlay.querySelector('.panel');
+        if (introPanel && !introPanel.querySelector('.intro-exit-btn')) {
+          const introExit = document.createElement('button');
+          introExit.type = 'button';
+          introExit.className = 'back-link intro-exit-btn';
+          introExit.textContent = 'Exit to Hub';
+          introExit.addEventListener('click', () => { window.location.href = hubHref; });
+          introPanel.appendChild(introExit);
+        }
+      }
+    } catch (err) {
+      console.error('Arcade.mountPauseMenu failed:', err);
     }
   }
 
