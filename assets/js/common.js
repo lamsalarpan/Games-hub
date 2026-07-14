@@ -169,15 +169,17 @@ window.Arcade = (function () {
     },
     {
       id: 'brickbreaker', title: 'Brick Breaker', href: 'brick-breaker/index.html',
-      accent: '#e0a63c', category: 'Skill', difficulty: 'Medium', playTime: '2–4 min',
-      desc: 'Time each drop. Perfect landings keep your width and build combo.',
-      icon: `<defs><linearGradient id="g-stack" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
-      </linearGradient></defs>
-      <rect x="22" y="68" width="56" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <rect x="30" y="50" width="40" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.92"/>
-      <rect x="36" y="32" width="28" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.85"/>
-      <rect x="41" y="14" width="18" height="16" rx="3" fill="#f0ede6" stroke="rgba(12,12,11,0.3)" stroke-width="1.5" opacity="0.9"/>`
+      accent: '#e8b55a', category: 'Arcade', difficulty: 'Medium', playTime: '2–5 min',
+      desc: 'Steer the paddle, keep the ball alive, and clear the wall level by level.',
+      icon: `<rect x="18" y="18" width="14" height="9" rx="1.5" fill="#e8683a"/>
+      <rect x="34" y="18" width="14" height="9" rx="1.5" fill="#e0a63c"/>
+      <rect x="50" y="18" width="14" height="9" rx="1.5" fill="#e0a63c"/>
+      <rect x="66" y="18" width="14" height="9" rx="1.5" fill="#e8683a"/>
+      <rect x="26" y="29" width="14" height="9" rx="1.5" fill="#e8b55a"/>
+      <rect x="42" y="29" width="14" height="9" rx="1.5" fill="#c8973a"/>
+      <rect x="58" y="29" width="14" height="9" rx="1.5" fill="#e8b55a"/>
+      <circle cx="50" cy="58" r="5" fill="#f0ede6"/>
+      <rect x="34" y="80" width="32" height="7" rx="3.5" fill="#e8b55a"/>`
     }
   ];
 
@@ -326,13 +328,16 @@ window.Arcade = (function () {
     { id: 'stacktower_20', title: 'Getting Tall', desc: 'Stack 20 blocks in Stack Tower' },
     { id: 'stacktower_50', title: 'Skyscraper', desc: 'Stack 50 blocks in Stack Tower' },
     { id: 'stacktower_combo10', title: 'Perfect Ten', desc: 'Reach a 10x perfect combo in Stack Tower' },
-    { id: 'hard_try_stacktower', title: 'Hard Mode', desc: 'Play Stack Tower on Hard' }
+    { id: 'hard_try_stacktower', title: 'Hard Mode', desc: 'Play Stack Tower on Hard' },
+    { id: 'brickbreaker_30', title: 'Wall Breaker', desc: 'Break 30 bricks in a single run of Brick Breaker' },
+    { id: 'brickbreaker_lvl3', title: 'Demolition Crew', desc: 'Clear 3 levels in one run of Brick Breaker' },
+    { id: 'hard_try_brickbreaker', title: 'Hard Mode', desc: 'Play Brick Breaker on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {
@@ -502,7 +507,7 @@ window.Arcade = (function () {
      that represents "progress" — but intentionally leaves favorites and
      preferences (theme, sound, difficulty) untouched. */
   const GAME_BEST_KEYS = {
-    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best'
+    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best'
   };
   const EXTRA_SCORE_KEYS = ['ttt_al_pvc_scores', 'ttt_al_pvp_scores'];
   function resetAllProgress() {

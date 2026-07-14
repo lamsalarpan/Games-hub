@@ -9,7 +9,7 @@
 
    Bump CACHE_NAME whenever this list changes so old caches get swept. */
 
-const CACHE_NAME = 'game-hub-v11';
+const CACHE_NAME = 'game-hub-v12';
 const NETWORK_TIMEOUT_MS = 3500;
 
 const PRECACHE_URLS = [
@@ -31,7 +31,8 @@ const PRECACHE_URLS = [
   './Road-fighter/index.html',
   './tic-tac-toe/index.html',
   './snake/index.html',
-  './stack-tower/index.html'
+  './stack-tower/index.html',
+  './brick-breaker/index.html'
 ];
 
 self.addEventListener('install', (event) => {

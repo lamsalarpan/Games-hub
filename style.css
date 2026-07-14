@@ -287,6 +287,37 @@ em { font-style: italic; color: var(--gold-light); }
   85%  { opacity: 0; }
   100% { left: 18%; bottom: 62%; opacity: 1; }
 }
+
+/* — Brick Breaker — */
+.p-brickbreaker { background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); max-height: 210px; }
+.p-brickbreaker .bb-row { position: absolute; left: 8%; right: 8%; display: flex; justify-content: space-between; }
+.p-brickbreaker .r1 { top: 14%; }
+.p-brickbreaker .r2 { top: 27%; }
+.p-brickbreaker .bb { width: 21%; height: 10px; border-radius: 2px; background: var(--gold); border: 1px solid rgba(var(--gold-rgb),0.4); }
+.p-brickbreaker .r1 .bb:nth-child(2), .p-brickbreaker .r1 .bb:nth-child(3) { background: var(--gold-light); }
+.p-brickbreaker .bb-paddle {
+  position: absolute; bottom: 14%; width: 26%; height: 6px; border-radius: 4px;
+  background: var(--gold-light); left: 37%;
+  animation: bbPaddle 2.6s ease-in-out infinite;
+}
+.p-brickbreaker .bb-ball {
+  position: absolute; width: 5%; aspect-ratio: 1/1; border-radius: 50%;
+  background: var(--text-primary); box-shadow: 0 0 6px rgba(240,237,230,0.5);
+  animation: bbBall 2.6s ease-in-out infinite;
+}
+@keyframes bbPaddle {
+  0%, 100% { left: 20%; }
+  50%      { left: 55%; }
+}
+@keyframes bbBall {
+  0%   { left: 30%; top: 78%; }
+  18%  { left: 42%; top: 40%; }
+  36%  { left: 58%; top: 26%; }
+  50%  { left: 68%; top: 78%; }
+  68%  { left: 50%; top: 40%; }
+  84%  { left: 33%; top: 26%; }
+  100% { left: 30%; top: 78%; }
+}
 @keyframes slither {
   0%   { left: 14%; top: 76%; }
   22%  { left: 14%; top: 20%; }

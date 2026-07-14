@@ -22,6 +22,7 @@ tic-tac-toe/index.html
 Road-fighter/index.html
 snake/index.html
 stack-tower/index.html
+brick-breaker/index.html
 faviconset/, logo.png
 ```
 
