@@ -54,7 +54,7 @@
   <div class="nav-left">
     <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
       <img src="../logo.png" alt="Arpan Lamsal logo">
-      <span class="nav-title" style="color:#7fd88f">Dino Run</span>
+      <span class="nav-title">Dino Run</span>
     </a>
     <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -751,6 +751,7 @@
   }
 
   function update(){
+    if (Arcade.isPaused()) return;
     frame++;
 
     if (state === 'playing'){
@@ -877,7 +878,7 @@
 
   function loop(){
     update();
-    if (state === 'playing') maybeScoreTick();
+    if (state === 'playing' && !Arcade.isPaused()) maybeScoreTick();
     draw();
     requestAnimationFrame(loop);
   }
@@ -969,6 +970,7 @@
   reset();
   loop();
   Arcade.mountPanels({ gameId: 'dino' });
+  Arcade.mountPauseMenu();
 })();
 
 </script>

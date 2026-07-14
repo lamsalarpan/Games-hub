@@ -80,6 +80,30 @@ em { font-style: italic; color: var(--gold-light); }
 .hero-stats .divider { width: 1px; background: var(--border-strong); align-self: stretch; }
 
 /* ══════════════════════════════
+   FILTER BAR
+══════════════════════════════ */
+.arcade-filters {
+  position: relative; z-index: 1;
+  max-width: 1180px; margin: 0 auto;
+  padding: 0 3rem;
+  display: flex; gap: 0.6rem;
+}
+.filter-pill {
+  font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-secondary);
+  background: transparent; border: 1px solid var(--border-strong);
+  border-radius: 20px; padding: 0.5rem 1rem; cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+}
+.filter-pill:hover { border-color: rgba(var(--gold-rgb),0.4); color: var(--text-primary); }
+.filter-pill.active { background: var(--gold); border-color: var(--gold); color: #0c0c0b; }
+.filter-empty {
+  grid-column: 1 / -1; text-align: center;
+  padding: 3rem 1rem; color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════
    CARTRIDGE GRID
 ══════════════════════════════ */
 .arcade {
@@ -253,6 +277,7 @@ em { font-style: italic; color: var(--gold-light); }
 @media (max-width: 720px) {
   .hero { padding: calc(var(--nav-h) + 3.5rem) 1.2rem 2.5rem; }
   .hero-stats { gap: 1.6rem; }
+  .arcade-filters { padding: 0 1.2rem; }
   .arcade { padding: 1rem 1.2rem 4rem; gap: 1.2rem; }
 }
 

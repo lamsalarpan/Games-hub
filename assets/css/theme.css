@@ -76,7 +76,7 @@ html,body{
 .nav-logo:hover img{ filter:drop-shadow(0 2px 16px rgba(var(--gold-light-rgb),0.55)); transform:translateY(-1px); }
 .nav-title{
   font-family:var(--font-display); font-style:italic; font-weight:600;
-  font-size:16px; letter-spacing:0.01em; color:var(--text-primary);
+  font-size:16px; letter-spacing:0.01em; color:var(--gold-light);
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
 }
 
@@ -96,6 +96,7 @@ html,body{
   display:flex; align-items:center; gap:0.4rem; flex-shrink:0;
   height:32px; padding:0 0.85rem 0 0.7rem;
   border:1px solid var(--border-strong); border-radius:100px;
+  background:none; cursor:pointer;
   color:var(--text-secondary); text-decoration:none;
   font-family:var(--font-mono); font-size:10.5px; letter-spacing:0.08em; text-transform:uppercase;
   transition:border-color .22s ease, color .22s ease, background .22s ease, transform .18s ease;
@@ -114,6 +115,32 @@ html,body{
 
 /* ---- Nav icon buttons (Settings / Stats — injected by Arcade.mountPanels) ---- */
 .nav-icon-group{ display:flex; align-items:center; gap:0.5rem; flex-shrink:0; }
+
+/* ══════════════════════════════
+   PAUSE MENU (in-game, replaces the plain "← Hub" link)
+══════════════════════════════ */
+.pause-wrap{ position:relative; }
+.pause-dropdown{
+  position:absolute; top:calc(100% + 10px); left:0;
+  min-width:190px;
+  background:var(--bg-card); border:1px solid var(--border-strong);
+  border-radius:10px; padding:0.4rem;
+  box-shadow:0 20px 40px rgba(0,0,0,0.45);
+  opacity:0; visibility:hidden; transform:translateY(-6px);
+  transition:opacity .18s ease, transform .18s ease, visibility .18s;
+  z-index:60;
+}
+.pause-dropdown.show{ opacity:1; visibility:visible; transform:translateY(0); }
+.pause-dd-item{
+  display:flex; align-items:center; gap:0.6rem; width:100%;
+  background:none; border:none; text-align:left;
+  font-family:var(--font-mono); font-size:12px; letter-spacing:0.02em;
+  color:var(--text-primary); padding:0.6rem 0.7rem; border-radius:6px;
+  cursor:pointer; transition:background .15s ease, color .15s ease;
+}
+.pause-dd-item svg{ width:15px; height:15px; flex-shrink:0; }
+.pause-dd-item:hover{ background:var(--bg-2); color:var(--gold-light); }
+.pause-dd-item.danger:hover{ background:rgba(200,90,58,0.12); color:#e2795a; }
 .nav-icon-btn{
   display:flex; align-items:center; justify-content:center;
   width:32px; height:32px; flex-shrink:0;
@@ -416,7 +443,7 @@ html,body{
 .toast.show{ opacity:1; transform:translate(-50%, 0); }
 
 /* ---- Footer (mirrors arpanlamsal.com.np) ---- */
-.site-footer{ border-top:1px solid var(--border); padding:2rem 1.5rem; margin-top:auto; }
+.site-footer{ position:relative; z-index:2; background:var(--bg); border-top:1px solid var(--border); padding:2rem 1.5rem; margin-top:auto; }
 .footer-inner{
   max-width:1200px; margin:0 auto;
   display:flex; justify-content:space-between; align-items:center;
@@ -516,12 +543,12 @@ html,body{
 }
 .device-phone{
   position:relative;
-  width:460px; height:960px; max-width:94vw; max-height:92vh;
+  width:520px; height:1040px; max-width:96vw; max-height:94vh;
   background:#000;
-  border-radius:56px;
+  border-radius:58px;
   /* Extra room top/bottom is real bezel — the notch and home-indicator
      live in it, so neither one sits on top of the actual page content. */
-  padding:40px 12px 26px;
+  padding:42px 13px 28px;
   box-shadow:0 40px 90px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 2px rgba(255,255,255,0.04);
 }
 .device-notch{
@@ -553,8 +580,8 @@ html,body{
 }
 .device-reenable:hover{ border-color:var(--gold); color:var(--gold-light); }
 @media (max-width:900px){
-  .device-phone{ width:400px; height:840px; }
+  .device-phone{ width:440px; height:900px; }
 }
 @media (max-height:760px){
-  .device-phone{ height:82vh; width:auto; aspect-ratio:460/960; }
+  .device-phone{ height:82vh; width:auto; aspect-ratio:520/1040; }
 }

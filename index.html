@@ -55,6 +55,11 @@
     <button type="button" class="btn-secondary" id="offlineBtn" style="width:auto; display:inline-block; margin-top:2.2rem; padding:0.7rem 1.4rem;">Save for offline play</button>
   </section>
 
+  <div class="arcade-filters" role="tablist" aria-label="Filter games">
+    <button type="button" class="filter-pill active" data-filter="all" role="tab" aria-selected="true">All Games</button>
+    <button type="button" class="filter-pill" data-filter="favorites" role="tab" aria-selected="false">Favorites</button>
+  </div>
+
   <section class="arcade" id="arcade" aria-label="Game selection"></section>
 </main>
 
@@ -116,6 +121,38 @@
     return `<svg viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C.3 8.4 2 5 5.4 5c2 0 3.4 1.1 4.6 2.7C11.2 6.1 12.6 5 14.6 5 18 5 19.7 8.4 18 11.7 15.5 16.4 12 21 12 21Z"/></svg>`;
   }
 
+  let currentFilter = 'all';
+
+  function applyFilter() {
+    const cards = document.querySelectorAll('#arcade .cart');
+    let visibleCount = 0;
+    cards.forEach(c => {
+      const show = currentFilter === 'all' || (currentFilter === 'favorites' && Arcade.isFavorite(c.dataset.gameId));
+      c.style.display = show ? '' : 'none';
+      if (show) visibleCount++;
+    });
+    let empty = document.querySelector('.filter-empty');
+    if (visibleCount === 0) {
+      if (!empty) {
+        empty = document.createElement('div');
+        empty.className = 'filter-empty';
+        empty.textContent = 'No favorites yet — tap the heart on a cartridge to pin it here.';
+        document.getElementById('arcade').appendChild(empty);
+      }
+    } else if (empty) {
+      empty.remove();
+    }
+  }
+
+  document.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-pill').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected', 'false'); });
+      btn.classList.add('active'); btn.setAttribute('aria-selected', 'true');
+      currentFilter = btn.dataset.filter;
+      applyFilter();
+    });
+  });
+
   function renderArcade() {
     const wrap = document.getElementById('arcade');
     const on = DOTS_BY_DIFFICULTY;
@@ -153,6 +190,7 @@
         const nowFav = Arcade.toggleFavorite(id);
         btn.classList.toggle('active', nowFav);
         btn.innerHTML = heartIcon(nowFav);
+        applyFilter();
       });
     });
 
@@ -167,6 +205,7 @@
       });
     }, { threshold: 0.15, rootMargin: '0px 0px -6% 0px' });
     cards.forEach(c => io.observe(c));
+    applyFilter();
   }
   renderArcade();
 

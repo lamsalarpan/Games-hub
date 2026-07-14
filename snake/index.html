@@ -55,7 +55,7 @@
   <div class="nav-left">
     <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
       <img src="../logo.png" alt="Arpan Lamsal logo">
-      <span class="nav-title" style="color:#6fd0a8">Snake</span>
+      <span class="nav-title">Snake</span>
     </a>
     <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -352,6 +352,7 @@
   }
 
   function loop(ts){
+    if (Arcade.isPaused()) { requestAnimationFrame(loop); return; }
     frame++;
     if (state === 'playing'){
       tickTimer += 16.7;
@@ -450,6 +451,7 @@
   reset();
   requestAnimationFrame(loop);
   Arcade.mountPanels({ gameId: 'snake' });
+  Arcade.mountPauseMenu();
 })();
 </script>
 </body>
