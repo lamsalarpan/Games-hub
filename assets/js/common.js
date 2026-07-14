@@ -154,6 +154,18 @@ window.Arcade = (function () {
       <circle cx="58" cy="20" r="1.8" fill="#0c0c0b"/>
       <circle cx="58.6" cy="19.4" r="0.7" fill="rgba(255,255,255,0.85)"/>
       <circle cx="30" cy="78" r="6" fill="#e8683a"/>`
+    },
+    {
+      id: 'stacktower', title: 'Stack Tower', href: 'stack-tower/index.html',
+      accent: '#e0a63c', category: 'Skill', difficulty: 'Medium', playTime: '2–4 min',
+      desc: 'Time each drop. Perfect landings keep your width and build combo.',
+      icon: `<defs><linearGradient id="g-stack" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="22" y="68" width="56" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+      <rect x="30" y="50" width="40" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.92"/>
+      <rect x="36" y="32" width="28" height="16" rx="3" fill="url(#g-stack)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.85"/>
+      <rect x="41" y="14" width="18" height="16" rx="3" fill="#f0ede6" stroke="rgba(12,12,11,0.3)" stroke-width="1.5" opacity="0.9"/>`
     }
   ];
 
@@ -298,13 +310,17 @@ window.Arcade = (function () {
     { id: 'hard_try_dino', title: 'Hard Mode', desc: 'Play Dino Run on Hard' },
     { id: 'hard_try_snake', title: 'Hard Mode', desc: 'Play Snake on Hard' },
     { id: 'hard_try_roadfighter', title: 'Hard Mode', desc: 'Play Road Fighter on Hard' },
-    { id: 'hard_try_tictactoe', title: 'Hard Mode', desc: 'Play Tic Tac Toe on Hard' }
+    { id: 'hard_try_tictactoe', title: 'Hard Mode', desc: 'Play Tic Tac Toe on Hard' },
+    { id: 'stacktower_20', title: 'Getting Tall', desc: 'Stack 20 blocks in Stack Tower' },
+    { id: 'stacktower_50', title: 'Skyscraper', desc: 'Stack 50 blocks in Stack Tower' },
+    { id: 'stacktower_combo10', title: 'Perfect Ten', desc: 'Reach a 10x perfect combo in Stack Tower' },
+    { id: 'hard_try_stacktower', title: 'Hard Mode', desc: 'Play Stack Tower on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {

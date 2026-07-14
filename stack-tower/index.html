@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Stack Tower — Arpan Lamsal</title>
+<meta name="description" content="A premium Stack Tower game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{ height:100%; }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 30%, rgba(200,151,58,0.08), transparent 70%);
+  }
+  .stage-wrap, .hud{ position:relative; z-index:1; }
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+
+  /* ---- Game stage (stack-tower-specific canvas sizing/frame) ---- */
+  .stage-wrap{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+  }
+  #game{
+    display:block;
+    background:linear-gradient(180deg, #0c0c0b 0%, #14140f 60%, #181410 100%);
+    border:1px solid var(--border-strong);
+    border-radius:4px;
+    box-shadow:0 40px 100px rgba(0,0,0,0.55);
+    touch-action:none;
+  }
+
+  /* ---- Combo readout: sits just under the main score, same HUD column ---- */
+  .combo{
+    font-family:var(--font-mono); font-weight:700; font-size:14px;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--gold-light);
+    text-shadow:0 2px 14px rgba(0,0,0,0.6);
+    opacity:0; transform:translateY(-4px);
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .combo.show{ opacity:1; transform:translateY(0); }
+  .combo.pulse{ animation:comboPulse .4s ease; }
+  @keyframes comboPulse{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.18); }
+    100%{ transform:scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Stack Tower</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="score mono" id="score">0</div>
+  <div class="combo mono" id="combo"></div>
+</div>
+
+<div class="stage-wrap">
+  <canvas id="game"></canvas>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <div class="panel">
+    <img class="mark" src="../logo.png" alt="">
+    <h1>Set your pace.</h1>
+    <div class="sub">Space · Click · Tap to drop</div>
+    <div class="option-list" id="diffRow">
+      <button type="button" class="option-btn" data-diff="easy">
+        <div class="opt-title">Relaxed</div>
+        <div class="opt-desc">Slower blocks, wider margin for error.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="medium">
+        <div class="opt-title">Classic</div>
+        <div class="opt-desc">The standard climb. Balanced speed and timing.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="hard">
+        <div class="opt-title">Rapid</div>
+        <div class="opt-desc">Fast from block one. Precision only.</div>
+      </button>
+    </div>
+    <div class="stat-row"><span>Best Height <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Line it up with the block below.<br>Perfect landings keep your width and build your combo.</div>
+  </div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="overOverlay">
+  <div class="panel">
+    <h1>Tower fell.</h1>
+    <div class="sub">Every stack starts somewhere</div>
+    <div class="stat-row"><span>Height</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <div class="stat-row"><span>Best Combo</span><b id="finalCombo">0</b></div>
+    <span class="new-best" id="newBestTag">New Record</span>
+    <button type="button" class="btn-primary" id="retryBtn">Stack Again</button>
+    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
+    <div class="hint">Space · Click · Tap to retry</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+  const GOLD = '#c8973a';
+  const GOLD_LIGHT = '#e8b55a';
+  const GOLD_DARK = '#9c7328';
+  const CREAM = '#f0ede6';
+
+  // Coarse-pointer (touch) devices get a lower pixel-ratio cap — the single
+  // biggest lever for smooth mobile performance, negligible visually.
+  const IS_COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const DPR_CAP = IS_COARSE ? 1.5 : 2;
+
+  let W = 0, H = 0, DPR = 1;
+  let LAYER_H = 40, VISIBLE_LAYERS = 6, screenBaseY = 0;
+  let bgGradient = null;
+  let shakeTime = 0, shakeMag = 0, flashTime = 0;
+
+  let stack = [];
+  let mover = null;
+  let particles = [];
+  let confetti = [];
+  let camLayers = 0;
+  let stars = [];
+
+  function viewportH(){
+    return window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    const maxW = Math.min(window.innerWidth * 0.92, 460);
+    const maxH = Math.max(340, viewportH() - 64 - 20);
+    const oldW = W;
+    W = Math.round(maxW); H = Math.round(maxH);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    LAYER_H = Math.max(30, Math.min(52, H * 0.086));
+    screenBaseY = H * 0.88;
+    VISIBLE_LAYERS = Math.max(4, Math.floor((screenBaseY - H * 0.16) / LAYER_H));
+
+    if (oldW && stack.length){
+      const s = W / oldW;
+      stack.forEach(b => { b.cx *= s; b.w *= s; });
+      if (mover){ mover.cx *= s; mover.w *= s; }
+    }
+
+    bgGradient = ctx.createLinearGradient(0, 0, 0, H);
+    bgGradient.addColorStop(0, '#0c0c0b');
+    bgGradient.addColorStop(0.6, '#14140f');
+    bgGradient.addColorStop(1, '#181410');
+
+    initStars();
+  }
+  let resizeQueued = false;
+  function queueResize(){
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => { resizeQueued = false; resize(); });
+  }
+  window.addEventListener('resize', queueResize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', queueResize);
+
+  function initStars(){
+    stars = [];
+    const count = IS_COARSE ? 14 : 26;
+    for (let i = 0; i < count; i++){
+      const a = Math.random() * 0.35 + 0.08;
+      stars.push({ x: Math.random() * W, y: Math.random() * H * 0.5, r: Math.random() * 1.3 + 0.3, color: `rgba(240,237,230,${a.toFixed(2)})` });
+    }
+  }
+
+  // Three difficulty tiers — speed, ramp, and landing tolerance all scale
+  // off these so "Rapid" isn't just faster, it also punishes sloppy taps
+  // harder from the very first block.
+  const DIFFICULTY_PRESETS = {
+    easy:   { speedStart: 2.0, speedMax: 5.0, ramp: 0.050, tolFrac: 0.050, tolMin: 9 },
+    medium: { speedStart: 2.6, speedMax: 6.8, ramp: 0.065, tolFrac: 0.038, tolMin: 6 },
+    hard:   { speedStart: 3.5, speedMax: 9.4, ramp: 0.090, tolFrac: 0.024, tolMin: 4 }
+  };
+  const DIFF_KEY = 'stacktower_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  const STORAGE_KEY = 'stacktower_al_best';
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const tag = document.getElementById('startBestDiff'); if (tag) tag.textContent = diffLabel();
+  }
+  refreshBest();
+
+  let state = 'start'; // start | countdown | playing | over
+  let score = 0, combo = 0, bestComboRun = 0;
+  let countdownFrames = 0, countdownDisplay = 3, lastCountSecond = 99;
+  let runStartTime = 0;
+
+  resize();
+
+  function initW(){ return W * 0.56; }
+  function minW(){ return Math.max(10, W * 0.026); }
+  function currentSpeed(){
+    const p = preset();
+    const raw = Math.min(p.speedMax, p.speedStart + stack.length * p.ramp);
+    return raw * (W / 380);
+  }
+  function camTargetLayers(){ return Math.max(0, stack.length - VISIBLE_LAYERS); }
+
+  function reset(){
+    stack = [{ cx: W / 2, w: initW() }];
+    score = 0; combo = 0; bestComboRun = 0;
+    particles = []; confetti = [];
+    shakeTime = 0; shakeMag = 0; flashTime = 0;
+    camLayers = 0;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('score').classList.remove('show');
+    const comboEl = document.getElementById('combo');
+    comboEl.classList.remove('show', 'pulse'); comboEl.textContent = '';
+    spawnMover();
+  }
+
+  function spawnMover(){
+    const top = stack[stack.length - 1];
+    const w = top.w;
+    const fromLeft = Math.random() < 0.5;
+    mover = { cx: fromLeft ? w / 2 : W - w / 2, w, dir: fromLeft ? 1 : -1 };
+  }
+
+  function motionOK(){ return !Arcade.getSettings().reducedMotion; }
+  function particlesOK(){ return Arcade.getSettings().particles !== false; }
+
+  function makeSlice(x, y, w, h, dir){
+    return { x, y, vx: dir * (1 + Math.random() * 1.6), vy: -2 - Math.random() * 2, gravity: 0.35, rot: 0, vr: dir * 0.12, life: 70, maxLife: 70, kind: 'slice', color: GOLD_LIGHT, w, h };
+  }
+  function spawnSlices(m, keepLeft, keepRight, topY){
+    if (!particlesOK()) return;
+    const fullLeft = m.cx - m.w / 2, fullRight = m.cx + m.w / 2;
+    if (fullLeft < keepLeft - 0.5){
+      const pw = keepLeft - fullLeft;
+      particles.push(makeSlice((fullLeft + keepLeft) / 2, topY + LAYER_H / 2, pw, LAYER_H, -1));
+    }
+    if (fullRight > keepRight + 0.5){
+      const pw = fullRight - keepRight;
+      particles.push(makeSlice((keepRight + fullRight) / 2, topY + LAYER_H / 2, pw, LAYER_H, 1));
+    }
+  }
+  function spawnFullFall(m, topY){
+    if (!particlesOK()) return;
+    particles.push(makeSlice(m.cx, topY + LAYER_H / 2, m.w, LAYER_H, m.dir));
+  }
+  function spawnPerfectBurst(cx, y){
+    if (!particlesOK()) return;
+    for (let i = 0; i < 10; i++){
+      particles.push({
+        x: cx + (Math.random() * 2 - 1) * 14, y,
+        vx: (Math.random() * 2 - 1) * 2.4, vy: -Math.random() * 2.4,
+        gravity: 0.12, rot: 0, vr: (Math.random() * 2 - 1) * 0.2,
+        life: 26, maxLife: 26, size: 2 + Math.random() * 2, kind: 'dust',
+        color: Math.random() < 0.5 ? GOLD_LIGHT : CREAM
+      });
+    }
+  }
+  function spawnConfetti(){
+    if (!particlesOK()) return;
+    const palette = [GOLD, GOLD_LIGHT, GOLD_DARK, CREAM];
+    for (let i = 0; i < 46; i++){
+      confetti.push({
+        x: Math.random() * W, y: -10 - Math.random() * 60,
+        vx: (Math.random() * 2 - 1) * 1.4, vy: 1 + Math.random() * 2,
+        gravity: 0.05, rot: Math.random() * Math.PI, vr: (Math.random() * 2 - 1) * 0.15,
+        life: 150 + Math.random() * 70, maxLife: 220, size: 4 + Math.random() * 4,
+        kind: 'confetti', color: palette[(Math.random() * palette.length) | 0]
+      });
+    }
+  }
+  function updateParticleList(arr){
+    for (let i = arr.length - 1; i >= 0; i--){
+      const p = arr[i];
+      p.vy += p.gravity; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life--;
+      if (p.life <= 0) arr.splice(i, 1);
+    }
+  }
+  function drawParticleList(arr){
+    for (const p of arr){
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      if (p.kind === 'slice'){ ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); }
+      else if (p.kind === 'confetti'){ ctx.fillRect(-p.size / 2, -p.size * 0.35, p.size, p.size * 0.7); }
+      else { ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill(); }
+      ctx.restore();
+    }
+  }
+
+  function updateScoreUI(){
+    const el = document.getElementById('score');
+    el.textContent = score;
+    el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+  }
+  function updateComboUI(){
+    const el = document.getElementById('combo');
+    if (combo >= 2){
+      el.textContent = 'Combo ×' + combo;
+      el.classList.add('show');
+      el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+    } else {
+      el.classList.remove('show');
+    }
+  }
+
+  function audioCtx(){ return Arcade.audioCtx(); }
+  function sfxTick(){ Arcade.tone(520, 0.06, 'sine', 0.14); }
+  function sfxGo(){ Arcade.tone(760, 0.12, 'triangle', 0.2, { sweepTo: 1000 }); }
+  function sfxDrop(){ Arcade.tone(360, 0.09, 'triangle', 0.16, { sweepTo: 280 }); }
+  function sfxPerfect(){
+    const c = Math.min(10, combo);
+    Arcade.tone(660 + c * 22, 0.09, 'sine', 0.18, { sweepTo: 900 + c * 22 });
+    setTimeout(() => Arcade.tone(880 + c * 22, 0.10, 'triangle', 0.14), 50);
+  }
+  function sfxMiss(){
+    Arcade.noiseBurst(0.3, 0.22, 900);
+    Arcade.tone(160, 0.22, 'sawtooth', 0.14, { sweepTo: 60 });
+  }
+
+  function startGame(diff){
+    if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
+    reset();
+    state = 'countdown';
+    countdownFrames = 3 * 60;
+    lastCountSecond = 99;
+    countdownDisplay = 3;
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    runStartTime = performance.now();
+    focusCanvas();
+  }
+
+  function endGame(){
+    state = 'over';
+    document.getElementById('score').classList.remove('show');
+    document.getElementById('combo').classList.remove('show');
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    document.getElementById('finalBestDiff').textContent = diffLabel();
+    document.getElementById('finalCombo').textContent = bestComboRun;
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+
+    const durationSec = Math.max(1, Math.round((performance.now() - runStartTime) / 1000));
+    Arcade.logRun('stacktower', score, difficulty, durationSec);
+    if (score >= 20) Arcade.unlock('stacktower_20', 'Getting Tall', 'Stack 20 blocks in Stack Tower');
+    if (score >= 50) Arcade.unlock('stacktower_50', 'Skyscraper', 'Stack 50 blocks in Stack Tower');
+    if (bestComboRun >= 10) Arcade.unlock('stacktower_combo10', 'Perfect Ten', 'Reach a 10x perfect combo in Stack Tower');
+
+    if (isNewBest && motionOK()) spawnConfetti();
+    if (navigator.vibrate) { try { navigator.vibrate(isNewBest ? [30, 40, 30, 40, 60] : [40]); } catch(e){} }
+  }
+
+  function drop(){
+    if (state !== 'playing') return;
+    const top = stack[stack.length - 1];
+    const m = mover;
+    const left = Math.max(m.cx - m.w / 2, top.cx - top.w / 2);
+    const right = Math.min(m.cx + m.w / 2, top.cx + top.w / 2);
+    const overlapW = right - left;
+    const topLayerIndex = stack.length;
+    const topY = (screenBaseY - (topLayerIndex - camLayers) * LAYER_H) - LAYER_H;
+
+    if (overlapW <= 0){
+      spawnFullFall(m, topY);
+      sfxMiss();
+      if (motionOK()){ shakeTime = 16; shakeMag = Math.max(7, H * 0.02); }
+      endGame();
+      return;
+    }
+
+    const offset = Math.abs(m.cx - top.cx);
+    const p = preset();
+    const tol = Math.max(p.tolMin, top.w * p.tolFrac);
+    let newW, newCx, perfect = false;
+
+    if (offset <= tol && overlapW >= top.w * 0.965){
+      perfect = true;
+      newW = top.w; newCx = top.cx;
+    } else {
+      newW = overlapW; newCx = (left + right) / 2;
+      spawnSlices(m, left, right, topY);
+    }
+
+    if (newW < minW()){
+      stack.push({ cx: newCx, w: Math.max(2, newW) });
+      sfxMiss();
+      if (motionOK()){ shakeTime = 14; shakeMag = Math.max(6, H * 0.02); }
+      endGame();
+      return;
+    }
+
+    stack.push({ cx: newCx, w: newW });
+    score++;
+    updateScoreUI();
+
+    if (perfect){
+      combo++; bestComboRun = Math.max(bestComboRun, combo);
+      spawnPerfectBurst(newCx, topY + LAYER_H / 2);
+      sfxPerfect();
+      flashTime = 8;
+      updateComboUI();
+      if (combo === 10) Arcade.unlock('stacktower_combo10', 'Perfect Ten', 'Reach a 10x perfect combo in Stack Tower');
+      if (navigator.vibrate) { try { navigator.vibrate(12); } catch(e){} }
+    } else {
+      combo = 0;
+      updateComboUI();
+      sfxDrop();
+      if (motionOK()){ shakeTime = 6; shakeMag = Math.max(2, Math.min(10, offset * 0.15)); }
+    }
+
+    spawnMover();
+  }
+
+  function update(){
+    if (Arcade.isPaused()) return;
+
+    if (shakeTime > 0){ shakeTime--; shakeMag *= 0.88; }
+    if (flashTime > 0) flashTime--;
+    updateParticleList(particles);
+    updateParticleList(confetti);
+    camLayers += (camTargetLayers() - camLayers) * 0.14;
+
+    if (state === 'countdown'){
+      countdownFrames--;
+      const secLeft = Math.max(0, Math.ceil(countdownFrames / 60));
+      if (secLeft !== lastCountSecond){
+        lastCountSecond = secLeft;
+        if (secLeft > 0) sfxTick();
+      }
+      countdownDisplay = secLeft;
+      if (countdownFrames <= 0){
+        state = 'playing';
+        document.getElementById('score').classList.add('show');
+        sfxGo();
+      }
+      return;
+    }
+
+    if (state === 'playing'){
+      const speed = currentSpeed();
+      mover.cx += mover.dir * speed;
+      const half = mover.w / 2;
+      if (mover.cx - half <= 0){ mover.cx = half; mover.dir = 1; }
+      else if (mover.cx + half >= W){ mover.cx = W - half; mover.dir = -1; }
+    }
+  }
+
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawBlock(cx, topY, w, h){
+    const grad = ctx.createLinearGradient(0, topY, 0, topY + h);
+    grad.addColorStop(0, GOLD_LIGHT);
+    grad.addColorStop(1, GOLD_DARK);
+    ctx.fillStyle = grad;
+    roundRect(cx - w / 2, topY, w, Math.max(2, h - 2), Math.min(6, h * 0.18));
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(12,12,11,0.35)'; ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.16)'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - w / 2 + 3, topY + 1.5); ctx.lineTo(cx + w / 2 - 3, topY + 1.5); ctx.stroke();
+  }
+
+  function drawStack(){
+    const startIdx = Math.max(0, Math.floor(camLayers) - 1);
+    for (let i = startIdx; i < stack.length; i++){
+      const y = screenBaseY - (i - camLayers) * LAYER_H;
+      const topY = y - LAYER_H;
+      if (y < -LAYER_H) break;
+      if (topY > H + LAYER_H) continue;
+      drawBlock(stack[i].cx, topY, stack[i].w, LAYER_H);
+    }
+  }
+  function drawMover(){
+    if (!mover) return;
+    const y = screenBaseY - (stack.length - camLayers) * LAYER_H;
+    drawBlock(mover.cx, y - LAYER_H, mover.w, LAYER_H);
+  }
+  function drawStars(){
+    for (const s of stars){
+      ctx.fillStyle = s.color;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+  function drawCountdown(){
+    const secLeft = countdownDisplay;
+    const frac = (countdownFrames % 60) / 60;
+    const s = 0.85 + 0.3 * Math.sin((1 - frac) * Math.PI);
+    ctx.save();
+    ctx.translate(W / 2, H * 0.4);
+    ctx.scale(Math.max(0.5, s), Math.max(0.5, s));
+    ctx.font = "700 76px 'Space Mono', monospace";
+    ctx.fillStyle = GOLD_LIGHT;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.globalAlpha = 0.94;
+    ctx.fillText(secLeft > 0 ? String(secLeft) : 'GO', 0, 0);
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.save();
+    if (shakeTime > 0 && motionOK()){
+      const dx = (Math.random() * 2 - 1) * shakeMag, dy = (Math.random() * 2 - 1) * shakeMag * 0.6;
+      ctx.translate(dx, dy);
+    }
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(-4, -4, W + 8, H + 8);
+    drawStars();
+    drawStack();
+    drawMover();
+    drawParticleList(particles);
+    drawParticleList(confetti);
+    if (flashTime > 0){
+      ctx.globalAlpha = (flashTime / 8) * 0.3;
+      ctx.fillStyle = GOLD_LIGHT;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+    if (state === 'countdown') drawCountdown();
+    ctx.restore();
+  }
+
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  // Canvas needs to be focusable so keyboard input reliably reaches it.
+  canvas.setAttribute('tabindex', '0');
+  canvas.style.outline = 'none';
+  function focusCanvas(){ try { canvas.focus({ preventScroll: true }); } catch(e){} }
+  focusCanvas();
+
+  function handleKeyDown(e){
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar' || e.code === 'ArrowUp' || e.key === 'ArrowUp'){
+      e.preventDefault();
+      audioCtx();
+      if (state === 'start') startGame();
+      else if (state === 'playing') drop();
+      else if (state === 'over') startGame();
+    }
+  }
+  window.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keydown', handleKeyDown);
+
+  canvas.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    focusCanvas();
+    audioCtx();
+    if (state === 'playing') drop();
+    else if (state === 'over') startGame();
+  }, { passive: false });
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.option-btn')) return;
+    e.preventDefault();
+  }, { passive: false });
+  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      focusCanvas();
+      audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    focusCanvas();
+    audioCtx();
+    startGame();
+  }, { passive: false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    focusCanvas();
+    startGame();
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  ['touchstart', 'touchend'].forEach(evt => {
+    canvas.addEventListener(evt, e => e.preventDefault(), { passive: false });
+  });
+
+  reset();
+  loop();
+  Arcade.mountPanels({ gameId: 'stacktower' });
+  Arcade.mountPauseMenu();
+})();
+</script>
+</body>
+</html>

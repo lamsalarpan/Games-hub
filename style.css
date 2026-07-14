@@ -260,6 +260,28 @@ em { font-style: italic; color: var(--gold-light); }
 .p-snake .seg.s3 { animation-delay: -0.56s; background: var(--gold); opacity: 0.65; }
 .p-snake .seg.s4 { animation-delay: -0.84s; background: var(--gold); opacity: 0.45; }
 .p-snake .food { position: absolute; width: 7%; height: 7%; border-radius: 50%; background: var(--text-primary); left: 84%; top: 42%; box-shadow: 0 0 6px rgba(240,237,230,0.5); }
+/* — Stack Tower — */
+.p-stacktower { background: linear-gradient(180deg, var(--bg-3), var(--bg-2)); }
+.p-stacktower .tower { position: absolute; left: 50%; bottom: 16%; transform: translateX(-50%); display: flex; flex-direction: column-reverse; align-items: center; }
+.p-stacktower .tblock { height: 12%; border-radius: 2px; margin-bottom: 2px; background: var(--gold); border: 1px solid rgba(var(--gold-rgb),0.35); }
+.p-stacktower .b1 { width: 48%; background: var(--gold-light); }
+.p-stacktower .b2 { width: 38%; opacity: 0.92; }
+.p-stacktower .b3 { width: 29%; opacity: 0.82; }
+.p-stacktower .mover {
+  position: absolute; width: 34%; aspect-ratio: 5/1; border-radius: 2px;
+  background: var(--gold-light); box-shadow: 0 0 8px rgba(var(--gold-rgb),0.3);
+  animation: stackMover 2.8s ease-in-out infinite;
+}
+@keyframes stackMover {
+  0%   { left: 18%; bottom: 62%; opacity: 1; }
+  38%  { left: 82%; bottom: 62%; opacity: 1; }
+  54%  { left: 50%; bottom: 62%; opacity: 1; }
+  70%  { left: 50%; bottom: 40%; opacity: 1; }
+  84%  { left: 50%; bottom: 40%; opacity: 1; }
+  85%  { opacity: 0; }
+  100% { left: 18%; bottom: 62%; opacity: 1; }
+}
+
 @keyframes slither {
   0%   { left: 14%; top: 76%; }
   22%  { left: 14%; top: 20%; }

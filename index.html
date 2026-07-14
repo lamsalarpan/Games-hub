@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub | Arpan Lamsal</title>
-<meta name="description" content="Game Hub — five games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter and Snake, built from scratch by Arpan Lamsal.">
+<meta name="description" content="Game Hub — six games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake and Stack Tower, built from scratch by Arpan Lamsal.">
 
 <link rel="icon" href="faviconset/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="16x16" href="faviconset/favicon-16x16.png">
@@ -38,7 +38,7 @@
 
 <main>
   <section class="hero">
-    <p class="eyebrow" id="heroEyebrow">5 games &middot; 1 console</p>
+    <p class="eyebrow" id="heroEyebrow">6 games &middot; 1 console</p>
     <h1 id="heroTitle">Press start on <em>something&nbsp;fun.</em></h1>
     <p class="lede">Five games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
 
@@ -112,9 +112,10 @@
         <div></div><div></div><div><span class="mark x3">×</span></div>
       </div><div class="winline"></div>`,
     roadfighter: `<div class="lane"></div><div class="rival r1"></div><div class="rival r2"></div><div class="car"></div>`,
-    snake: `<div class="seg s1"></div><div class="seg s2"></div><div class="seg s3"></div><div class="seg s4"></div><div class="food"></div>`
+    snake: `<div class="seg s1"></div><div class="seg s2"></div><div class="seg s3"></div><div class="seg s4"></div><div class="food"></div>`,
+    stacktower: `<div class="tower"><div class="tblock b1"></div><div class="tblock b2"></div><div class="tblock b3"></div></div><div class="mover"></div>`
   };
-  const PREVIEW_CLASS = { flappy: 'p-flappy', dino: 'p-dino', tictactoe: 'p-ttt', roadfighter: 'p-road', snake: 'p-snake' };
+  const PREVIEW_CLASS = { flappy: 'p-flappy', dino: 'p-dino', tictactoe: 'p-ttt', roadfighter: 'p-road', snake: 'p-snake', stacktower: 'p-stacktower' };
   const DOTS_BY_DIFFICULTY = { Easy: 1, Medium: 2, Hard: 3 };
 
   function heartIcon(filled) {

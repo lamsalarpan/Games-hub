@@ -21,6 +21,7 @@ dino/index.html
 tic-tac-toe/index.html
 Road-fighter/index.html
 snake/index.html
+stack-tower/index.html
 faviconset/, logo.png
 ```
 
