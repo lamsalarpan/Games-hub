@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Bounce Tail — Arpan Lamsal</title>
+<meta name="description" content="A premium Bounce Tail game built by Arpan Lamsal, inspired by the classic Nokia Bounce, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{ height:100%; }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 30%, rgba(200,151,58,0.08), transparent 70%);
+  }
+  .stage-wrap{ position:relative; z-index:1; }
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+
+  .stage-wrap{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+  }
+  #game{
+    display:block;
+    background:linear-gradient(180deg, #0c0c0b 0%, #14140f 55%, #1a1710 100%);
+    border:1px solid var(--border-strong);
+    border-radius:4px;
+    box-shadow:0 40px 100px rgba(0,0,0,0.55);
+    touch-action:none;
+  }
+
+  .height-tag{
+    font-family:var(--font-mono); font-weight:700; font-size:14px;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--gold-light);
+    text-shadow:0 2px 14px rgba(0,0,0,0.6);
+    opacity:0; transition:opacity .25s ease;
+  }
+  .height-tag.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Bounce Tail</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="score mono" id="score">0</div>
+  <div class="height-tag mono" id="heightTag">0m</div>
+</div>
+
+<div class="stage-wrap">
+  <canvas id="game"></canvas>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Bounce as high as you dare.</h1>
+    <div class="sub">Drag · Arrow keys · Screen wraps at the edges</div>
+    <div class="option-list" id="diffRow">
+      <button type="button" class="option-btn" data-diff="easy">
+        <div class="opt-title">Easy</div>
+        <div class="opt-desc">Wider platforms, gentle bounce. A relaxed climb.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="medium">
+        <div class="opt-title">Medium</div>
+        <div class="opt-desc">The standard climb. Balanced gaps and hazards.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="hard">
+        <div class="opt-title">Hard</div>
+        <div class="opt-desc">Narrow platforms, more spikes. One slip ends it.</div>
+      </button>
+    </div>
+    <div class="stat-row"><span>Best Height <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0m</b></div>
+    <div class="hint">Steer the ball across platforms — it bounces on its own.<br>Gold springs launch you higher. Spikes and gaps end the run.</div>
+  </div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="overOverlay">
+  <div class="panel">
+    <h1>Gravity wins.</h1>
+    <div class="sub">Every great climb starts with a fall</div>
+    <div class="stat-row"><span>Height</span><b id="finalScore">0m</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0m</b></div>
+    <span class="new-best" id="newBestTag">New Record</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
+    <div class="hint">Space · Click · Tap to retry</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+ try {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+  const GOLD = '#c8973a';
+  const GOLD_LIGHT = '#e8b55a';
+  const GOLD_DARK = '#9c7328';
+  const CREAM = '#f0ede6';
+  const SPIKE_RED = '#e8683a';
+
+  const IS_COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const DPR_CAP = IS_COARSE ? 1.5 : 2;
+
+  let W = 0, H = 0, DPR = 1;
+  let bgGradient = null;
+  let shakeTime = 0, shakeMag = 0;
+
+  let platforms = [];
+  let ball = null;
+  let particles = [];
+  let stars = [];
+  let camY = 0;       // world-space Y of the top of the visible screen
+  let highestY = 0;   // smallest (highest) world Y the ball has reached
+  let trail = [];      // short after-image "tail" behind the ball
+
+  function viewportH(){
+    return window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    const maxW = Math.min(window.innerWidth * 0.94, 480);
+    const maxH = Math.max(420, viewportH() - 64 - 20);
+    let w = maxW, h = Math.min(maxH, w * 1.7);
+    W = Math.round(w); H = Math.round(h);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    bgGradient = ctx.createLinearGradient(0, 0, 0, H);
+    bgGradient.addColorStop(0, '#0c0c0b');
+    bgGradient.addColorStop(0.6, '#14140f');
+    bgGradient.addColorStop(1, '#1a1710');
+    initStars();
+  }
+  let resizeQueued = false;
+  function queueResize(){
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => { resizeQueued = false; resize(); });
+  }
+  window.addEventListener('resize', queueResize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', queueResize);
+
+  function initStars(){
+    stars = [];
+    const count = IS_COARSE ? 14 : 26;
+    for (let i = 0; i < count; i++){
+      const a = Math.random() * 0.3 + 0.06;
+      stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + 0.3, color: `rgba(240,237,230,${a.toFixed(2)})` });
+    }
+  }
+
+  // Three difficulty tiers: platform width/gap and hazard frequency all
+  // scale off these, so Hard isn't just faster — the margin for error
+  // shrinks from the very first platform.
+  const DIFFICULTY_PRESETS = {
+    easy:   { gap: 62,  platW: 0.22, hazardChance: 0.10, springChance: 0.14, moveChance: 0.06 },
+    medium: { gap: 78,  platW: 0.17, hazardChance: 0.18, springChance: 0.12, moveChance: 0.12 },
+    hard:   { gap: 96,  platW: 0.13, hazardChance: 0.28, springChance: 0.10, moveChance: 0.18 }
+  };
+  const DIFF_KEY = 'bouncetail_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  const STORAGE_KEY = 'bouncetail_al_best';
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best + 'm';
+    const tag = document.getElementById('startBestDiff'); if (tag) tag.textContent = diffLabel();
+  }
+  refreshBest();
+
+  let state = 'start'; // start | playing | over
+  let score = 0;
+  let runStartTime = 0;
+  let pointerX = null;
+
+  const BALL_R_FRAC = 0.032;
+  const GRAVITY = 0.34;
+  const BOUNCE_V = -11.5;
+  const SPRING_V = -18.5;
+
+  function newPlatform(y, forceType){
+    const p = preset();
+    const w = Math.max(46, W * p.platW * (0.8 + Math.random() * 0.5));
+    const x = Math.random() * (W - w);
+    let type = forceType || 'normal';
+    if (!forceType){
+      const r = Math.random();
+      if (r < p.hazardChance) type = 'spike';
+      else if (r < p.hazardChance + p.springChance) type = 'spring';
+      else if (r < p.hazardChance + p.springChance + p.moveChance) type = 'moving';
+      else if (Math.random() < 0.12) type = 'crumble';
+    }
+    return { x, y, w, h: 10, type, dir: Math.random() < 0.5 ? -1 : 1, alive: true, crumbling: false, crumbleT: 0 };
+  }
+
+  function layoutInitialPlatforms(){
+    platforms = [];
+    const p = preset();
+    platforms.push({ x: W / 2 - 34, y: H - 40, w: 68, h: 10, type: 'normal', dir: 1, alive: true, crumbling: false, crumbleT: 0 });
+    let y = H - 40;
+    while (y > -H) {
+      y -= p.gap * (0.85 + Math.random() * 0.3);
+      platforms.push(newPlatform(y));
+    }
+  }
+
+  function resetBall(){
+    ball = { x: W / 2, y: H - 70, r: Math.max(9, W * BALL_R_FRAC), vx: 0, vy: BOUNCE_V };
+    trail = [];
+  }
+
+  function reset(){
+    layoutInitialPlatforms();
+    resetBall();
+    camY = 0; highestY = ball.y;
+    score = 0;
+    particles = [];
+    shakeTime = 0; shakeMag = 0;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('score').classList.remove('show');
+    document.getElementById('heightTag').classList.remove('show');
+  }
+
+  function motionOK(){ return !Arcade.getSettings().reducedMotion; }
+  function particlesOK(){ return Arcade.getSettings().particles !== false; }
+
+  function spawnBurst(x, y, color){
+    if (!particlesOK()) return;
+    for (let i = 0; i < 7; i++){
+      particles.push({
+        x, y,
+        vx: (Math.random() * 2 - 1) * 2.6, vy: -(Math.random() * 2.2 + 0.6),
+        gravity: 0.1, life: 22, maxLife: 22, size: 2 + Math.random() * 2, color
+      });
+    }
+  }
+  function updateParticles(){
+    for (let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.vy += p.gravity; p.x += p.vx; p.y += p.vy; p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+  function drawParticles(){
+    for (const p of particles){
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y - camY, p.size, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function updateScoreUI(){
+    const el = document.getElementById('score');
+    el.textContent = score;
+    el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+    document.getElementById('heightTag').textContent = score + 'm';
+  }
+
+  function audioCtx(){ return Arcade.audioCtx(); }
+  function sfxBounce(){ Arcade.tone(360, 0.06, 'triangle', 0.16, { sweepTo: 520 }); }
+  function sfxSpring(){ Arcade.tone(440, 0.1, 'sine', 0.2, { sweepTo: 900 }); }
+  function sfxHazard(){
+    Arcade.noiseBurst(0.3, 0.22, 900);
+    Arcade.tone(160, 0.22, 'sawtooth', 0.14, { sweepTo: 60 });
+  }
+  function sfxCrumble(){ Arcade.tone(220, 0.08, 'square', 0.1, { sweepTo: 120 }); }
+
+  function startGame(diff){
+    if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
+    reset();
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('score').classList.add('show');
+    document.getElementById('heightTag').classList.add('show');
+    runStartTime = performance.now();
+    focusCanvas();
+  }
+
+  function endGame(){
+    state = 'over';
+    sfxHazard();
+    if (motionOK()){ shakeTime = 16; shakeMag = Math.max(7, H * 0.02); }
+    document.getElementById('score').classList.remove('show');
+    document.getElementById('heightTag').classList.remove('show');
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+    document.getElementById('finalScore').textContent = score + 'm';
+    document.getElementById('finalBest').textContent = best + 'm';
+    document.getElementById('finalBestDiff').textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+
+    const durationSec = Math.max(1, Math.round((performance.now() - runStartTime) / 1000));
+    Arcade.logRun('bouncetail', score, difficulty, durationSec);
+    if (score >= 500) Arcade.unlock('bouncetail_500', 'Sky High', 'Reach 500m in Bounce Tail');
+    if (score >= 1500) Arcade.unlock('bouncetail_1500', 'Stratosphere', 'Reach 1500m in Bounce Tail');
+    if (difficulty === 'hard') Arcade.unlock('hard_try_bouncetail', 'Hard Mode', 'Play Bounce Tail on Hard');
+
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+    else if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e){} }
+  }
+
+  function ensurePlatformsAbove(){
+    let topY = platforms.length ? Math.min(...platforms.map(p => p.y)) : camY;
+    const p = preset();
+    while (topY > camY - H) {
+      topY -= p.gap * (0.85 + Math.random() * 0.3);
+      platforms.push(newPlatform(topY));
+    }
+    // Drop platforms that scrolled far below the visible area.
+    platforms = platforms.filter(pl => pl.y < camY + H + 60);
+  }
+
+  function updateBall(){
+    ball.vy += GRAVITY;
+    ball.y += ball.vy;
+    ball.x += ball.vx;
+    ball.vx *= 0.98;
+
+    if (pointerX !== null){
+      ball.x += (pointerX - ball.x) * 0.22;
+    }
+    // Screen wrap
+    if (ball.x < -ball.r) ball.x = W + ball.r;
+    else if (ball.x > W + ball.r) ball.x = -ball.r;
+
+    // Trail (the "tail")
+    if (motionOK()){
+      trail.unshift({ x: ball.x, y: ball.y });
+      if (trail.length > 7) trail.pop();
+    }
+
+    // Only test collision while falling, matching the genre's feel —
+    // you pass straight through platforms on the way up.
+    if (ball.vy > 0){
+      for (const pl of platforms){
+        if (!pl.alive || pl.crumbling) continue;
+        if (ball.x + ball.r * 0.6 < pl.x || ball.x - ball.r * 0.6 > pl.x + pl.w) continue;
+        const ballBottom = ball.y + ball.r;
+        if (ballBottom >= pl.y && ballBottom <= pl.y + pl.h + Math.max(10, ball.vy)) {
+          if (pl.type === 'spike') { endGame(); return; }
+          if (pl.type === 'crumble') {
+            pl.crumbling = true; pl.crumbleT = 14;
+            sfxCrumble();
+          }
+          ball.vy = pl.type === 'spring' ? SPRING_V : BOUNCE_V;
+          if (pl.type === 'spring') { sfxSpring(); spawnBurst(ball.x, pl.y, GOLD_LIGHT); }
+          else { sfxBounce(); spawnBurst(ball.x, pl.y, GOLD); }
+          if (navigator.vibrate) { try { navigator.vibrate(pl.type === 'spring' ? 14 : 6); } catch(e){} }
+          break;
+        }
+      }
+    }
+
+    // Moving platforms
+    for (const pl of platforms){
+      if (pl.type === 'moving' && pl.alive && !pl.crumbling){
+        pl.x += pl.dir * 1.4;
+        if (pl.x <= 0 || pl.x + pl.w >= W) pl.dir *= -1;
+      }
+      if (pl.crumbling){
+        pl.crumbleT--;
+        if (pl.crumbleT <= 0) pl.alive = false;
+      }
+    }
+
+    // Camera follows the ball once it's above the upper third of the screen.
+    const screenY = ball.y - camY;
+    if (screenY < H * 0.38) {
+      camY -= (H * 0.38 - screenY);
+    }
+    highestY = Math.min(highestY, ball.y);
+    const newScore = Math.max(0, Math.round((H - 70 - highestY) / 12));
+    if (newScore > score) { score = newScore; updateScoreUI(); }
+
+    ensurePlatformsAbove();
+
+    if (ball.y - camY > H + 50) endGame();
+  }
+
+  function update(){
+    if (Arcade.isPaused()) return;
+    if (shakeTime > 0){ shakeTime--; shakeMag *= 0.88; }
+    updateParticles();
+    if (state === 'playing') updateBall();
+  }
+
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawPlatforms(){
+    for (const pl of platforms){
+      if (!pl.alive) continue;
+      const y = pl.y - camY;
+      if (y < -20 || y > H + 20) continue;
+      ctx.save();
+      if (pl.crumbling) ctx.globalAlpha = Math.max(0.15, pl.crumbleT / 14);
+
+      if (pl.type === 'spike'){
+        ctx.fillStyle = SPIKE_RED;
+        const teeth = Math.max(3, Math.round(pl.w / 14));
+        const tw = pl.w / teeth;
+        ctx.beginPath();
+        for (let i = 0; i < teeth; i++){
+          ctx.moveTo(pl.x + i * tw, y + pl.h);
+          ctx.lineTo(pl.x + i * tw + tw / 2, y);
+          ctx.lineTo(pl.x + (i + 1) * tw, y + pl.h);
+        }
+        ctx.closePath(); ctx.fill();
+      } else {
+        const grad = ctx.createLinearGradient(0, y, 0, y + pl.h);
+        if (pl.type === 'spring') { grad.addColorStop(0, GOLD_LIGHT); grad.addColorStop(1, GOLD); }
+        else if (pl.type === 'moving') { grad.addColorStop(0, '#7fd88f'); grad.addColorStop(1, '#4f9c66'); }
+        else if (pl.type === 'crumble') { grad.addColorStop(0, '#a08560'); grad.addColorStop(1, GOLD_DARK); }
+        else { grad.addColorStop(0, GOLD); grad.addColorStop(1, GOLD_DARK); }
+        ctx.fillStyle = grad;
+        roundRect(pl.x, y, pl.w, pl.h, 3);
+        ctx.fill();
+        if (pl.type === 'spring'){
+          ctx.fillStyle = '#0c0c0b';
+          ctx.fillRect(pl.x + pl.w / 2 - 6, y - 4, 12, 4);
+        }
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawBall(){
+    // Tail — a short fading trail behind the ball, referencing the name
+    // and giving the bounce a sense of speed.
+    for (let i = trail.length - 1; i >= 0; i--){
+      const t = trail[i];
+      const a = (1 - i / trail.length) * 0.28;
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.fillStyle = GOLD_LIGHT;
+      ctx.beginPath(); ctx.arc(t.x, t.y - camY, ball.r * (1 - i / (trail.length + 2)), 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.shadowColor = 'rgba(232,181,90,0.55)';
+    ctx.shadowBlur = 12;
+    const grad = ctx.createRadialGradient(ball.x - ball.r * 0.3, ball.y - camY - ball.r * 0.3, 1, ball.x, ball.y - camY, ball.r);
+    grad.addColorStop(0, CREAM);
+    grad.addColorStop(1, GOLD_LIGHT);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(ball.x, ball.y - camY, ball.r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawStars(){
+    for (const s of stars){
+      ctx.fillStyle = s.color;
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function draw(){
+    ctx.save();
+    if (shakeTime > 0 && motionOK()){
+      const dx = (Math.random() * 2 - 1) * shakeMag, dy = (Math.random() * 2 - 1) * shakeMag * 0.6;
+      ctx.translate(dx, dy);
+    }
+    ctx.fillStyle = bgGradient;
+    ctx.fillRect(-4, -4, W + 8, H + 8);
+    drawStars();
+    drawPlatforms();
+    if (ball) drawBall();
+    drawParticles();
+    ctx.restore();
+  }
+
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  canvas.setAttribute('tabindex', '0');
+  canvas.style.outline = 'none';
+  function focusCanvas(){ try { canvas.focus({ preventScroll: true }); } catch(e){} }
+  focusCanvas();
+
+  function setPointerFromClientX(clientX){
+    const rect = canvas.getBoundingClientRect();
+    pointerX = (clientX - rect.left) * (W / rect.width);
+  }
+
+  let keyLeft = false, keyRight = false;
+  function handleKeyDown(e){
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault();
+      audioCtx();
+      if (state === 'start') startGame();
+      else if (state === 'over') startGame();
+    } else if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A'){
+      e.preventDefault(); keyLeft = true; pointerX = null;
+    } else if (e.code === 'ArrowRight' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D'){
+      e.preventDefault(); keyRight = true; pointerX = null;
+    }
+  }
+  function handleKeyUp(e){
+    if (e.code === 'ArrowLeft' || e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keyLeft = false;
+    if (e.code === 'ArrowRight' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keyRight = false;
+  }
+  window.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keydown', handleKeyDown);
+  window.addEventListener('keyup', handleKeyUp);
+  setInterval(() => {
+    if (!ball || state !== 'playing') return;
+    if (keyLeft) ball.vx = Math.max(ball.vx - 0.9, -7);
+    if (keyRight) ball.vx = Math.min(ball.vx + 0.9, 7);
+  }, 16);
+
+  canvas.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    focusCanvas();
+    audioCtx();
+    setPointerFromClientX(e.clientX);
+    if (state === 'over') startGame();
+  }, { passive: false });
+  canvas.addEventListener('pointermove', function(e){ setPointerFromClientX(e.clientX); }, { passive: false });
+  canvas.addEventListener('mousemove', function(e){ setPointerFromClientX(e.clientX); });
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.option-btn')) return;
+    e.preventDefault();
+  }, { passive: false });
+  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      focusCanvas();
+      audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    focusCanvas();
+    audioCtx();
+    startGame();
+  }, { passive: false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    focusCanvas();
+    startGame();
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  ['touchstart', 'touchend'].forEach(evt => {
+    canvas.addEventListener(evt, e => e.preventDefault(), { passive: false });
+  });
+  canvas.addEventListener('touchmove', function(e){
+    e.preventDefault();
+    if (e.touches && e.touches[0]) setPointerFromClientX(e.touches[0].clientX);
+  }, { passive: false });
+
+  resize();
+  reset();
+  loop();
+  Arcade.mountPanels({ gameId: 'bouncetail' });
+  Arcade.mountPauseMenu();
+ } catch (err) {
+   console.error('Bounce Tail failed to start:', err);
+   document.body.innerHTML =
+     '<div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:2rem;text-align:center;font-family:monospace;color:#f0ede6;background:#0c0c0b;">' +
+       '<div style="font-size:14px;letter-spacing:.08em;color:#c8973a;text-transform:uppercase;">Bounce Tail hit a snag</div>' +
+       '<div style="font-size:12px;color:#8a8880;max-width:420px;">' + (err && err.message ? err.message : 'Unknown error') + '</div>' +
+       '<a href="../index.html" style="margin-top:.5rem;font-size:12px;letter-spacing:.06em;color:#e8b55a;text-decoration:none;border:1px solid rgba(200,151,58,0.35);border-radius:20px;padding:.6rem 1.2rem;">&larr; Back to Hub</a>' +
+     '</div>';
+ }
+})();
+</script>
+</body>
+</html>

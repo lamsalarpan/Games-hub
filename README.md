@@ -21,6 +21,7 @@ Road-fighter/index.html
 snake/index.html
 stack-tower/index.html
 brick-breaker/index.html
+bounce-tail/index.html
 faviconset/ (favicons + logo.png)
 ```
 
