@@ -1,7 +1,7 @@
 {
   "name": "Game Hub — Arpan Lamsal",
   "short_name": "Game Hub",
-  "description": "A small collection of mini games by Arpan Lamsal — Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake.",
+  "description": "A small collection of mini games by Arpan Lamsal — Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake, Stack Tower, Brick Breaker, Bounce Tail, Nova Drift.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

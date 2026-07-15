@@ -132,6 +132,20 @@ window.Arcade = (function () {
       <rect x="18" y="86" width="26" height="7" rx="3.5" fill="#c8973a"/>
       <rect x="58" y="60" width="24" height="7" rx="3.5" fill="#c8973a"/>
       <path d="M64 60 l0 -6 M60 56 l8 0" stroke="#e8b55a" stroke-width="2.5" stroke-linecap="round"/>`
+    },
+    {
+      id: 'novadrift', title: 'Nova Drift', href: 'nova-drift/index.html',
+      accent: '#b39cf0', category: 'Reflex', difficulty: 'Hard', playTime: '2–5 min',
+      desc: 'Orbit the core, switch rings to dodge asteroids, and chain gold shards for combo score.',
+      icon: `<defs><linearGradient id="g-nova" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <circle cx="50" cy="50" r="35" fill="none" stroke="rgba(240,237,230,0.18)" stroke-width="2"/>
+      <circle cx="50" cy="50" r="23" fill="none" stroke="rgba(240,237,230,0.3)" stroke-width="2"/>
+      <circle cx="50" cy="50" r="11" fill="url(#g-nova)"/>
+      <circle cx="50" cy="15" r="4.6" fill="#f0ede6" stroke="rgba(12,12,11,0.35)" stroke-width="1"/>
+      <path d="M79 50 l7 -4 3 4 -3 4 Z" fill="#e8683a"/>
+      <path d="M22 63 L28 63 L25 68 Z" fill="#b39cf0"/>`
     }
   ];
 
@@ -286,13 +300,16 @@ window.Arcade = (function () {
     { id: 'hard_try_brickbreaker', title: 'Hard Mode', desc: 'Play Brick Breaker on Hard' },
     { id: 'bouncetail_500', title: 'Sky High', desc: 'Reach 500m in Bounce Tail' },
     { id: 'bouncetail_1500', title: 'Stratosphere', desc: 'Reach 1500m in Bounce Tail' },
-    { id: 'hard_try_bouncetail', title: 'Hard Mode', desc: 'Play Bounce Tail on Hard' }
+    { id: 'hard_try_bouncetail', title: 'Hard Mode', desc: 'Play Bounce Tail on Hard' },
+    { id: 'novadrift_800', title: 'Steady Orbit', desc: 'Score 800 in Nova Drift' },
+    { id: 'novadrift_2200', title: 'Solar Ace', desc: 'Score 2200 in Nova Drift' },
+    { id: 'hard_try_novadrift', title: 'Hard Mode', desc: 'Play Nova Drift on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {
@@ -493,7 +510,7 @@ window.Arcade = (function () {
      that represents "progress" — but intentionally leaves favorites and
      preferences (theme, sound, difficulty) untouched. */
   const GAME_BEST_KEYS = {
-    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best', bouncetail: 'bouncetail_al_best'
+    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best', bouncetail: 'bouncetail_al_best', novadrift: 'novadrift_al_best'
   };
   const EXTRA_SCORE_KEYS = ['ttt_al_pvc_scores', 'ttt_al_pvp_scores'];
   function resetAllProgress() {

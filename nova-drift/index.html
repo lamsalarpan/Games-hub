@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Nova Drift — Arpan Lamsal</title>
+<meta name="description" content="A premium orbital dodge-and-collect game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{ height:100%; }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 34%, rgba(200,151,58,0.10), transparent 70%);
+  }
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+
+  .stage-wrap{
+    position:fixed; inset:0; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+  }
+  #game{
+    display:block;
+    background:#0c0c0b;
+    border:1px solid var(--border-strong);
+    border-radius:4px;
+    box-shadow:0 40px 100px rgba(0,0,0,0.55);
+    touch-action:none;
+  }
+
+  .combo-tag{
+    font-family:var(--font-mono); font-weight:700; font-size:13px;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--gold-light);
+    text-shadow:0 2px 14px rgba(0,0,0,0.6);
+    opacity:0; transition:opacity .25s ease;
+  }
+  .combo-tag.show{ opacity:1; }
+
+  .lane-hint{
+    position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);
+    z-index:2; display:flex; justify-content:center; gap:0.6rem;
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted); pointer-events:none; opacity:0; transition:opacity .3s ease;
+  }
+  .lane-hint.show{ opacity:1; }
+  .lane-hint span{ display:flex; align-items:center; gap:0.35rem; }
+  .lane-hint svg{ width:12px; height:12px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Nova Drift</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="score mono" id="score">0</div>
+  <div class="combo-tag mono" id="comboTag">x1</div>
+</div>
+
+<div class="stage-wrap">
+  <canvas id="game"></canvas>
+</div>
+
+<div class="lane-hint mono" id="laneHint">
+  <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Tap left — drift in</span>
+  <span>Tap right — drift out<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></span>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Orbit the core. Outlast the drift.</h1>
+    <div class="sub">Tap left/right or ←/→ · Switch orbits to dodge and collect</div>
+    <div class="option-list" id="diffRow">
+      <button type="button" class="option-btn" data-diff="easy">
+        <div class="opt-title">Easy</div>
+        <div class="opt-desc">Slower spin, gentler drift. A relaxed orbit.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="medium">
+        <div class="opt-title">Medium</div>
+        <div class="opt-desc">The standard run. Balanced speed and hazards.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="hard">
+        <div class="opt-title">Hard</div>
+        <div class="opt-desc">Fast spin, tight margins, frequent flares.</div>
+      </button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Switch orbit rings to dodge asteroids and the core's flare pulse.<br>Grab gold shards for score — chain them for a rising multiplier.</div>
+  </div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="overOverlay">
+  <div class="panel">
+    <h1>Pulled into the core.</h1>
+    <div class="sub">Every drift ends somewhere</div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
+    <div class="hint">Space · Click · Tap to retry</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+ try {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+  const GOLD = '#c8973a';
+  const GOLD_LIGHT = '#e8b55a';
+  const GOLD_DARK = '#9c7328';
+  const CREAM = '#f0ede6';
+  const EMBER = '#e8683a';
+  const VIOLET = '#b39cf0';
+  const VIOLET_LIGHT = '#d6c8ff';
+
+  const IS_COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const DPR_CAP = IS_COARSE ? 1.5 : 2;
+
+  let W = 0, H = 0, DPR = 1;
+  let cx = 0, cy = 0, BASE_R = 0, CORE_R = 0, OUTER_R = 0, LANES = [];
+  let SHIP_SIZE = 10, OBSTACLE_SIZE = 10, SHARD_SIZE = 8, HIT_ARC = 20;
+  let shakeTime = 0, shakeMag = 0;
+  let stars = [];
+
+  function viewportH(){
+    return window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    const maxW = Math.min(window.innerWidth * 0.94, 480);
+    const maxH = Math.max(420, viewportH() - 64 - 20);
+    let w = maxW, h = Math.min(maxH, w * 1.28);
+    W = Math.round(w); H = Math.round(h);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    cx = W / 2; cy = H * 0.52;
+    BASE_R = Math.min(W, H) * 0.42;
+    CORE_R = BASE_R * 0.16;
+    OUTER_R = BASE_R * 1.06;
+    LANES = [BASE_R * 0.36, BASE_R * 0.62, BASE_R * 0.90];
+    SHIP_SIZE = Math.max(7, BASE_R * 0.055);
+    OBSTACLE_SIZE = Math.max(7, BASE_R * 0.06);
+    SHARD_SIZE = Math.max(6, BASE_R * 0.05);
+    HIT_ARC = Math.max(16, BASE_R * 0.20);
+
+    if (player) player.radius = LANES[player.laneIndex];
+    initStars();
+  }
+  let resizeQueued = false;
+  function queueResize(){
+    if (resizeQueued) return;
+    resizeQueued = true;
+    requestAnimationFrame(() => { resizeQueued = false; resize(); });
+  }
+  window.addEventListener('resize', queueResize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', queueResize);
+
+  function initStars(){
+    stars = [];
+    const count = IS_COARSE ? 30 : 55;
+    for (let i = 0; i < count; i++){
+      const a = Math.random() * 0.35 + 0.08;
+      const r = OUTER_R * 1.05 + Math.random() * (Math.max(W, H) * 0.5);
+      const ang = Math.random() * Math.PI * 2;
+      stars.push({ ang, r, size: Math.random() * 1.2 + 0.3, color: `rgba(240,237,230,${a.toFixed(2)})`, drift: (Math.random() * 2 - 1) * 0.0004 });
+    }
+  }
+
+  // Three difficulty tiers, tuned as smooth ramps against elapsed run time
+  // (in seconds) rather than per-frame increments, so there's no drift or
+  // frame-rate dependence — every value is recomputed fresh each frame.
+  const DIFFICULTY_PRESETS = {
+    easy:   { omega0: 0.0115, omegaMax: 0.0270, omegaRampSec: 55, fallTime0: 3.4, fallTimeMin: 1.9, fallRampSec: 50, spawnBase: 100, spawnMin: 58, spawnRampSec: 45, shardChance: 0.40, shieldChance: 0.05, pulseInterval: 760, pulseWarn: 62, pulseSpeedFrac: 0.016 },
+    medium: { omega0: 0.0145, omegaMax: 0.0350, omegaRampSec: 50, fallTime0: 2.7, fallTimeMin: 1.35, fallRampSec: 45, spawnBase: 82,  spawnMin: 44, spawnRampSec: 40, shardChance: 0.34, shieldChance: 0.04, pulseInterval: 640, pulseWarn: 54, pulseSpeedFrac: 0.020 },
+    hard:   { omega0: 0.0190, omegaMax: 0.0450, omegaRampSec: 45, fallTime0: 2.1, fallTimeMin: 1.00, fallRampSec: 40, spawnBase: 66,  spawnMin: 34, spawnRampSec: 35, shardChance: 0.28, shieldChance: 0.03, pulseInterval: 520, pulseWarn: 46, pulseSpeedFrac: 0.026 }
+  };
+  const DIFF_KEY = 'novadrift_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  const STORAGE_KEY = 'novadrift_al_best';
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = String(best);
+    const tag = document.getElementById('startBestDiff'); if (tag) tag.textContent = diffLabel();
+  }
+  refreshBest();
+
+  let state = 'start'; // start | playing | over
+  let score = 0;
+  let scoreAccum = 0;
+  let multiplier = 1;
+  let elapsedFrames = 0;
+  let runStartTime = 0;
+
+  let player = null;
+  let objects = [];   // asteroids, shards, shields
+  let particles = [];
+  let pulse = null;         // active flare ring {r, resolved}
+  let pulseWarnTimer = 0;   // countdown to next flare while > 0
+  let pulseCooldown = 0;    // frames until warning begins
+  let spawnTimer = 0;
+  let hintTimer = 0;
+
+  function angularDist(a, b){
+    let d = Math.abs(a - b) % (Math.PI * 2);
+    if (d > Math.PI) d = Math.PI * 2 - d;
+    return d;
+  }
+
+  function newPlayer(){
+    return { laneIndex: 1, radius: LANES[1], theta: -Math.PI / 2, shielded: false, shieldPulse: 0 };
+  }
+
+  function reset(){
+    player = newPlayer();
+    objects = [];
+    particles = [];
+    pulse = null;
+    pulseWarnTimer = 0;
+    pulseCooldown = preset().pulseInterval;
+    spawnTimer = Math.round(preset().spawnBase * 0.6);
+    score = 0; scoreAccum = 0; multiplier = 1;
+    elapsedFrames = 0;
+    shakeTime = 0; shakeMag = 0;
+    hintTimer = 260;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('score').classList.remove('show');
+    document.getElementById('comboTag').classList.remove('show');
+    document.getElementById('laneHint').classList.remove('show');
+  }
+
+  function motionOK(){ return !Arcade.getSettings().reducedMotion; }
+  function particlesOK(){ return Arcade.getSettings().particles !== false; }
+
+  function spawnBurst(ang, r, color, count){
+    if (!particlesOK()) return;
+    const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+    for (let i = 0; i < (count || 8); i++){
+      particles.push({
+        x, y,
+        vx: (Math.random() * 2 - 1) * 2.4, vy: (Math.random() * 2 - 1) * 2.4,
+        life: 22, maxLife: 22, size: 2 + Math.random() * 2.4, color
+      });
+    }
+  }
+  function updateParticles(){
+    for (let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.vx *= 0.94; p.vy *= 0.94; p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+  function drawParticles(){
+    for (const p of particles){
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function updateScoreUI(){
+    const el = document.getElementById('score');
+    el.textContent = score;
+    el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+    const combo = document.getElementById('comboTag');
+    combo.textContent = 'x' + multiplier;
+    combo.classList.toggle('show', multiplier > 1);
+  }
+
+  function sfxShard(){ Arcade.tone(560, 0.07, 'triangle', 0.18, { sweepTo: 880 }); }
+  function sfxShield(){ Arcade.tone(320, 0.12, 'sine', 0.2, { sweepTo: 640 }); }
+  function sfxHit(){
+    Arcade.noiseBurst(0.32, 0.22, 900);
+    Arcade.tone(150, 0.24, 'sawtooth', 0.15, { sweepTo: 55 });
+  }
+  function sfxDeflect(){ Arcade.tone(220, 0.16, 'square', 0.16, { sweepTo: 480 }); }
+  function sfxLaneSwitch(){ Arcade.tone(300, 0.045, 'sine', 0.09, { sweepTo: 360 }); }
+
+  function startGame(diff){
+    if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
+    reset();
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('score').classList.add('show');
+    runStartTime = performance.now();
+    focusCanvas();
+  }
+
+  function endGame(){
+    state = 'over';
+    sfxHit();
+    if (motionOK()){ shakeTime = 18; shakeMag = Math.max(7, BASE_R * 0.05); }
+    document.getElementById('score').classList.remove('show');
+    document.getElementById('laneHint').classList.remove('show');
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+    document.getElementById('finalScore').textContent = String(score);
+    document.getElementById('finalBest').textContent = String(best);
+    document.getElementById('finalBestDiff').textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+
+    const durationSec = Math.max(1, Math.round((performance.now() - runStartTime) / 1000));
+    Arcade.logRun('novadrift', score, difficulty, durationSec);
+    if (score >= 800) Arcade.unlock('novadrift_800', 'Steady Orbit', 'Score 800 in Nova Drift');
+    if (score >= 2200) Arcade.unlock('novadrift_2200', 'Solar Ace', 'Score 2200 in Nova Drift');
+    if (difficulty === 'hard') Arcade.unlock('hard_try_novadrift', 'Hard Mode', 'Play Nova Drift on Hard');
+
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+    else if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e){} }
+  }
+
+  function resetMultiplier(){ multiplier = 1; updateScoreUI(); }
+
+  function switchLane(dir){
+    if (state !== 'playing') return;
+    const next = Math.max(0, Math.min(LANES.length - 1, player.laneIndex + dir));
+    if (next === player.laneIndex) return;
+    player.laneIndex = next;
+    sfxLaneSwitch();
+  }
+
+  function spawnObject(){
+    const p = preset();
+    const ang = Math.random() * Math.PI * 2;
+    const roll = Math.random();
+    let type = 'asteroid';
+    if (roll < p.shardChance) type = 'shard';
+    else if (roll < p.shardChance + p.shieldChance) type = 'shield';
+    objects.push({ type, ang, r: OUTER_R, wobble: Math.random() * Math.PI * 2 });
+  }
+
+  function updateObjects(){
+    const p = preset();
+    const elapsedSec = elapsedFrames / 60;
+    const fallTime = Math.max(p.fallTimeMin, p.fallTime0 - (p.fallTime0 - p.fallTimeMin) * Math.min(1, elapsedSec / p.fallRampSec));
+    const speed = OUTER_R / (fallTime * 60);
+    const radialTol = HIT_ARC * 0.62;
+
+    for (let i = objects.length - 1; i >= 0; i--){
+      const o = objects[i];
+      const s = o.type === 'asteroid' ? speed : speed * 0.82;
+      o.r -= s;
+      o.wobble += 0.05;
+
+      if (o.r <= CORE_R * 0.55){
+        if (o.type === 'shard') resetMultiplier();
+        objects.splice(i, 1);
+        continue;
+      }
+
+      const angDist = angularDist(o.ang, player.theta);
+      const arcTolAngle = HIT_ARC / Math.max(o.r, 20);
+      if (angDist < arcTolAngle && Math.abs(o.r - player.radius) < radialTol){
+        if (o.type === 'asteroid'){
+          if (player.shielded){
+            player.shielded = false;
+            player.shieldPulse = 14;
+            sfxDeflect();
+            spawnBurst(o.ang, o.r, VIOLET_LIGHT, 12);
+            objects.splice(i, 1);
+          } else {
+            endGame();
+            return;
+          }
+        } else if (o.type === 'shard'){
+          const gain = 20 * multiplier;
+          score += gain; scoreAccum += gain;
+          multiplier = Math.min(6, multiplier + 1);
+          sfxShard();
+          spawnBurst(o.ang, o.r, GOLD_LIGHT, 9);
+          objects.splice(i, 1);
+          updateScoreUI();
+        } else if (o.type === 'shield'){
+          player.shielded = true;
+          sfxShield();
+          spawnBurst(o.ang, o.r, VIOLET, 10);
+          objects.splice(i, 1);
+        }
+      }
+    }
+  }
+
+  function updatePulse(){
+    const p = preset();
+    if (pulse){
+      pulse.r += BASE_R * p.pulseSpeedFrac;
+      if (!pulse.resolved && Math.abs(pulse.r - player.radius) < HIT_ARC * 0.5){
+        pulse.resolved = true;
+        if (player.shielded){
+          player.shielded = false;
+          player.shieldPulse = 14;
+          sfxDeflect();
+          spawnBurst(player.theta, player.radius, VIOLET_LIGHT, 14);
+        } else {
+          endGame();
+          return;
+        }
+      }
+      if (pulse.r > OUTER_R * 1.1){
+        pulse = null;
+        pulseCooldown = p.pulseInterval;
+      }
+      return;
+    }
+    if (pulseWarnTimer > 0){
+      pulseWarnTimer--;
+      if (pulseWarnTimer === 0) pulse = { r: 0, resolved: false };
+      return;
+    }
+    if (pulseCooldown > 0){
+      pulseCooldown--;
+      if (pulseCooldown === 0) pulseWarnTimer = p.pulseWarn;
+    }
+  }
+
+  function update(){
+    if (Arcade.isPaused()) return;
+    if (state !== 'playing'){
+      if (shakeTime > 0){ shakeTime--; shakeMag *= 0.88; }
+      updateParticles();
+      return;
+    }
+    elapsedFrames++;
+    const p = preset();
+    const elapsedSec = elapsedFrames / 60;
+    const omega = Math.min(p.omegaMax, p.omega0 + (p.omegaMax - p.omega0) * Math.min(1, elapsedSec / p.omegaRampSec));
+    player.theta += omega;
+    if (player.theta > Math.PI * 2) player.theta -= Math.PI * 2;
+    player.radius += (LANES[player.laneIndex] - player.radius) * 0.22;
+    if (player.shieldPulse > 0) player.shieldPulse--;
+
+    if (hintTimer > 0){
+      hintTimer--;
+      document.getElementById('laneHint').classList.toggle('show', hintTimer > 40);
+    }
+
+    spawnTimer--;
+    if (spawnTimer <= 0){
+      spawnObject();
+      const spawnInterval = Math.max(p.spawnMin, p.spawnBase - (p.spawnBase - p.spawnMin) * Math.min(1, elapsedSec / p.spawnRampSec));
+      spawnTimer = Math.round(spawnInterval);
+    }
+
+    // Continuous survival score, derived fresh from the accumulator each frame.
+    scoreAccum += 0.16;
+    const target = Math.floor(scoreAccum);
+    if (target > score) { score = target; updateScoreUI(); }
+
+    updateObjects();
+    if (state !== 'playing') return;
+    updatePulse();
+    if (state !== 'playing') return;
+
+    if (shakeTime > 0){ shakeTime--; shakeMag *= 0.88; }
+    updateParticles();
+
+    for (const s of stars) s.ang += s.drift;
+  }
+
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawStars(){
+    for (const s of stars){
+      const x = cx + Math.cos(s.ang) * s.r, y = cy + Math.sin(s.ang) * s.r;
+      if (x < -10 || x > W + 10 || y < -10 || y > H + 10) continue;
+      ctx.fillStyle = s.color;
+      ctx.beginPath(); ctx.arc(x, y, s.size, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  function drawCore(){
+    const pulseScale = 1 + Math.sin(elapsedFrames * 0.045) * 0.06;
+    const r = CORE_R * pulseScale;
+    const grad = ctx.createRadialGradient(cx, cy, 1, cx, cy, r * 2.4);
+    grad.addColorStop(0, 'rgba(240,237,230,0.9)');
+    grad.addColorStop(0.35, 'rgba(232,181,90,0.55)');
+    grad.addColorStop(1, 'rgba(200,151,58,0)');
+    ctx.save();
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx, cy, r * 2.4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = CREAM;
+    ctx.shadowColor = 'rgba(232,181,90,0.8)';
+    ctx.shadowBlur = 18;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
+    if (pulseWarnTimer > 0){
+      const p = preset();
+      const t = 1 - pulseWarnTimer / p.pulseWarn;
+      ctx.save();
+      ctx.globalAlpha = 0.35 + 0.35 * Math.sin(t * Math.PI * 6);
+      ctx.strokeStyle = EMBER;
+      ctx.lineWidth = 2.4;
+      ctx.beginPath(); ctx.arc(cx, cy, r * (1.6 + t * 0.8), 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawLanes(){
+    ctx.save();
+    ctx.setLineDash([3, 7]);
+    for (let i = 0; i < LANES.length; i++){
+      const active = state === 'playing' && player.laneIndex === i;
+      ctx.strokeStyle = active ? 'rgba(232,181,90,0.5)' : 'rgba(240,237,230,0.14)';
+      ctx.lineWidth = active ? 2 : 1.2;
+      ctx.beginPath(); ctx.arc(cx, cy, LANES[i], 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawPulseRing(){
+    if (!pulse) return;
+    ctx.save();
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = EMBER;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = 'rgba(232,104,58,0.7)';
+    ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(cx, cy, pulse.r, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawObjects(){
+    for (const o of objects){
+      const x = cx + Math.cos(o.ang) * o.r, y = cy + Math.sin(o.ang) * o.r;
+      if (x < -30 || x > W + 30 || y < -30 || y > H + 30) continue;
+      ctx.save();
+      ctx.translate(x, y);
+      if (o.type === 'asteroid'){
+        ctx.rotate(o.wobble);
+        ctx.fillStyle = EMBER;
+        ctx.strokeStyle = 'rgba(12,12,11,0.4)';
+        ctx.lineWidth = 1.4;
+        const s = OBSTACLE_SIZE;
+        ctx.beginPath();
+        ctx.moveTo(s, 0);
+        ctx.lineTo(s * 0.3, s * 0.85);
+        ctx.lineTo(-s * 0.75, s * 0.5);
+        ctx.lineTo(-s, -s * 0.2);
+        ctx.lineTo(-s * 0.2, -s * 0.9);
+        ctx.lineTo(s * 0.7, -s * 0.55);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else if (o.type === 'shard'){
+        ctx.rotate(o.wobble * 0.6);
+        ctx.shadowColor = 'rgba(232,181,90,0.7)';
+        ctx.shadowBlur = 10;
+        const grad = ctx.createLinearGradient(0, -SHARD_SIZE, 0, SHARD_SIZE);
+        grad.addColorStop(0, GOLD_LIGHT); grad.addColorStop(1, GOLD_DARK);
+        ctx.fillStyle = grad;
+        const s = SHARD_SIZE;
+        ctx.beginPath();
+        ctx.moveTo(0, -s); ctx.lineTo(s * 0.7, 0); ctx.lineTo(0, s); ctx.lineTo(-s * 0.7, 0);
+        ctx.closePath(); ctx.fill();
+      } else if (o.type === 'shield'){
+        ctx.shadowColor = 'rgba(179,156,240,0.7)';
+        ctx.shadowBlur = 12;
+        const grad = ctx.createRadialGradient(-2, -2, 1, 0, 0, SHARD_SIZE * 1.15);
+        grad.addColorStop(0, VIOLET_LIGHT); grad.addColorStop(1, VIOLET);
+        ctx.fillStyle = grad;
+        ctx.beginPath(); ctx.arc(0, 0, SHARD_SIZE * 1.05, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#0c0c0b'; ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(-SHARD_SIZE * 0.5, 0); ctx.lineTo(SHARD_SIZE * 0.5, 0);
+        ctx.moveTo(0, -SHARD_SIZE * 0.5); ctx.lineTo(0, SHARD_SIZE * 0.5);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+
+  function drawShip(){
+    if (!player) return;
+    const x = cx + Math.cos(player.theta) * player.radius, y = cy + Math.sin(player.theta) * player.radius;
+    const facing = player.theta + Math.PI / 2;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(facing);
+    if (player.shielded || player.shieldPulse > 0){
+      ctx.save();
+      ctx.globalAlpha = player.shielded ? 0.55 : Math.max(0, player.shieldPulse / 14) * 0.5;
+      ctx.strokeStyle = VIOLET_LIGHT;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, SHIP_SIZE * 1.7, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.shadowColor = 'rgba(232,181,90,0.6)';
+    ctx.shadowBlur = 10;
+    const grad = ctx.createLinearGradient(0, -SHIP_SIZE, 0, SHIP_SIZE);
+    grad.addColorStop(0, CREAM); grad.addColorStop(1, GOLD_LIGHT);
+    ctx.fillStyle = grad;
+    const s = SHIP_SIZE;
+    ctx.beginPath();
+    ctx.moveTo(0, -s * 1.15);
+    ctx.lineTo(s * 0.8, s * 0.9);
+    ctx.lineTo(0, s * 0.45);
+    ctx.lineTo(-s * 0.8, s * 0.9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.save();
+    if (shakeTime > 0 && motionOK()){
+      const dx = (Math.random() * 2 - 1) * shakeMag, dy = (Math.random() * 2 - 1) * shakeMag * 0.6;
+      ctx.translate(dx, dy);
+    }
+    ctx.fillStyle = '#0c0c0b';
+    ctx.fillRect(-4, -4, W + 8, H + 8);
+    drawStars();
+    drawLanes();
+    drawPulseRing();
+    drawCore();
+    drawObjects();
+    if (state !== 'start') drawShip();
+    drawParticles();
+    ctx.restore();
+  }
+
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  canvas.setAttribute('tabindex', '0');
+  canvas.style.outline = 'none';
+  function focusCanvas(){ try { canvas.focus({ preventScroll: true }); } catch(e){} }
+  focusCanvas();
+
+  function handleKeyDown(e){
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault();
+      audioCtxWake();
+      if (state === 'start' || state === 'over') startGame();
+    } else if (['ArrowLeft', 'ArrowDown', 'a', 'A', 's', 'S'].includes(e.key)){
+      e.preventDefault(); switchLane(-1);
+    } else if (['ArrowRight', 'ArrowUp', 'd', 'D', 'w', 'W'].includes(e.key)){
+      e.preventDefault(); switchLane(1);
+    }
+  }
+  window.addEventListener('keydown', handleKeyDown);
+  document.addEventListener('keydown', handleKeyDown);
+
+  function audioCtxWake(){ Arcade.audioCtx(); }
+
+  canvas.addEventListener('pointerdown', function(e){
+    e.preventDefault();
+    focusCanvas();
+    audioCtxWake();
+    if (state === 'over'){ startGame(); return; }
+    if (state === 'start') return;
+    const rect = canvas.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width;
+    switchLane(relX < 0.5 ? -1 : 1);
+  }, { passive: false });
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.option-btn')) return;
+    e.preventDefault();
+  }, { passive: false });
+  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      focusCanvas();
+      audioCtxWake();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    focusCanvas();
+    audioCtxWake();
+    startGame();
+  }, { passive: false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    focusCanvas();
+    startGame();
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
+    canvas.addEventListener(evt, e => e.preventDefault(), { passive: false });
+  });
+
+  resize();
+  reset();
+  loop();
+  Arcade.mountPanels({ gameId: 'novadrift' });
+  Arcade.mountPauseMenu();
+ } catch (err) {
+   console.error('Nova Drift failed to start:', err);
+   document.body.innerHTML =
+     '<div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:2rem;text-align:center;font-family:monospace;color:#f0ede6;background:#0c0c0b;">' +
+       '<div style="font-size:14px;letter-spacing:.08em;color:#c8973a;text-transform:uppercase;">Nova Drift hit a snag</div>' +
+       '<div style="font-size:12px;color:#8a8880;max-width:420px;">' + (err && err.message ? err.message : 'Unknown error') + '</div>' +
+       '<a href="../index.html" style="margin-top:.5rem;font-size:12px;letter-spacing:.06em;color:#e8b55a;text-decoration:none;border:1px solid rgba(200,151,58,0.35);border-radius:20px;padding:.6rem 1.2rem;">&larr; Back to Hub</a>' +
+     '</div>';
+ }
+})();
+</script>
+</body>
+</html>
