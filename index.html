@@ -58,10 +58,7 @@
   <div class="arcade-filters" role="tablist" aria-label="Filter games">
     <button type="button" class="filter-pill active" data-filter="all" role="tab" aria-selected="true">All Games</button>
     <button type="button" class="filter-pill" data-filter="favorites" role="tab" aria-selected="false">Favorites</button>
-    <input type="search" class="search-input" id="arcadeSearch" placeholder="Search games…" aria-label="Search games">
   </div>
-
-  <section class="engage-bar" id="engageBar" aria-label="Continue where you left off"></section>
 
   <section class="arcade" id="arcade" aria-label="Game selection"></section>
 </main>
@@ -127,15 +124,12 @@
   }
 
   let currentFilter = 'all';
-  let searchText = '';
 
   function applyFilter() {
     const cards = document.querySelectorAll('#arcade .cart');
     let visibleCount = 0;
     cards.forEach(c => {
-      const matchesFilter = currentFilter === 'all' || (currentFilter === 'favorites' && Arcade.isFavorite(c.dataset.gameId));
-      const matchesSearch = !searchText || c.dataset.searchText.includes(searchText);
-      const show = matchesFilter && matchesSearch;
+      const show = currentFilter === 'all' || (currentFilter === 'favorites' && Arcade.isFavorite(c.dataset.gameId));
       c.style.display = show ? '' : 'none';
       if (show) visibleCount++;
     });
@@ -144,20 +138,13 @@
       if (!empty) {
         empty = document.createElement('div');
         empty.className = 'filter-empty';
+        empty.textContent = 'No favorites yet — tap the heart on a cartridge to pin it here.';
         document.getElementById('arcade').appendChild(empty);
       }
-      empty.textContent = searchText
-        ? 'No games match “' + searchText + '”.'
-        : 'No favorites yet — tap the heart on a cartridge to pin it here.';
     } else if (empty) {
       empty.remove();
     }
   }
-
-  document.getElementById('arcadeSearch').addEventListener('input', (e) => {
-    searchText = e.target.value.trim().toLowerCase();
-    applyFilter();
-  });
 
   document.querySelectorAll('.filter-pill').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -177,7 +164,7 @@
       const fav = Arcade.isFavorite(g.id);
       const code = String(i + 1).padStart(2, '0');
       return `
-        <a class="cart" href="${g.href}" data-game-id="${g.id}" data-search-text="${(g.title + ' ' + g.desc + ' ' + g.category).toLowerCase()}">
+        <a class="cart" href="${g.href}" data-game-id="${g.id}">
           <div class="cart-plate">
             <div class="cart-plate-left">
               <button type="button" class="cart-fav${fav ? ' active' : ''}" data-fav="${g.id}" aria-label="Toggle favorite">${heartIcon(fav)}</button>
@@ -223,36 +210,6 @@
     applyFilter();
   }
   renderArcade();
-
-  function renderEngageBar() {
-    const bar = document.getElementById('engageBar');
-    const chips = [];
-
-    let lastGame = null, lastTime = 0;
-    Arcade.GAMES.forEach(g => {
-      const t = Arcade.getLastPlayed(g.id);
-      if (t > lastTime) { lastTime = t; lastGame = g; }
-    });
-    if (lastGame) {
-      chips.push(`<a class="continue-card" href="${lastGame.href}"><span class="cc-dot"></span>Continue <b>${lastGame.title}</b></a>`);
-    }
-
-    const streak = Arcade.getStreakDays();
-    if (streak >= 2) {
-      chips.push(`<span class="info-chip">&#128293; <b>${streak}</b>-day streak</span>`);
-    }
-
-    const unlocked = Arcade.getUnlocked();
-    const ids = Object.keys(unlocked);
-    if (ids.length) {
-      let latestId = ids[0];
-      ids.forEach(id => { if (unlocked[id].date > unlocked[latestId].date) latestId = id; });
-      chips.push(`<span class="info-chip">&#127942; Latest: <b>${unlocked[latestId].title}</b></span>`);
-    }
-
-    bar.innerHTML = chips.join('');
-  }
-  renderEngageBar();
 
   // Personalize the hero once a profile exists.
   (function personalize() {

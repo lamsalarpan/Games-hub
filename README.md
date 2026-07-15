@@ -48,22 +48,6 @@ itself ("Welcome back, ‹name›") once a profile is set.
 button on each cartridge in the hub grid, and power the "Favorites" pill
 in the filter bar.
 
-## Homepage engagement bar
-
-`index.html` renders a small strip above the grid (`#engageBar`) built
-entirely from real `Arcade` data — it stays empty (and hidden) for a
-brand-new player:
-
-- **Continue Playing** — the most recently played game, from `Arcade.getLastPlayed(id)`.
-- **Daily streak** — `Arcade.getStreakDays()` counts consecutive calendar
-  days with at least one logged run (`recordPlayDay()` runs once per
-  `logRun()` call, so every game contributes automatically). Two
-  achievements (`streak_3`, `streak_7`) ride on the same counter.
-- **Latest trophy** — the most recently unlocked achievement from `Arcade.getUnlocked()`.
-
-The search box (`#arcadeSearch`) filters the grid by title/description/category
-client-side and combines with the existing All/Favorites pill.
-
 ## Desktop phone-mockup frame
 
 On any viewport ≥861px wide (`assets/js/common.js`, runs on every page
