@@ -23,13 +23,27 @@
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
     background:radial-gradient(60% 50% at 50% 38%, rgba(127,216,143,0.09), transparent 70%);
   }
-  .stage-wrap, .hud{ position:relative; z-index:1; }
+  .stage-wrap{ position:relative; z-index:1; }
   html,body{
     height:100%;
     overflow:hidden;
     touch-action:none;
     overscroll-behavior:none;
     -webkit-user-select:none; user-select:none;
+  }
+
+  /* ---- Forced landscape on portrait phones ----
+     Dino Run wants a wide play area; a portrait phone gives it almost
+     none. Rather than rely on the (unreliable, fullscreen-only) Screen
+     Orientation API, this rotates the whole page 90° with a transform —
+     which also makes <body> the containing block for every fixed-position
+     child (nav, HUD, overlays), so they rotate as one cohesive unit. Only
+     engaged during actual gameplay; menus and game-over stay upright. */
+  body.force-landscape{
+    position:fixed; top:50%; left:50%;
+    width:100vh; height:100vw;
+    transform:translate(-50%, -50%) rotate(90deg);
+    transform-origin:center center;
   }
 
   /* ---- Game stage (dino-specific canvas sizing/frame) ---- */
@@ -53,7 +67,7 @@
 <nav class="nav">
   <div class="nav-left">
     <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
-      <img src="../logo.png" alt="Arpan Lamsal logo">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
       <span class="nav-title">Dino Run</span>
     </a>
     <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
@@ -74,7 +88,7 @@
 <!-- Start overlay -->
 <div class="overlay show" id="startOverlay">
   <div class="panel">
-    <img class="mark" src="../logo.png" alt="">
+    <img class="mark" src="../faviconset/logo.png" alt="">
     <h1>Choose your pace.</h1>
     <div class="sub">Space / Up · Click · Tap</div>
     <div class="option-list" id="diffRow">
@@ -140,10 +154,29 @@
   function viewportH(){
     return window.visualViewport ? window.visualViewport.height : window.innerHeight;
   }
+
+  // ---- Forced landscape (portrait phones only, gameplay only) ----
+  let landscapeLockActive = false;
+  function isPortraitMobile(){
+    return window.matchMedia('(max-width: 860px)').matches && window.innerHeight > window.innerWidth;
+  }
+  function applyRotation(){
+    if (!landscapeLockActive) { document.body.classList.remove('force-landscape'); return; }
+    document.body.classList.toggle('force-landscape', isPortraitMobile());
+    queueResize();
+  }
+
   function resize(){
     DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
-    const maxW = Math.min(window.innerWidth * 0.94, 860);
-    const maxH = Math.max(200, viewportH() - 64 - 24);
+    const rotated = document.body.classList.contains('force-landscape');
+    // When rotated, the space actually available for the "width" of the
+    // game is the device's real height (and vice versa) — the page is
+    // visually turned sideways even though window.innerWidth/Height still
+    // report the true, un-rotated physical viewport.
+    const viewW = rotated ? viewportH() : window.innerWidth;
+    const viewH = rotated ? window.innerWidth : viewportH();
+    const maxW = Math.min(viewW * 0.94, 860);
+    const maxH = Math.max(200, viewH - 64 - 24);
     let w = maxW, h = w / 2.15;
     if (h > maxH){ h = maxH; w = h * 2.15; }
     W = Math.round(w); H = Math.round(h);
@@ -166,8 +199,8 @@
     resizeQueued = true;
     requestAnimationFrame(() => { resizeQueued = false; resize(); });
   }
-  window.addEventListener('resize', queueResize);
-  window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+  window.addEventListener('resize', () => { applyRotation(); queueResize(); });
+  window.addEventListener('orientationchange', () => setTimeout(() => { applyRotation(); resize(); }, 50));
   if (window.visualViewport) window.visualViewport.addEventListener('resize', queueResize);
 
   // Three difficulty tiers. Speed/ramp/spawn-interval/crow-bias/boulder-unlock
@@ -286,6 +319,8 @@
   function startGame(diff){
     if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
     refreshBest();
+    landscapeLockActive = true;
+    applyRotation();
     reset();
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
@@ -297,6 +332,8 @@
   function endGame(){
     state = 'over';
     sfxHit();
+    landscapeLockActive = false;
+    applyRotation();
     shakeTime = 14; shakeMag = Math.max(6, H*0.03);
     document.getElementById('score').classList.remove('show');
     const isNewBest = score > best;
@@ -969,6 +1006,14 @@
 
   reset();
   loop();
+  window.addEventListener('arcade:pause', () => {
+    landscapeLockActive = false;
+    applyRotation();
+  });
+  window.addEventListener('arcade:resume', () => {
+    if (state === 'playing') { landscapeLockActive = true; applyRotation(); }
+  });
+
   Arcade.mountPanels({ gameId: 'dino' });
   Arcade.mountPauseMenu();
 })();

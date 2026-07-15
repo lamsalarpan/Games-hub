@@ -169,17 +169,17 @@ window.Arcade = (function () {
     },
     {
       id: 'brickbreaker', title: 'Brick Breaker', href: 'brick-breaker/index.html',
-      accent: '#e8683a', category: 'Arcade', difficulty: 'Medium', playTime: '3–6 min',
-      desc: 'Break every brick. Chain explosives, catch power-ups, clear the level.',
-      icon: `<defs><linearGradient id="g-brick" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
-      </linearGradient></defs>
-      <rect x="18" y="20" width="26" height="12" rx="2" fill="url(#g-brick)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <rect x="46" y="20" width="26" height="12" rx="2" fill="#e8683a" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <rect x="18" y="34" width="26" height="12" rx="2" fill="#8a8880" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
-      <rect x="46" y="34" width="26" height="12" rx="2" fill="url(#g-brick)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" opacity="0.85"/>
-      <rect x="38" y="70" width="24" height="7" rx="3.5" fill="url(#g-brick)"/>
-      <circle cx="50" cy="60" r="5" fill="#f0ede6"/>`
+      accent: '#e8b55a', category: 'Arcade', difficulty: 'Medium', playTime: '2–5 min',
+      desc: 'Steer the paddle, keep the ball alive, and clear the wall level by level.',
+      icon: `<rect x="18" y="18" width="14" height="9" rx="1.5" fill="#e8683a"/>
+      <rect x="34" y="18" width="14" height="9" rx="1.5" fill="#e0a63c"/>
+      <rect x="50" y="18" width="14" height="9" rx="1.5" fill="#e0a63c"/>
+      <rect x="66" y="18" width="14" height="9" rx="1.5" fill="#e8683a"/>
+      <rect x="26" y="29" width="14" height="9" rx="1.5" fill="#e8b55a"/>
+      <rect x="42" y="29" width="14" height="9" rx="1.5" fill="#c8973a"/>
+      <rect x="58" y="29" width="14" height="9" rx="1.5" fill="#e8b55a"/>
+      <circle cx="50" cy="58" r="5" fill="#f0ede6"/>
+      <rect x="34" y="80" width="32" height="7" rx="3.5" fill="#e8b55a"/>`
     }
   ];
 
@@ -308,8 +308,6 @@ window.Arcade = (function () {
     { id: 'ten_runs', title: 'Warming Up', desc: 'Complete 10 runs across any games' },
     { id: 'fifty_runs', title: 'Arcade Regular', desc: 'Complete 50 runs across any games' },
     { id: 'completionist', title: 'Completionist', desc: 'Play every game in the hub' },
-    { id: 'streak_3', title: 'Habit Forming', desc: 'Play the hub on 3 days in a row' },
-    { id: 'streak_7', title: 'Dedicated', desc: 'Play the hub on 7 days in a row' },
     { id: 'first_favorite', title: 'Picked A Favorite', desc: 'Favorite your first game' },
     { id: 'offline_ready', title: 'Off The Grid', desc: 'Save the hub for offline play' },
     { id: 'flappy_10', title: 'Pipe Dream', desc: 'Score 10 in Flappy Bird' },
@@ -331,18 +329,15 @@ window.Arcade = (function () {
     { id: 'stacktower_50', title: 'Skyscraper', desc: 'Stack 50 blocks in Stack Tower' },
     { id: 'stacktower_combo10', title: 'Perfect Ten', desc: 'Reach a 10x perfect combo in Stack Tower' },
     { id: 'hard_try_stacktower', title: 'Hard Mode', desc: 'Play Stack Tower on Hard' },
-    { id: 'brickbreaker_bricks100', title: 'Wrecking Ball', desc: 'Destroy 100 bricks in Brick Breaker' },
-    { id: 'brickbreaker_bricks1000', title: 'Demolition Expert', desc: 'Destroy 1000 bricks in Brick Breaker' },
-    { id: 'brickbreaker_combo20', title: 'Combo Master', desc: 'Reach a 20x combo in Brick Breaker' },
-    { id: 'brickbreaker_perfect', title: 'Flawless Run', desc: 'Clear a level without losing a life in Brick Breaker' },
-    { id: 'brickbreaker_level10', title: 'Level 10 Clear', desc: 'Reach level 10 in Brick Breaker' },
+    { id: 'brickbreaker_30', title: 'Wall Breaker', desc: 'Break 30 bricks in a single run of Brick Breaker' },
+    { id: 'brickbreaker_lvl3', title: 'Demolition Crew', desc: 'Clear 3 levels in one run of Brick Breaker' },
     { id: 'hard_try_brickbreaker', title: 'Hard Mode', desc: 'Play Brick Breaker on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 240 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {
@@ -450,34 +445,7 @@ window.Arcade = (function () {
   const PLAYS_KEY = 'arcade_total_plays_v1';
   const GAME_PLAYS_PREFIX = 'arcade_gameplays_';
   const LAST_PLAYED_PREFIX = 'arcade_lastplayed_';
-  const PLAY_DAYS_KEY = 'arcade_play_days_v1';
-  function dayStr(d) {
-    d = d || new Date();
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-  }
-  function recordPlayDay() {
-    let days = [];
-    try { days = JSON.parse(localStorage.getItem(PLAY_DAYS_KEY) || '[]'); } catch (e) {}
-    const t = dayStr();
-    if (!days.includes(t)) {
-      days.push(t);
-      if (days.length > 400) days = days.slice(days.length - 400);
-      localStorage.setItem(PLAY_DAYS_KEY, JSON.stringify(days));
-    }
-  }
-  function getStreakDays() {
-    let days = [];
-    try { days = JSON.parse(localStorage.getItem(PLAY_DAYS_KEY) || '[]'); } catch (e) { return 0; }
-    if (!days.length) return 0;
-    const set = new Set(days);
-    let streak = 0;
-    const cursor = new Date();
-    if (!set.has(dayStr(cursor))) cursor.setDate(cursor.getDate() - 1);
-    while (set.has(dayStr(cursor))) { streak++; cursor.setDate(cursor.getDate() - 1); }
-    return streak;
-  }
   function logRun(gameId, score, difficulty, durationSec) {
-    recordPlayDay();
     const key = RUNS_PREFIX + gameId;
     let runs = [];
     try { runs = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) {}
@@ -504,9 +472,6 @@ window.Arcade = (function () {
     if (difficulty === 'hard') unlock('hard_try_' + gameId, 'Hard Mode', 'Play ' + gameLabel(gameId) + ' on Hard');
     const playedGames = GAMES.filter(g => getRuns(g.id).length > 0).map(g => g.id);
     if (playedGames.length >= GAMES.length) unlock('completionist', 'Completionist', 'Play every game in the hub');
-    const streak = getStreakDays();
-    if (streak >= 3) unlock('streak_3', 'Habit Forming', 'Play the hub on 3 days in a row');
-    if (streak >= 7) unlock('streak_7', 'Dedicated', 'Play the hub on 7 days in a row');
 
     return runs;
   }
@@ -542,7 +507,7 @@ window.Arcade = (function () {
      that represents "progress" — but intentionally leaves favorites and
      preferences (theme, sound, difficulty) untouched. */
   const GAME_BEST_KEYS = {
-    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best'
+    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best'
   };
   const EXTRA_SCORE_KEYS = ['ttt_al_pvc_scores', 'ttt_al_pvp_scores'];
   function resetAllProgress() {
@@ -944,106 +909,122 @@ window.Arcade = (function () {
   function isPaused() { return paused; }
 
   function mountPauseMenu() {
-    const homeBtn = document.querySelector('.nav-home-btn');
-    if (!homeBtn) return;
-    const hubHref = homeBtn.getAttribute('href') || '../index.html';
+    try {
+      const homeBtn = document.querySelector('.nav-home-btn');
+      if (!homeBtn) return;
+      const hubHref = homeBtn.getAttribute('href') || '../index.html';
 
-    const wrap = document.createElement('div');
-    wrap.className = 'pause-wrap';
-    wrap.innerHTML = `
-      <button type="button" class="nav-home-btn" id="arcadePauseBtn" aria-haspopup="true" aria-expanded="false">
-        <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
-        <span>Pause</span>
-      </button>
-      <div class="pause-dropdown" id="arcadePauseDropdown">
-        <button type="button" class="pause-dd-item" id="arcadeResumeBtn">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Resume
+      const wrap = document.createElement('div');
+      wrap.className = 'pause-wrap';
+      wrap.innerHTML = `
+        <button type="button" class="nav-home-btn" id="arcadePauseBtn" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          <span>Pause</span>
         </button>
-        <button type="button" class="pause-dd-item" id="arcadeMuteToggleBtn"></button>
-        <button type="button" class="pause-dd-item danger" id="arcadeExitBtn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Exit to Hub
-        </button>
-      </div>`;
-    homeBtn.replaceWith(wrap);
+        <div class="pause-dropdown" id="arcadePauseDropdown">
+          <button type="button" class="pause-dd-item" id="arcadeResumeBtn">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Resume
+          </button>
+          <button type="button" class="pause-dd-item" id="arcadeMuteToggleBtn"></button>
+          <button type="button" class="pause-dd-item danger" id="arcadeExitBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg> Exit to Hub
+          </button>
+        </div>`;
+      homeBtn.replaceWith(wrap);
 
-    const confirmOverlay = document.createElement('div');
-    confirmOverlay.className = 'overlay';
-    confirmOverlay.id = 'arcadeExitConfirmOverlay';
-    confirmOverlay.innerHTML = `
-      <div class="panel" style="text-align:center;">
-        <div class="sub">Exit Game</div>
-        <h1 style="font-size:1.8rem;">Are you sure?</h1>
-        <p class="hint">Leaving now ends your current run.</p>
-        <button type="button" class="btn-primary" id="arcadeExitConfirmYes">Exit to Hub</button>
-        <button type="button" class="back-link" id="arcadeExitConfirmNo" style="margin-top:0.8rem;">Keep Playing</button>
-      </div>`;
-    document.body.appendChild(confirmOverlay);
+      const confirmOverlay = document.createElement('div');
+      confirmOverlay.className = 'overlay';
+      confirmOverlay.id = 'arcadeExitConfirmOverlay';
+      confirmOverlay.innerHTML = `
+        <div class="panel" style="text-align:center;">
+          <div class="sub">Exit Game</div>
+          <h1 style="font-size:1.8rem;">Are you sure?</h1>
+          <p class="hint">Leaving now ends your current run.</p>
+          <button type="button" class="btn-primary" id="arcadeExitConfirmYes">Exit to Hub</button>
+          <button type="button" class="back-link" id="arcadeExitConfirmNo" style="margin-top:0.8rem;">Keep Playing</button>
+        </div>`;
+      document.body.appendChild(confirmOverlay);
 
-    const pauseBtn = document.getElementById('arcadePauseBtn');
-    const dropdown = document.getElementById('arcadePauseDropdown');
-    const muteBtn = document.getElementById('arcadeMuteToggleBtn');
+      const pauseBtn = document.getElementById('arcadePauseBtn');
+      const dropdown = document.getElementById('arcadePauseDropdown');
+      const muteBtn = document.getElementById('arcadeMuteToggleBtn');
 
-    function refreshMuteLabel() {
-      const muted = getSettings().muted;
-      muteBtn.innerHTML = muted
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/></svg> Play Sound'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Stop Sound';
-    }
-    refreshMuteLabel();
-
-    function openMenu() {
-      paused = true;
-      dropdown.classList.add('show');
-      pauseBtn.setAttribute('aria-expanded', 'true');
-      try { window.dispatchEvent(new CustomEvent('arcade:pause')); } catch (e) {}
-    }
-    function closeMenu(resume) {
-      dropdown.classList.remove('show');
-      pauseBtn.setAttribute('aria-expanded', 'false');
-      if (resume) {
-        paused = false;
-        try { window.dispatchEvent(new CustomEvent('arcade:resume')); } catch (e) {}
+      function refreshMuteLabel() {
+        const muted = getSettings().muted;
+        muteBtn.innerHTML = muted
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M23 9l-6 6M17 9l6 6"/></svg> Play Sound'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Stop Sound';
       }
-    }
-
-    pauseBtn.addEventListener('click', () => {
-      if (dropdown.classList.contains('show')) closeMenu(true);
-      else openMenu();
-    });
-    document.getElementById('arcadeResumeBtn').addEventListener('click', () => closeMenu(true));
-    document.addEventListener('pointerdown', (e) => {
-      if (dropdown.classList.contains('show') && !wrap.contains(e.target)) closeMenu(true);
-    });
-    muteBtn.addEventListener('click', () => {
-      setSetting('muted', !getSettings().muted);
       refreshMuteLabel();
-    });
-    document.getElementById('arcadeExitBtn').addEventListener('click', () => {
-      dropdown.classList.remove('show');
-      confirmOverlay.classList.add('show');
-    });
-    document.getElementById('arcadeExitConfirmNo').addEventListener('click', () => {
-      confirmOverlay.classList.remove('show');
-      closeMenu(true);
-    });
-    document.getElementById('arcadeExitConfirmYes').addEventListener('click', () => {
-      window.location.href = hubHref;
-    });
 
-    // The very first screen a player sees (difficulty picker, or the
-    // mode menu in tic-tac-toe) gets its own direct Exit link too — no
-    // confirmation needed since no run is in progress yet.
-    const introOverlay = document.querySelector('.overlay.show');
-    if (introOverlay) {
-      const introPanel = introOverlay.querySelector('.panel');
-      if (introPanel && !introPanel.querySelector('.intro-exit-btn')) {
-        const introExit = document.createElement('button');
-        introExit.type = 'button';
-        introExit.className = 'back-link intro-exit-btn';
-        introExit.textContent = 'Exit to Hub';
-        introExit.addEventListener('click', () => { window.location.href = hubHref; });
-        introPanel.appendChild(introExit);
+      function openMenu() {
+        paused = true;
+        dropdown.classList.add('show');
+        pauseBtn.setAttribute('aria-expanded', 'true');
+        try { window.dispatchEvent(new CustomEvent('arcade:pause')); } catch (e) {}
       }
+      function closeMenu(resume) {
+        dropdown.classList.remove('show');
+        pauseBtn.setAttribute('aria-expanded', 'false');
+        if (resume) {
+          paused = false;
+          try { window.dispatchEvent(new CustomEvent('arcade:resume')); } catch (e) {}
+        }
+      }
+
+      pauseBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (dropdown.classList.contains('show')) closeMenu(true);
+        else openMenu();
+      });
+      document.getElementById('arcadeResumeBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeMenu(true);
+      });
+      // Click-outside-to-close, using the click event (not pointerdown) so it
+      // fires strictly after the pause button's own click has already been
+      // processed — pointerdown fires earlier in the sequence and can race
+      // with the button's own toggle logic on some browsers/devices.
+      document.addEventListener('click', (e) => {
+        if (dropdown.classList.contains('show') && !wrap.contains(e.target)) closeMenu(true);
+      });
+      muteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setSetting('muted', !getSettings().muted);
+        refreshMuteLabel();
+      });
+      document.getElementById('arcadeExitBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        dropdown.classList.remove('show');
+        confirmOverlay.classList.add('show');
+      });
+      confirmOverlay.addEventListener('click', (e) => { if (e.target === confirmOverlay) { confirmOverlay.classList.remove('show'); closeMenu(true); } });
+      document.getElementById('arcadeExitConfirmNo').addEventListener('click', () => {
+        confirmOverlay.classList.remove('show');
+        closeMenu(true);
+      });
+      document.getElementById('arcadeExitConfirmYes').addEventListener('click', () => {
+        window.location.href = hubHref;
+      });
+
+      // The very first screen a player sees (difficulty picker, or the
+      // mode menu in tic-tac-toe) gets its own direct Exit link too — no
+      // confirmation needed since no run is in progress yet.
+      const introOverlay = document.querySelector('.overlay.show');
+      if (introOverlay) {
+        const introPanel = introOverlay.querySelector('.panel');
+        if (introPanel && !introPanel.querySelector('.intro-exit-btn')) {
+          const introExit = document.createElement('button');
+          introExit.type = 'button';
+          introExit.className = 'back-link intro-exit-btn';
+          introExit.textContent = 'Exit to Hub';
+          introExit.addEventListener('click', () => { window.location.href = hubHref; });
+          introPanel.appendChild(introExit);
+        }
+      }
+    } catch (err) {
+      console.error('Arcade.mountPauseMenu failed:', err);
     }
   }
 
@@ -1053,7 +1034,6 @@ window.Arcade = (function () {
     registerServiceWorker: registerServiceWorker, unlock: unlock, isUnlocked: isUnlocked,
     getUnlocked: getUnlocked, logRun: logRun, getRuns: getRuns, getTotalPlays: getTotalPlays,
     getGamePlays: getGamePlays, getLastPlayed: getLastPlayed, getTotalPlayTimeSec: getTotalPlayTimeSec,
-    getStreakDays: getStreakDays,
     formatDuration: formatDuration, getGamesPlayedCount: getGamesPlayedCount,
     getFavoriteGameLabel: getFavoriteGameLabel, getHighestScoreOverall: getHighestScoreOverall,
     getAverageScoreOverall: getAverageScoreOverall, getCompletionPercent: getCompletionPercent,

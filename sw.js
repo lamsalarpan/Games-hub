@@ -9,14 +9,14 @@
 
    Bump CACHE_NAME whenever this list changes so old caches get swept. */
 
-const CACHE_NAME = 'game-hub-v11';
+const CACHE_NAME = 'game-hub-v13';
 const NETWORK_TIMEOUT_MS = 3500;
 
 const PRECACHE_URLS = [
   './',
   './index.html',
   './manifest.json',
-  './logo.png',
+  './faviconset/logo.png',
   './style.css',
   './assets/css/theme.css',
   './assets/js/common.js',

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub | Arpan Lamsal</title>
-<meta name="description" content="Game Hub — seven games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake, Stack Tower and Brick Breaker, built from scratch by Arpan Lamsal.">
+<meta name="description" content="Game Hub — five games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter and Snake, built from scratch by Arpan Lamsal.">
 
 <link rel="icon" href="faviconset/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="16x16" href="faviconset/favicon-16x16.png">
@@ -30,7 +30,7 @@
 <nav class="nav">
   <div class="nav-left">
     <a href="index.html" class="nav-logo" aria-label="Game Hub home">
-      <img src="logo.png" alt="">
+      <img src="faviconset/logo.png" alt="">
       <span class="nav-title">Game Hub</span>
     </a>
   </div>
@@ -38,12 +38,12 @@
 
 <main>
   <section class="hero">
-    <p class="eyebrow" id="heroEyebrow">7 games &middot; 1 console</p>
+    <p class="eyebrow" id="heroEyebrow">5 games &middot; 1 console</p>
     <h1 id="heroTitle">Press start on <em>something&nbsp;fun.</em></h1>
-    <p class="lede">Seven games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
+    <p class="lede">Five games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
 
     <div class="hero-stats">
-      <div class="stat"><b>07</b><span>Cartridges</span></div>
+      <div class="stat"><b>05</b><span>Cartridges</span></div>
       <div class="divider"></div>
       <div class="stat"><b>&infin;</b><span>Free replays</span></div>
       <div class="divider"></div>
@@ -101,22 +101,6 @@
     field.appendChild(frag);
   })();
 
-  // Per-game mini gameplay preview markup + a difficulty→dot count map,
-  // keyed by the same ids used in Arcade.GAMES (single source of truth).
-  const PREVIEWS = {
-    flappy: `<div class="pipe pA"></div><div class="pipe pA top"></div><div class="pipe pB"></div><div class="pipe pB top"></div><div class="bird"></div>`,
-    dino: `<div class="ground"></div><div class="dino"></div><div class="cactus c1"></div><div class="cactus c2"></div>`,
-    tictactoe: `<div class="board">
-        <div><span class="mark x1">×</span></div><div></div><div></div>
-        <div></div><div><span class="mark o1">○</span></div><div></div>
-        <div></div><div></div><div><span class="mark x3">×</span></div>
-      </div><div class="winline"></div>`,
-    roadfighter: `<div class="lane"></div><div class="rival r1"></div><div class="rival r2"></div><div class="car"></div>`,
-    snake: `<div class="seg s1"></div><div class="seg s2"></div><div class="seg s3"></div><div class="seg s4"></div><div class="food"></div>`,
-    stacktower: `<div class="tower"><div class="tblock b1"></div><div class="tblock b2"></div><div class="tblock b3"></div></div><div class="mover"></div>`,
-    brickbreaker: `<div class="bb-row r1"><span></span><span></span><span></span><span></span><span></span></div><div class="bb-row r2"><span></span><span></span><span></span><span></span><span></span></div><div class="bb-ball"></div><div class="bb-paddle"></div>`
-  };
-  const PREVIEW_CLASS = { flappy: 'p-flappy', dino: 'p-dino', tictactoe: 'p-ttt', roadfighter: 'p-road', snake: 'p-snake', stacktower: 'p-stacktower', brickbreaker: 'p-brick' };
   const DOTS_BY_DIFFICULTY = { Easy: 1, Medium: 2, Hard: 3 };
 
   function heartIcon(filled) {
@@ -172,7 +156,9 @@
             </div>
             <span class="cart-genre">${g.category}</span>
           </div>
-          <div class="screen ${PREVIEW_CLASS[g.id] || ''}">${PREVIEWS[g.id] || ''}</div>
+          <div class="screen">
+            <svg class="game-icon" viewBox="0 0 100 100" aria-hidden="true">${g.icon}</svg>
+          </div>
           <div class="cart-body">
             <h3>${g.title}</h3>
             <p>${g.desc}</p>
