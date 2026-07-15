@@ -10,12 +10,10 @@ index.html               ← the hub (dynamic game grid, read from Arcade.GAMES,
 manifest.json, sw.js      ← PWA / offline support (network-first, always fresh)
 assets/
   css/theme.css           ← shared design tokens + components (nav, overlays,
-                             buttons, HUD, option cards, footer, profile panel,
-                             desktop phone-mockup frame...)
+                             buttons, HUD, option cards, footer, profile panel)
   js/common.js             ← shared helpers (synthesized SFX, best-score
                              storage, toasts, achievements, player profile,
-                             favorites, settings, SW registration, and the
-                             desktop phone-mockup frame builder)
+                             favorites, settings, SW registration)
 flappy/index.html
 dino/index.html
 tic-tac-toe/index.html
@@ -47,17 +45,6 @@ itself ("Welcome back, ‹name›") once a profile is set.
 `Arcade.toggleFavorite(gameId)` / `Arcade.isFavorite(gameId)` back the heart
 button on each cartridge in the hub grid — purely local, no UI elsewhere
 depends on it yet, but it's there for a future "Favorites only" filter.
-
-## Desktop phone-mockup frame
-
-On any viewport ≥861px wide (`assets/js/common.js`, runs on every page
-automatically), the page hides itself, then rebuilds as a phone-shaped
-bezel containing an `<iframe>` pointed at that same URL. The framed copy
-gets a genuinely small real viewport (measures itself against the phone's
-dimensions, not the desktop window), so canvas games size themselves
-correctly with no per-game changes. Actual phones/tablets are under the
-width threshold and always render natively, full-bleed. A "Open without
-the frame" link next to the mockup opens the real page in a new tab.
 
 ## Design consistency (strict, across every page)
 

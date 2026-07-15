@@ -5,68 +5,6 @@
    instead of re-implementing them per-file.
    ========================================== */
 
-/* ---- Desktop "phone mockup" frame ----
-   On a laptop/desktop viewport, the whole page (hub or any game) renders
-   inside a phone-shaped bezel via an iframe pointed at the very same URL.
-   That gives the framed copy a genuinely small viewport of its own, so
-   canvas games size themselves against real phone dimensions instead of
-   the full desktop window — no per-game resize code needs to change.
-   Actual phones/tablets are under the width threshold and render natively. */
-(function () {
-  var PREF_KEY = 'arcade_prefer_regular';
-  try {
-    if (window.self !== window.top) return;           // already the framed copy
-    if (window.__arcadeNoFrame) return;                // manual escape hatch
-    var urlSaysRegular = /[?&]noframe=1(&|$)/.test(window.location.search);
-    var storedRegular = localStorage.getItem(PREF_KEY) === '1';
-    if (urlSaysRegular) localStorage.setItem(PREF_KEY, '1'); // clicking the link makes it stick
-    var regularView = urlSaysRegular || storedRegular;
-    if (!window.matchMedia('(min-width: 861px)').matches) return;
-    if (regularView) {
-      window.addEventListener('DOMContentLoaded', function () {
-        var back = document.createElement('a');
-        back.className = 'device-reenable mono';
-        back.href = '#';
-        back.textContent = 'Preview in phone frame';
-        back.addEventListener('click', function (e) {
-          e.preventDefault();
-          localStorage.removeItem(PREF_KEY);
-          window.location.href = window.location.href.replace(/[?&]noframe=1/, '');
-        });
-        document.body.appendChild(back);
-      });
-      return;
-    }
-    document.documentElement.style.visibility = 'hidden';
-    window.addEventListener('DOMContentLoaded', function () {
-      try { buildDeviceFrame(); }
-      catch (e) { document.documentElement.style.visibility = 'visible'; }
-    });
-  } catch (e) {}
-
-  function buildDeviceFrame() {
-    var url = window.location.href;
-    var stage = document.createElement('div');
-    stage.className = 'device-stage';
-    stage.innerHTML =
-      '<div class="device-stage-label mono">Game Hub &middot; Desktop Preview</div>' +
-      '<div class="device-phone">' +
-        '<div class="device-notch"></div>' +
-        '<iframe class="device-screen" src="' + url + '" title="Game Hub"></iframe>' +
-        '<div class="device-home"></div>' +
-      '</div>' +
-      '<a class="device-fullscreen mono" href="#" id="arcadeRegularViewLink">View regular (non-mobile) layout &rarr;</a>';
-    document.body.innerHTML = '';
-    document.body.appendChild(stage);
-    document.getElementById('arcadeRegularViewLink').addEventListener('click', function (e) {
-      e.preventDefault();
-      localStorage.setItem(PREF_KEY, '1');
-      window.location.reload();
-    });
-    document.documentElement.style.visibility = 'visible';
-  }
-})();
-
 window.Arcade = (function () {
 
   /* ---- Shared game registry (single source of truth) ----
@@ -1010,17 +948,31 @@ window.Arcade = (function () {
 
       // The very first screen a player sees (difficulty picker, or the
       // mode menu in tic-tac-toe) gets its own direct Exit link too — no
-      // confirmation needed since no run is in progress yet.
+      // confirmation needed since no run is in progress yet. Where a
+      // difficulty/option list already exists, this becomes a matching
+      // 4th card in that same list rather than a separate small link.
       const introOverlay = document.querySelector('.overlay.show');
       if (introOverlay) {
         const introPanel = introOverlay.querySelector('.panel');
+        const optionList = introOverlay.querySelector('.option-list');
         if (introPanel && !introPanel.querySelector('.intro-exit-btn')) {
-          const introExit = document.createElement('button');
-          introExit.type = 'button';
-          introExit.className = 'back-link intro-exit-btn';
-          introExit.textContent = 'Exit to Hub';
-          introExit.addEventListener('click', () => { window.location.href = hubHref; });
-          introPanel.appendChild(introExit);
+          if (optionList) {
+            const homeCard = document.createElement('button');
+            homeCard.type = 'button';
+            homeCard.className = 'option-btn intro-exit-btn';
+            homeCard.innerHTML = `
+              <div class="opt-title">Home</div>
+              <div class="opt-desc">Head back to the Game Hub instead.</div>`;
+            homeCard.addEventListener('click', () => { window.location.href = hubHref; });
+            optionList.appendChild(homeCard);
+          } else {
+            const introExit = document.createElement('button');
+            introExit.type = 'button';
+            introExit.className = 'back-link intro-exit-btn';
+            introExit.textContent = 'Exit to Hub';
+            introExit.addEventListener('click', () => { window.location.href = hubHref; });
+            introPanel.appendChild(introExit);
+          }
         }
       }
     } catch (err) {

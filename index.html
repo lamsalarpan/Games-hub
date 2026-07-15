@@ -43,7 +43,7 @@
     <p class="lede">Five games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
 
     <div class="hero-stats">
-      <div class="stat"><b>05</b><span>Cartridges</span></div>
+      <div class="stat"><b id="cartCount">05</b><span>Cartridges</span></div>
       <div class="divider"></div>
       <div class="stat"><b>&infin;</b><span>Free replays</span></div>
       <div class="divider"></div>
@@ -52,7 +52,15 @@
       <div class="stat"><b>&check;</b><span>Works offline</span></div>
     </div>
 
-    <button type="button" class="btn-secondary" id="offlineBtn" style="width:auto; display:inline-block; margin-top:2.2rem; padding:0.7rem 1.4rem;">Save for offline play</button>
+    <button type="button" class="hero-offline-btn" id="offlineBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.5 5.5 0 0 0 6 19h12.5a4.5 4.5 0 0 0 .85-8.96Z"/><path d="M12 11v8M9 16l3 3 3-3"/></svg>
+      <span>Save for offline play</span>
+    </button>
+
+    <div class="scroll-cue">
+      <span>Swipe down</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
   </section>
 
   <div class="arcade-filters" role="tablist" aria-label="Filter games">
@@ -140,6 +148,7 @@
   });
 
   function renderArcade() {
+    document.getElementById('cartCount').textContent = String(Arcade.GAMES.length).padStart(2, '0');
     const wrap = document.getElementById('arcade');
     const on = DOTS_BY_DIFFICULTY;
     wrap.innerHTML = Arcade.GAMES.map((g, i) => {
