@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub | Arpan Lamsal</title>
-<meta name="description" content="Game Hub — five games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter and Snake, built from scratch by Arpan Lamsal.">
+<meta name="description" content="Game Hub — seven games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake, Stack Tower and Brick Breaker, built from scratch by Arpan Lamsal.">
 
 <link rel="icon" href="faviconset/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="16x16" href="faviconset/favicon-16x16.png">
@@ -30,7 +30,7 @@
 <nav class="nav">
   <div class="nav-left">
     <a href="index.html" class="nav-logo" aria-label="Game Hub home">
-      <img src="faviconset/logo.png" alt="">
+      <img src="logo.png" alt="">
       <span class="nav-title">Game Hub</span>
     </a>
   </div>
@@ -38,12 +38,12 @@
 
 <main>
   <section class="hero">
-    <p class="eyebrow" id="heroEyebrow">5 games &middot; 1 console</p>
+    <p class="eyebrow" id="heroEyebrow">7 games &middot; 1 console</p>
     <h1 id="heroTitle">Press start on <em>something&nbsp;fun.</em></h1>
-    <p class="lede">Five games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
+    <p class="lede">Seven games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
 
     <div class="hero-stats">
-      <div class="stat"><b>05</b><span>Cartridges</span></div>
+      <div class="stat"><b>07</b><span>Cartridges</span></div>
       <div class="divider"></div>
       <div class="stat"><b>&infin;</b><span>Free replays</span></div>
       <div class="divider"></div>
@@ -58,7 +58,10 @@
   <div class="arcade-filters" role="tablist" aria-label="Filter games">
     <button type="button" class="filter-pill active" data-filter="all" role="tab" aria-selected="true">All Games</button>
     <button type="button" class="filter-pill" data-filter="favorites" role="tab" aria-selected="false">Favorites</button>
+    <input type="search" class="search-input" id="arcadeSearch" placeholder="Search games…" aria-label="Search games">
   </div>
+
+  <section class="engage-bar" id="engageBar" aria-label="Continue where you left off"></section>
 
   <section class="arcade" id="arcade" aria-label="Game selection"></section>
 </main>
@@ -101,6 +104,22 @@
     field.appendChild(frag);
   })();
 
+  // Per-game mini gameplay preview markup + a difficulty→dot count map,
+  // keyed by the same ids used in Arcade.GAMES (single source of truth).
+  const PREVIEWS = {
+    flappy: `<div class="pipe pA"></div><div class="pipe pA top"></div><div class="pipe pB"></div><div class="pipe pB top"></div><div class="bird"></div>`,
+    dino: `<div class="ground"></div><div class="dino"></div><div class="cactus c1"></div><div class="cactus c2"></div>`,
+    tictactoe: `<div class="board">
+        <div><span class="mark x1">×</span></div><div></div><div></div>
+        <div></div><div><span class="mark o1">○</span></div><div></div>
+        <div></div><div></div><div><span class="mark x3">×</span></div>
+      </div><div class="winline"></div>`,
+    roadfighter: `<div class="lane"></div><div class="rival r1"></div><div class="rival r2"></div><div class="car"></div>`,
+    snake: `<div class="seg s1"></div><div class="seg s2"></div><div class="seg s3"></div><div class="seg s4"></div><div class="food"></div>`,
+    stacktower: `<div class="tower"><div class="tblock b1"></div><div class="tblock b2"></div><div class="tblock b3"></div></div><div class="mover"></div>`,
+    brickbreaker: `<div class="bb-row r1"><span></span><span></span><span></span><span></span><span></span></div><div class="bb-row r2"><span></span><span></span><span></span><span></span><span></span></div><div class="bb-ball"></div><div class="bb-paddle"></div>`
+  };
+  const PREVIEW_CLASS = { flappy: 'p-flappy', dino: 'p-dino', tictactoe: 'p-ttt', roadfighter: 'p-road', snake: 'p-snake', stacktower: 'p-stacktower', brickbreaker: 'p-brick' };
   const DOTS_BY_DIFFICULTY = { Easy: 1, Medium: 2, Hard: 3 };
 
   function heartIcon(filled) {
@@ -108,12 +127,15 @@
   }
 
   let currentFilter = 'all';
+  let searchText = '';
 
   function applyFilter() {
     const cards = document.querySelectorAll('#arcade .cart');
     let visibleCount = 0;
     cards.forEach(c => {
-      const show = currentFilter === 'all' || (currentFilter === 'favorites' && Arcade.isFavorite(c.dataset.gameId));
+      const matchesFilter = currentFilter === 'all' || (currentFilter === 'favorites' && Arcade.isFavorite(c.dataset.gameId));
+      const matchesSearch = !searchText || c.dataset.searchText.includes(searchText);
+      const show = matchesFilter && matchesSearch;
       c.style.display = show ? '' : 'none';
       if (show) visibleCount++;
     });
@@ -122,13 +144,20 @@
       if (!empty) {
         empty = document.createElement('div');
         empty.className = 'filter-empty';
-        empty.textContent = 'No favorites yet — tap the heart on a cartridge to pin it here.';
         document.getElementById('arcade').appendChild(empty);
       }
+      empty.textContent = searchText
+        ? 'No games match “' + searchText + '”.'
+        : 'No favorites yet — tap the heart on a cartridge to pin it here.';
     } else if (empty) {
       empty.remove();
     }
   }
+
+  document.getElementById('arcadeSearch').addEventListener('input', (e) => {
+    searchText = e.target.value.trim().toLowerCase();
+    applyFilter();
+  });
 
   document.querySelectorAll('.filter-pill').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -148,7 +177,7 @@
       const fav = Arcade.isFavorite(g.id);
       const code = String(i + 1).padStart(2, '0');
       return `
-        <a class="cart" href="${g.href}" data-game-id="${g.id}">
+        <a class="cart" href="${g.href}" data-game-id="${g.id}" data-search-text="${(g.title + ' ' + g.desc + ' ' + g.category).toLowerCase()}">
           <div class="cart-plate">
             <div class="cart-plate-left">
               <button type="button" class="cart-fav${fav ? ' active' : ''}" data-fav="${g.id}" aria-label="Toggle favorite">${heartIcon(fav)}</button>
@@ -156,9 +185,7 @@
             </div>
             <span class="cart-genre">${g.category}</span>
           </div>
-          <div class="screen">
-            <svg class="game-icon" viewBox="0 0 100 100" aria-hidden="true">${g.icon}</svg>
-          </div>
+          <div class="screen ${PREVIEW_CLASS[g.id] || ''}">${PREVIEWS[g.id] || ''}</div>
           <div class="cart-body">
             <h3>${g.title}</h3>
             <p>${g.desc}</p>
@@ -196,6 +223,36 @@
     applyFilter();
   }
   renderArcade();
+
+  function renderEngageBar() {
+    const bar = document.getElementById('engageBar');
+    const chips = [];
+
+    let lastGame = null, lastTime = 0;
+    Arcade.GAMES.forEach(g => {
+      const t = Arcade.getLastPlayed(g.id);
+      if (t > lastTime) { lastTime = t; lastGame = g; }
+    });
+    if (lastGame) {
+      chips.push(`<a class="continue-card" href="${lastGame.href}"><span class="cc-dot"></span>Continue <b>${lastGame.title}</b></a>`);
+    }
+
+    const streak = Arcade.getStreakDays();
+    if (streak >= 2) {
+      chips.push(`<span class="info-chip">&#128293; <b>${streak}</b>-day streak</span>`);
+    }
+
+    const unlocked = Arcade.getUnlocked();
+    const ids = Object.keys(unlocked);
+    if (ids.length) {
+      let latestId = ids[0];
+      ids.forEach(id => { if (unlocked[id].date > unlocked[latestId].date) latestId = id; });
+      chips.push(`<span class="info-chip">&#127942; Latest: <b>${unlocked[latestId].title}</b></span>`);
+    }
+
+    bar.innerHTML = chips.join('');
+  }
+  renderEngageBar();
 
   // Personalize the hero once a profile exists.
   (function personalize() {

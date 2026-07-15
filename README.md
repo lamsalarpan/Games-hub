@@ -23,7 +23,7 @@ Road-fighter/index.html
 snake/index.html
 stack-tower/index.html
 brick-breaker/index.html
-faviconset/ (favicons + logo.png)
+faviconset/, logo.png
 ```
 
 Every game page links `../assets/css/theme.css` and `../assets/js/common.js`
@@ -45,8 +45,24 @@ itself ("Welcome back, ‹name›") once a profile is set.
 ## Favorites
 
 `Arcade.toggleFavorite(gameId)` / `Arcade.isFavorite(gameId)` back the heart
-button on each cartridge in the hub grid — purely local, no UI elsewhere
-depends on it yet, but it's there for a future "Favorites only" filter.
+button on each cartridge in the hub grid, and power the "Favorites" pill
+in the filter bar.
+
+## Homepage engagement bar
+
+`index.html` renders a small strip above the grid (`#engageBar`) built
+entirely from real `Arcade` data — it stays empty (and hidden) for a
+brand-new player:
+
+- **Continue Playing** — the most recently played game, from `Arcade.getLastPlayed(id)`.
+- **Daily streak** — `Arcade.getStreakDays()` counts consecutive calendar
+  days with at least one logged run (`recordPlayDay()` runs once per
+  `logRun()` call, so every game contributes automatically). Two
+  achievements (`streak_3`, `streak_7`) ride on the same counter.
+- **Latest trophy** — the most recently unlocked achievement from `Arcade.getUnlocked()`.
+
+The search box (`#arcadeSearch`) filters the grid by title/description/category
+client-side and combines with the existing All/Favorites pill.
 
 ## Desktop phone-mockup frame
 
@@ -61,7 +77,7 @@ the frame" link next to the mockup opens the real page in a new tab.
 
 ## Design consistency (strict, across every page)
 
-- **Nav**: identical everywhere — logo (`faviconset/logo.png`, 38px, given visual
+- **Nav**: identical everywhere — logo (`logo.png`, 38px, given visual
   priority) + game title on the left, immediately followed by a "← Hub"
   pill that always links to `../index.html`. Nothing on the right.
 - **Difficulty / mode selection**: every game that has one uses the same
