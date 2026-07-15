@@ -343,6 +343,7 @@
     document.getElementById('finalBestDiff').textContent = diffLabel();
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
     Arcade.logRun('dino', score, difficulty);
     if (score >= 300) Arcade.unlock('dino_300', 'Marathon Runner', 'Score 300 in Dino Run');
     if (score >= 750) Arcade.unlock('dino_750', 'Prehistoric Legend', 'Score 750 in Dino Run');

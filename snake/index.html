@@ -224,6 +224,7 @@
     const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
 
     Arcade.logRun('snake', score, difficulty);
     if (score >= 10) Arcade.unlock('snake_10', 'Growing Pains', 'Score 10 in Snake');

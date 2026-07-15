@@ -366,6 +366,7 @@
     const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
     Arcade.logRun('roadfighter', score, difficulty);
     if (reason === 'fuel') Arcade.unlock('roadfighter_fuel', 'Fumes', 'Run clean out of fuel in Road Fighter');
     if (score >= 150) Arcade.unlock('roadfighter_150', 'Long Haul', 'Pass 150 cars in a single run of Road Fighter');

@@ -273,6 +273,7 @@
     document.getElementById('finalBestDiff').textContent = diffLabel();
     document.getElementById('newBestTag').classList.toggle('show', isNewBest);
     document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
     Arcade.logRun('flappy', score, difficulty);
     if (score >= 10) Arcade.unlock('flappy_10', 'Pipe Dream', 'Score 10 in Flappy Bird');
     if (score >= 30) Arcade.unlock('flappy_30', 'Sky Master', 'Score 30 in Flappy Bird');

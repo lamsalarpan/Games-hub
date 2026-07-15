@@ -112,6 +112,37 @@ em { font-style: italic; color: var(--gold-light); }
 }
 
 /* ══════════════════════════════
+   RECENTLY PLAYED
+══════════════════════════════ */
+.recent-section {
+  position: relative; z-index: 1;
+  max-width: 1180px; margin: 0 auto;
+  padding: 0.5rem 3rem 1.8rem;
+}
+.recent-heading { margin-bottom: 0.9rem; }
+.recent-row {
+  display: flex; gap: 0.9rem; overflow-x: auto;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.2rem;
+}
+.recent-row::-webkit-scrollbar { display: none; }
+.recent-card {
+  flex: 0 0 auto; width: 168px;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  padding: 0.9rem;
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 6px; text-decoration: none; color: var(--text-primary);
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.recent-card:hover { border-color: var(--border-strong); transform: translateY(-3px); }
+.recent-card svg { width: 30%; height: auto; align-self: center; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.3)); }
+.recent-card b { font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1rem; }
+.recent-card span {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em;
+  color: var(--text-muted); text-transform: uppercase;
+}
+
+/* ══════════════════════════════
    FILTER BAR
 ══════════════════════════════ */
 .arcade-filters {

@@ -325,14 +325,43 @@ window.Arcade = (function () {
       el = document.createElement('div');
       el.id = 'arcadeToast';
       el.className = 'toast';
-      el.setAttribute('role', 'status');
-      el.setAttribute('aria-live', 'polite');
       document.body.appendChild(el);
     }
     el.textContent = message;
     el.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), duration || 2600);
+  }
+
+  /* ---- Shared "new best score" celebration ----
+     One DOM-based confetti burst every game can call instead of each
+     reimplementing its own canvas particle version. Respects the same
+     reduced-motion / particles settings as everything else, and a
+     matching haptic buzz on devices that support it. */
+  function celebrate() {
+    if (OS_REDUCED_MOTION || getSettings().reducedMotion || getSettings().particles === false) return;
+    const palette = ['#c8973a', '#e8b55a', '#9c7328', '#f0ede6'];
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+    const count = window.matchMedia('(pointer: coarse)').matches ? 26 : 44;
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement('span');
+      const size = 5 + Math.random() * 5;
+      piece.style.left = (Math.random() * 100) + '%';
+      piece.style.width = size + 'px';
+      piece.style.height = (size * 0.45) + 'px';
+      piece.style.background = palette[(Math.random() * palette.length) | 0];
+      piece.style.animationDuration = (1.8 + Math.random() * 1.2).toFixed(2) + 's';
+      piece.style.animationDelay = (Math.random() * 0.3).toFixed(2) + 's';
+      piece.style.setProperty('--drift', (Math.random() * 140 - 70).toFixed(0) + 'px');
+      piece.style.setProperty('--spin', (Math.random() * 720 - 360).toFixed(0) + 'deg');
+      layer.appendChild(piece);
+    }
+    document.body.appendChild(layer);
+    setTimeout(() => layer.remove(), 3200);
+  }
+  function celebrateHaptic() {
+    if (navigator.vibrate) { try { navigator.vibrate([30, 40, 30, 40, 60]); } catch (e) {} }
   }
 
   /* ---- Achievement toast (distinct from the plain toast: trophy + glow) ---- */
@@ -343,8 +372,6 @@ window.Arcade = (function () {
       el = document.createElement('div');
       el.id = 'arcadeAchToast';
       el.className = 'ach-toast';
-      el.setAttribute('role', 'status');
-      el.setAttribute('aria-live', 'polite');
       el.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a3 3 0 0 0 3 3M17 5h3a1 1 0 0 1 1 1v1a3 3 0 0 1-3 3"/></svg>
         <span class="ach-toast-body"><b>Achievement Unlocked</b><span id="arcadeAchTitle"></span></span>
@@ -558,6 +585,76 @@ window.Arcade = (function () {
   // Apply immediately on script load so there's no flash of the wrong theme.
   applySettings();
 
+  /* ---- Shared motion/particle gates ----
+     Every game was copy-pasting its own one-line motionOK()/particlesOK()
+     function; centralized here so there's one definition to get right.
+     Also honors the OS-level prefers-reduced-motion media query, not just
+     the in-app toggle — a person who set that at the system level never
+     had to find this app's own Settings panel to get the same result. */
+  const OS_REDUCED_MOTION = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function motionOK() { return !OS_REDUCED_MOTION && !getSettings().reducedMotion; }
+  function particlesOK() { return motionOK() && getSettings().particles !== false; }
+
+  /* ---- Shared particle system ----
+     A tiny, self-contained particle list any game can instantiate once
+     and call into its own update()/draw() loop. Replaces what used to be
+     a hand-rolled copy of the same ~30 lines in every game file. Spawn
+     calls are no-ops when particles/reduced-motion settings say so, so
+     call sites never need their own "is this OK" check. */
+  function createParticleSystem() {
+    let list = [];
+    function spawnBurst(x, y, color, count) {
+      if (!particlesOK()) return;
+      count = count || 8;
+      for (let i = 0; i < count; i++) {
+        list.push({
+          x, y,
+          vx: (Math.random() * 2 - 1) * 3, vy: (Math.random() * 2 - 1) * 3 - 1,
+          gravity: 0.14, life: 24, maxLife: 24, size: 2 + Math.random() * 2.4,
+          color, confetti: false
+        });
+      }
+    }
+    function spawnConfetti(width, palette, count) {
+      if (!particlesOK()) return;
+      palette = palette || ['#c8973a', '#e8b55a', '#9c7328', '#f0ede6'];
+      count = count || 40;
+      for (let i = 0; i < count; i++) {
+        list.push({
+          x: Math.random() * width, y: -10 - Math.random() * 60,
+          vx: (Math.random() * 2 - 1) * 1.3, vy: 1 + Math.random() * 2,
+          gravity: 0.05, life: 150 + Math.random() * 60, maxLife: 210,
+          size: 4 + Math.random() * 4, color: palette[(Math.random() * palette.length) | 0], confetti: true
+        });
+      }
+    }
+    function update() {
+      for (let i = list.length - 1; i >= 0; i--) {
+        const p = list[i];
+        p.vy += p.gravity; p.x += p.vx; p.y += p.vy; p.life--;
+        if (p.life <= 0) list.splice(i, 1);
+      }
+    }
+    function draw(ctx) {
+      for (const p of list) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+        ctx.fillStyle = p.color;
+        if (p.confetti) ctx.fillRect(p.x - p.size / 2, p.y - p.size * 0.35, p.size, p.size * 0.7);
+        else { ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }
+        ctx.restore();
+      }
+    }
+    function clear() { list = []; }
+    return { spawnBurst, spawnConfetti, update, draw, clear, get list() { return list; } };
+  }
+
+  /* ---- Shared haptic buzz (silently a no-op where unsupported) ---- */
+  function vibrate(pattern) {
+    if (!motionOK()) return; // treat strong haptic buzzes as "motion" too
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+  }
+
   /* ---- Offline / PWA support ---- */
   function registerServiceWorker(swPath) {
     if (!('serviceWorker' in navigator) || !navigator.serviceWorker) return Promise.resolve(null);
@@ -635,6 +732,10 @@ window.Arcade = (function () {
         <div class="setting-row">
           <span>Sound Effects</span>
           <button type="button" class="switch${s.muted ? '' : ' on'}" id="arcadeMuteSwitch" role="switch" aria-checked="${!s.muted}"><span class="switch-knob"></span></button>
+        </div>
+        <div class="setting-row">
+          <span>Fullscreen</span>
+          <button type="button" class="switch" id="arcadeFullscreenSwitch" role="switch" aria-checked="false"><span class="switch-knob"></span></button>
         </div>
         <div class="setting-row">
           <span>Music</span>
@@ -772,6 +873,19 @@ window.Arcade = (function () {
       setSetting('muted', next);
       muteSwitch.classList.toggle('on', !next);
       muteSwitch.setAttribute('aria-checked', String(!next));
+    });
+    const fsSwitch = document.getElementById('arcadeFullscreenSwitch');
+    function syncFsSwitch() {
+      const isFs = !!document.fullscreenElement;
+      fsSwitch.classList.toggle('on', isFs);
+      fsSwitch.setAttribute('aria-checked', String(isFs));
+    }
+    if (!document.fullscreenEnabled) { fsSwitch.disabled = true; fsSwitch.style.opacity = '0.4'; }
+    syncFsSwitch();
+    document.addEventListener('fullscreenchange', syncFsSwitch);
+    fsSwitch.addEventListener('click', () => {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      else document.documentElement.requestFullscreen().catch(() => toast('Fullscreen isn\u2019t available right now.'));
     });
     const musicSwitch = document.getElementById('arcadeMusicSwitch');
     musicSwitch.addEventListener('click', () => {
@@ -950,112 +1064,39 @@ window.Arcade = (function () {
         window.location.href = hubHref;
       });
 
-      // Every overlay panel gets a small corner Home button (unless it
-      // already has its own way back to the Hub, or it's one of the
-      // utility panels below where "close" should return you to what
-      // you were doing, not exit the game). The old version of this only
-      // patched whichever overlay happened to be open at mount time —
-      // fine for single-screen games, but tic-tac-toe chains several
-      // overlays (mode -> difficulty/names -> round-over) and only the
-      // first ever got patched, leaving the later screens with no way
-      // home since the real nav bar is covered by the overlay itself.
-      const utilityOverlayIds = [
-        'arcadeProfileOverlay', 'arcadeSettingsOverlay', 'arcadeStatsOverlay', confirmOverlay.id
-      ];
-      document.querySelectorAll('.overlay').forEach((ov) => {
-        if (utilityOverlayIds.indexOf(ov.id) !== -1) return;
-        const panel = ov.querySelector('.panel');
-        if (!panel || panel.querySelector('.overlay-home-btn, #homeBtn')) return;
-        const homeBtn = document.createElement('a');
-        homeBtn.href = hubHref;
-        homeBtn.className = 'overlay-home-btn';
-        homeBtn.setAttribute('aria-label', 'Back to Game Hub');
-        homeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>';
-        panel.prepend(homeBtn);
-      });
+      // The very first screen a player sees (difficulty picker, or the
+      // mode menu in tic-tac-toe) gets its own direct Exit link too — no
+      // confirmation needed since no run is in progress yet. Where a
+      // difficulty/option list already exists, this becomes a matching
+      // 4th card in that same list rather than a separate small link.
+      const introOverlay = document.querySelector('.overlay.show');
+      if (introOverlay) {
+        const introPanel = introOverlay.querySelector('.panel');
+        const optionList = introOverlay.querySelector('.option-list');
+        if (introPanel && !introPanel.querySelector('.intro-exit-btn')) {
+          if (optionList) {
+            const homeCard = document.createElement('button');
+            homeCard.type = 'button';
+            homeCard.className = 'option-btn intro-exit-btn';
+            homeCard.innerHTML = `
+              <div class="opt-title">Home</div>
+              <div class="opt-desc">Head back to the Game Hub instead.</div>`;
+            homeCard.addEventListener('click', () => { window.location.href = hubHref; });
+            optionList.appendChild(homeCard);
+          } else {
+            const introExit = document.createElement('button');
+            introExit.type = 'button';
+            introExit.className = 'back-link intro-exit-btn';
+            introExit.textContent = 'Exit to Hub';
+            introExit.addEventListener('click', () => { window.location.href = hubHref; });
+            introPanel.appendChild(introExit);
+          }
+        }
+      }
     } catch (err) {
       console.error('Arcade.mountPauseMenu failed:', err);
     }
   }
-
-  /* ---- Global overlay UX ----
-     Works generically on every element with class "overlay" — the hub's
-     settings/stats/profile panels, every game's pause/exit-confirm panel,
-     and every game's own start/game-over/difficulty screens — with no
-     per-game wiring required:
-       - locks background scroll while any overlay is open
-       - moves focus into the panel on open, and back to whatever opened
-         it on close (keyboard users never lose their place)
-       - Escape triggers whichever close/back/cancel control the open
-         overlay already has (never closes a screen with no such control,
-         e.g. a required difficulty pick) */
-  (function () {
-    const openerOf = new WeakMap();
-    function firstFocusable(root) {
-      return root.querySelector('button, a[href], input, select, [tabindex]:not([tabindex="-1"])');
-    }
-    function onShown(el) {
-      const panel = el.querySelector('.panel') || el;
-      if (!panel.contains(document.activeElement)) {
-        openerOf.set(el, document.activeElement);
-        const target = firstFocusable(panel);
-        if (target) target.focus();
-      }
-    }
-    function onHidden(el) {
-      const opener = openerOf.get(el);
-      openerOf.delete(el);
-      if (opener && typeof opener.focus === 'function' && document.body.contains(opener)) opener.focus();
-    }
-    function refreshScrollLock() {
-      document.documentElement.style.overflow = document.querySelector('.overlay.show') ? 'hidden' : '';
-    }
-    const classObserver = new MutationObserver((mutations) => {
-      mutations.forEach((m) => {
-        const el = m.target;
-        if (!el.classList || !el.classList.contains('overlay')) return;
-        const showing = el.classList.contains('show');
-        const was = (m.oldValue || '').split(' ').indexOf('show') !== -1;
-        if (showing && !was) onShown(el);
-        else if (!showing && was) onHidden(el);
-      });
-      refreshScrollLock();
-    });
-    function watch(el) {
-      classObserver.observe(el, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
-    }
-    document.querySelectorAll('.overlay').forEach(watch);
-    // Apply the same treatment to whatever's already open at load time
-    // (e.g. a game's start screen), since the observer only sees changes.
-    document.querySelectorAll('.overlay.show').forEach(onShown);
-    refreshScrollLock();
-    new MutationObserver((mutations) => {
-      mutations.forEach((m) => {
-        m.addedNodes.forEach((n) => {
-          if (n.nodeType === 1 && n.classList && n.classList.contains('overlay')) watch(n);
-        });
-      });
-    }).observe(document.body, { childList: true });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape') return;
-      const openDropdown = document.getElementById('arcadePauseDropdown');
-      if (openDropdown && openDropdown.classList.contains('show')) {
-        const resumeBtn = document.getElementById('arcadeResumeBtn');
-        if (resumeBtn) resumeBtn.click();
-        return;
-      }
-      const open = document.querySelector('.overlay.show');
-      if (!open) return;
-      const closer = open.querySelector('[id$="Close"], .back-link, #arcadeExitConfirmNo');
-      if (closer) closer.click();
-    });
-  })();
-
-  /* Subtle, safe entrance for every page — never starts hidden (see the
-     .arcade-anim-in rule in theme.css), so a slow/failed script can never
-     leave a page blank; worst case it's just a no-op fade that didn't run. */
-  if (document.body) document.body.classList.add('arcade-anim-in');
 
   return {
     GAMES: GAMES, ACHIEVEMENTS: ACHIEVEMENTS, tone: tone, noiseBurst: noiseBurst, audioCtx: audioCtx,
@@ -1068,6 +1109,7 @@ window.Arcade = (function () {
     getAverageScoreOverall: getAverageScoreOverall, getCompletionPercent: getCompletionPercent,
     resetAllProgress: resetAllProgress,
     getFavorites: getFavorites, isFavorite: isFavorite, toggleFavorite: toggleFavorite,
+    celebrate: celebrate, celebrateHaptic: celebrateHaptic,
     getProfile: getProfile, setProfile: setProfile, readAvatarFile: readAvatarFile, initials: initials,
     getSettings: getSettings, setSetting: setSetting, applySettings: applySettings, mountPanels: mountPanels,
     mountPauseMenu: mountPauseMenu, isPaused: isPaused

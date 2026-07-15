@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Hub | Arpan Lamsal</title>
-<meta name="description" content="Game Hub — seven games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter, Snake, Stack Tower and Brick Breaker, built from scratch by Arpan Lamsal.">
+<meta name="description" content="Game Hub — five games, one console. Flappy Bird, Dino Run, Tic Tac Toe, Road Fighter and Snake, built from scratch by Arpan Lamsal.">
 
 <link rel="icon" href="faviconset/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="16x16" href="faviconset/favicon-16x16.png">
@@ -38,9 +38,9 @@
 
 <main>
   <section class="hero">
-    <p class="eyebrow" id="heroEyebrow">7 games &middot; 1 console</p>
+    <p class="eyebrow" id="heroEyebrow">5 games &middot; 1 console</p>
     <h1 id="heroTitle">Press start on <em>something&nbsp;fun.</em></h1>
-    <p class="lede">Seven games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
+    <p class="lede">Five games built from scratch with vanilla JS and canvas — no installs, no accounts, no ads. Just pick a cartridge and play.</p>
 
     <div class="hero-stats">
       <div class="stat"><b id="cartCount">05</b><span>Cartridges</span></div>
@@ -61,6 +61,13 @@
       <span>Swipe down</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
     </div>
+  </section>
+
+  <section class="recent-section" id="recentSection" style="display:none;" aria-label="Recently played">
+    <div class="recent-heading">
+      <span class="eyebrow" style="margin:0;">Continue playing</span>
+    </div>
+    <div class="recent-row" id="recentRow"></div>
   </section>
 
   <div class="arcade-filters" role="tablist" aria-label="Filter games">
@@ -147,6 +154,23 @@
     });
   });
 
+  function renderRecent() {
+    const played = Arcade.GAMES
+      .map(g => ({ g, t: Arcade.getLastPlayed(g.id) }))
+      .filter(x => x.t > 0)
+      .sort((a, b) => b.t - a.t)
+      .slice(0, 5);
+    const section = document.getElementById('recentSection');
+    if (!played.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    document.getElementById('recentRow').innerHTML = played.map(({ g }) => `
+      <a class="recent-card" href="${g.href}">
+        <svg viewBox="0 0 100 100" aria-hidden="true">${g.icon}</svg>
+        <b>${g.title}</b>
+        <span>Continue</span>
+      </a>`).join('');
+  }
+
   function renderArcade() {
     document.getElementById('cartCount').textContent = String(Arcade.GAMES.length).padStart(2, '0');
     const wrap = document.getElementById('arcade');
@@ -205,6 +229,7 @@
     applyFilter();
   }
   renderArcade();
+  renderRecent();
 
   // Personalize the hero once a profile exists.
   (function personalize() {

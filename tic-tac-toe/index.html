@@ -28,7 +28,7 @@
     content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
     background:radial-gradient(60% 50% at 50% 38%, rgba(230,230,225,0.07), transparent 70%);
   }
-  .stage-wrap{ position:relative; z-index:1; }
+  .stage-wrap, .site-footer{ position:relative; z-index:1; }
 
   /* ---- Stage ---- */
   .stage-wrap{
@@ -754,18 +754,6 @@
   renderBoard();
   Arcade.mountPanels({ gameId: 'tictactoe' });
   Arcade.mountPauseMenu();
-
-  // Mode -> difficulty -> names is one continuous flow for the player, so
-  // its panel should feel like one stable surface rather than resizing
-  // (and re-centering, dragging its back-link to a new spot) at every
-  // step. All three stay in the layout at all times (shown/hidden purely
-  // via opacity), so their natural heights can be measured directly.
-  (function stabilizeFlowPanelHeight(){
-    const panels = [menuOverlay, difficultyOverlay, document.getElementById('namesOverlay')]
-      .map((ov) => ov && ov.querySelector('.panel')).filter(Boolean);
-    const maxH = panels.reduce((max, p) => Math.max(max, p.offsetHeight), 0);
-    if (maxH) panels.forEach((p) => { p.style.minHeight = maxH + 'px'; });
-  })();
 })();
 </script>
 </body>

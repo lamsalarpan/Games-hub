@@ -53,24 +53,16 @@ html,body{
   -webkit-tap-highlight-color:transparent;
 }
 
-/* ---- Keyboard focus (site-wide, one rule instead of per-component states) ----
-   Covers every button/link/input/custom control across the hub and every
-   game automatically — mouse/touch users never see it (:focus-visible only
-   matches keyboard/programmatic focus), keyboard users always get a clear,
-   on-brand ring instead of an inconsistent (or missing) browser default. */
-a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
-  outline:2px solid var(--gold-light); outline-offset:3px; border-radius:4px;
+/* ---- Keyboard focus ----
+   :focus-visible so mouse/touch clicks stay clean but Tab-navigation
+   always gets a clear, on-brand outline — this was entirely missing
+   before, which is a real accessibility failure for keyboard users. */
+:focus-visible{
+  outline:2px solid var(--gold);
+  outline-offset:2px;
+  border-radius:2px;
 }
-.theme-swatch:focus-visible, .social-icon:focus-visible, .nav-icon-btn:focus-visible,
-.nav-avatar-btn:focus-visible, .switch:focus-visible, .cart-fav:focus-visible{
-  outline-offset:3px; border-radius:50%;
-}
-.text-input:focus-visible{ outline:none; } /* already has its own border-color treatment */
-
-/* ---- Page enter (subtle, safe fade+rise — never starts hidden, so a
-   script error can never leave a page blank; just a no-op if JS doesn't run) ---- */
-@keyframes pageEnter{ from{ opacity:0.4; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
-body.arcade-anim-in{ animation:pageEnter .45s ease both; }
+canvas:focus-visible{ outline-offset:-2px; }
 
 /* ---- Nav (shared shell across hub + every game — identical everywhere) ---- */
 .nav{
@@ -205,7 +197,6 @@ body.arcade-anim-in{ animation:pageEnter .45s ease both; }
 }
 .overlay.show{ opacity:1; pointer-events:auto; }
 .panel{
-  position:relative;
   width:100%; max-width:360px;
   background:var(--bg-card);
   border:1px solid var(--border-strong);
@@ -216,23 +207,6 @@ body.arcade-anim-in{ animation:pageEnter .45s ease both; }
   transition:transform .35s ease;
 }
 .overlay.show .panel{ transform:translateY(0) scale(1); }
-
-/* Corner Home button — every overlay panel gets one (added generically by
-   Arcade.mountPauseMenu) so there's always a way back to the Hub even when
-   an overlay's own backdrop is covering the nav bar underneath it. Sits
-   top-left, out of the panel's normal content flow so it never affects
-   the height/position of the panel's own content or footer links below it. */
-.overlay-home-btn{
-  position:absolute; top:0.85rem; left:0.85rem;
-  width:32px; height:32px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  background:transparent; border:1px solid var(--border-strong);
-  color:var(--text-secondary);
-  transition:color .2s ease, border-color .2s ease, background .2s ease;
-  touch-action:manipulation;
-}
-.overlay-home-btn svg{ width:15px; height:15px; }
-.overlay-home-btn:hover{ color:var(--gold-light); border-color:var(--gold); background:rgba(var(--gold-rgb),0.08); }
 
 .panel img.mark, .panel img.mark-logo{ width:52px; height:52px; margin-bottom:1.2rem; opacity:0.95; }
 .panel h1{
@@ -249,7 +223,6 @@ body.arcade-anim-in{ animation:pageEnter .45s ease both; }
   font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em;
   color:var(--text-muted); margin-top:1.6rem;
 }
-
 
 .stat-row{
   display:flex; justify-content:space-between;
@@ -479,6 +452,20 @@ body.arcade-anim-in{ animation:pageEnter .45s ease both; }
   transition:opacity .3s ease, transform .3s ease;
 }
 .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+/* ---- Shared new-best-score confetti (Arcade.celebrate()) ---- */
+.confetti-layer{
+  position:fixed; inset:0; z-index:150; pointer-events:none; overflow:hidden;
+}
+.confetti-layer span{
+  position:absolute; top:-14px;
+  border-radius:1px;
+  animation-name:confettiFall; animation-timing-function:ease-in; animation-fill-mode:forwards;
+}
+@keyframes confettiFall{
+  0%   { transform:translate(0, 0) rotate(0deg); opacity:1; }
+  100% { transform:translate(var(--drift), 108vh) rotate(var(--spin)); opacity:0.85; }
+}
 
 /* ---- Footer (mirrors arpanlamsal.com.np) ---- */
 .site-footer{ position:relative; z-index:2; background:var(--bg); border-top:1px solid var(--border); padding:2rem 1.5rem; margin-top:auto; }
