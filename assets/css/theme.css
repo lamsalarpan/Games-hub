@@ -205,6 +205,7 @@ body.arcade-anim-in{ animation:pageEnter .45s ease both; }
 }
 .overlay.show{ opacity:1; pointer-events:auto; }
 .panel{
+  position:relative;
   width:100%; max-width:360px;
   background:var(--bg-card);
   border:1px solid var(--border-strong);
@@ -215,6 +216,23 @@ body.arcade-anim-in{ animation:pageEnter .45s ease both; }
   transition:transform .35s ease;
 }
 .overlay.show .panel{ transform:translateY(0) scale(1); }
+
+/* Corner Home button — every overlay panel gets one (added generically by
+   Arcade.mountPauseMenu) so there's always a way back to the Hub even when
+   an overlay's own backdrop is covering the nav bar underneath it. Sits
+   top-left, out of the panel's normal content flow so it never affects
+   the height/position of the panel's own content or footer links below it. */
+.overlay-home-btn{
+  position:absolute; top:0.85rem; left:0.85rem;
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:transparent; border:1px solid var(--border-strong);
+  color:var(--text-secondary);
+  transition:color .2s ease, border-color .2s ease, background .2s ease;
+  touch-action:manipulation;
+}
+.overlay-home-btn svg{ width:15px; height:15px; }
+.overlay-home-btn:hover{ color:var(--gold-light); border-color:var(--gold); background:rgba(var(--gold-rgb),0.08); }
 
 .panel img.mark, .panel img.mark-logo{ width:52px; height:52px; margin-bottom:1.2rem; opacity:0.95; }
 .panel h1{
@@ -231,6 +249,7 @@ body.arcade-anim-in{ animation:pageEnter .45s ease both; }
   font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em;
   color:var(--text-muted); margin-top:1.6rem;
 }
+
 
 .stat-row{
   display:flex; justify-content:space-between;

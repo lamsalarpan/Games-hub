@@ -950,35 +950,29 @@ window.Arcade = (function () {
         window.location.href = hubHref;
       });
 
-      // The very first screen a player sees (difficulty picker, or the
-      // mode menu in tic-tac-toe) gets its own direct Exit link too — no
-      // confirmation needed since no run is in progress yet. Where a
-      // difficulty/option list already exists, this becomes a matching
-      // 4th card in that same list rather than a separate small link.
-      const introOverlay = document.querySelector('.overlay.show');
-      if (introOverlay) {
-        const introPanel = introOverlay.querySelector('.panel');
-        const optionList = introOverlay.querySelector('.option-list');
-        if (introPanel && !introPanel.querySelector('.intro-exit-btn')) {
-          if (optionList) {
-            const homeCard = document.createElement('button');
-            homeCard.type = 'button';
-            homeCard.className = 'option-btn intro-exit-btn';
-            homeCard.innerHTML = `
-              <div class="opt-title">Home</div>
-              <div class="opt-desc">Head back to the Game Hub instead.</div>`;
-            homeCard.addEventListener('click', () => { window.location.href = hubHref; });
-            optionList.appendChild(homeCard);
-          } else {
-            const introExit = document.createElement('button');
-            introExit.type = 'button';
-            introExit.className = 'back-link intro-exit-btn';
-            introExit.textContent = 'Exit to Hub';
-            introExit.addEventListener('click', () => { window.location.href = hubHref; });
-            introPanel.appendChild(introExit);
-          }
-        }
-      }
+      // Every overlay panel gets a small corner Home button (unless it
+      // already has its own way back to the Hub, or it's one of the
+      // utility panels below where "close" should return you to what
+      // you were doing, not exit the game). The old version of this only
+      // patched whichever overlay happened to be open at mount time —
+      // fine for single-screen games, but tic-tac-toe chains several
+      // overlays (mode -> difficulty/names -> round-over) and only the
+      // first ever got patched, leaving the later screens with no way
+      // home since the real nav bar is covered by the overlay itself.
+      const utilityOverlayIds = [
+        'arcadeProfileOverlay', 'arcadeSettingsOverlay', 'arcadeStatsOverlay', confirmOverlay.id
+      ];
+      document.querySelectorAll('.overlay').forEach((ov) => {
+        if (utilityOverlayIds.indexOf(ov.id) !== -1) return;
+        const panel = ov.querySelector('.panel');
+        if (!panel || panel.querySelector('.overlay-home-btn, #homeBtn')) return;
+        const homeBtn = document.createElement('a');
+        homeBtn.href = hubHref;
+        homeBtn.className = 'overlay-home-btn';
+        homeBtn.setAttribute('aria-label', 'Back to Game Hub');
+        homeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>';
+        panel.prepend(homeBtn);
+      });
     } catch (err) {
       console.error('Arcade.mountPauseMenu failed:', err);
     }
@@ -1045,6 +1039,12 @@ window.Arcade = (function () {
 
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
+      const openDropdown = document.getElementById('arcadePauseDropdown');
+      if (openDropdown && openDropdown.classList.contains('show')) {
+        const resumeBtn = document.getElementById('arcadeResumeBtn');
+        if (resumeBtn) resumeBtn.click();
+        return;
+      }
       const open = document.querySelector('.overlay.show');
       if (!open) return;
       const closer = open.querySelector('[id$="Close"], .back-link, #arcadeExitConfirmNo');
