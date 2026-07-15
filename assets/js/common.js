@@ -325,6 +325,8 @@ window.Arcade = (function () {
       el = document.createElement('div');
       el.id = 'arcadeToast';
       el.className = 'toast';
+      el.setAttribute('role', 'status');
+      el.setAttribute('aria-live', 'polite');
       document.body.appendChild(el);
     }
     el.textContent = message;
@@ -341,6 +343,8 @@ window.Arcade = (function () {
       el = document.createElement('div');
       el.id = 'arcadeAchToast';
       el.className = 'ach-toast';
+      el.setAttribute('role', 'status');
+      el.setAttribute('aria-live', 'polite');
       el.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 5H4a1 1 0 0 0-1 1v1a3 3 0 0 0 3 3M17 5h3a1 1 0 0 1 1 1v1a3 3 0 0 1-3 3"/></svg>
         <span class="ach-toast-body"><b>Achievement Unlocked</b><span id="arcadeAchTitle"></span></span>
@@ -979,6 +983,79 @@ window.Arcade = (function () {
       console.error('Arcade.mountPauseMenu failed:', err);
     }
   }
+
+  /* ---- Global overlay UX ----
+     Works generically on every element with class "overlay" — the hub's
+     settings/stats/profile panels, every game's pause/exit-confirm panel,
+     and every game's own start/game-over/difficulty screens — with no
+     per-game wiring required:
+       - locks background scroll while any overlay is open
+       - moves focus into the panel on open, and back to whatever opened
+         it on close (keyboard users never lose their place)
+       - Escape triggers whichever close/back/cancel control the open
+         overlay already has (never closes a screen with no such control,
+         e.g. a required difficulty pick) */
+  (function () {
+    const openerOf = new WeakMap();
+    function firstFocusable(root) {
+      return root.querySelector('button, a[href], input, select, [tabindex]:not([tabindex="-1"])');
+    }
+    function onShown(el) {
+      const panel = el.querySelector('.panel') || el;
+      if (!panel.contains(document.activeElement)) {
+        openerOf.set(el, document.activeElement);
+        const target = firstFocusable(panel);
+        if (target) target.focus();
+      }
+    }
+    function onHidden(el) {
+      const opener = openerOf.get(el);
+      openerOf.delete(el);
+      if (opener && typeof opener.focus === 'function' && document.body.contains(opener)) opener.focus();
+    }
+    function refreshScrollLock() {
+      document.documentElement.style.overflow = document.querySelector('.overlay.show') ? 'hidden' : '';
+    }
+    const classObserver = new MutationObserver((mutations) => {
+      mutations.forEach((m) => {
+        const el = m.target;
+        if (!el.classList || !el.classList.contains('overlay')) return;
+        const showing = el.classList.contains('show');
+        const was = (m.oldValue || '').split(' ').indexOf('show') !== -1;
+        if (showing && !was) onShown(el);
+        else if (!showing && was) onHidden(el);
+      });
+      refreshScrollLock();
+    });
+    function watch(el) {
+      classObserver.observe(el, { attributes: true, attributeFilter: ['class'], attributeOldValue: true });
+    }
+    document.querySelectorAll('.overlay').forEach(watch);
+    // Apply the same treatment to whatever's already open at load time
+    // (e.g. a game's start screen), since the observer only sees changes.
+    document.querySelectorAll('.overlay.show').forEach(onShown);
+    refreshScrollLock();
+    new MutationObserver((mutations) => {
+      mutations.forEach((m) => {
+        m.addedNodes.forEach((n) => {
+          if (n.nodeType === 1 && n.classList && n.classList.contains('overlay')) watch(n);
+        });
+      });
+    }).observe(document.body, { childList: true });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      const open = document.querySelector('.overlay.show');
+      if (!open) return;
+      const closer = open.querySelector('[id$="Close"], .back-link, #arcadeExitConfirmNo');
+      if (closer) closer.click();
+    });
+  })();
+
+  /* Subtle, safe entrance for every page — never starts hidden (see the
+     .arcade-anim-in rule in theme.css), so a slow/failed script can never
+     leave a page blank; worst case it's just a no-op fade that didn't run. */
+  if (document.body) document.body.classList.add('arcade-anim-in');
 
   return {
     GAMES: GAMES, ACHIEVEMENTS: ACHIEVEMENTS, tone: tone, noiseBurst: noiseBurst, audioCtx: audioCtx,

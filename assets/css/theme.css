@@ -53,6 +53,25 @@ html,body{
   -webkit-tap-highlight-color:transparent;
 }
 
+/* ---- Keyboard focus (site-wide, one rule instead of per-component states) ----
+   Covers every button/link/input/custom control across the hub and every
+   game automatically — mouse/touch users never see it (:focus-visible only
+   matches keyboard/programmatic focus), keyboard users always get a clear,
+   on-brand ring instead of an inconsistent (or missing) browser default. */
+a:focus-visible, button:focus-visible, input:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--gold-light); outline-offset:3px; border-radius:4px;
+}
+.theme-swatch:focus-visible, .social-icon:focus-visible, .nav-icon-btn:focus-visible,
+.nav-avatar-btn:focus-visible, .switch:focus-visible, .cart-fav:focus-visible{
+  outline-offset:3px; border-radius:50%;
+}
+.text-input:focus-visible{ outline:none; } /* already has its own border-color treatment */
+
+/* ---- Page enter (subtle, safe fade+rise — never starts hidden, so a
+   script error can never leave a page blank; just a no-op if JS doesn't run) ---- */
+@keyframes pageEnter{ from{ opacity:0.4; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+body.arcade-anim-in{ animation:pageEnter .45s ease both; }
+
 /* ---- Nav (shared shell across hub + every game — identical everywhere) ---- */
 .nav{
   position:fixed; top:0; left:0; right:0; height:var(--nav-h);
