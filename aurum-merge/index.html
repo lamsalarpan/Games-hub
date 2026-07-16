@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Aurum Merge — Arpan Lamsal</title>
+<meta name="description" content="A premium 2048-style merge puzzle built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  body{
+    min-height:100vh; min-height:100dvh;
+    display:flex; flex-direction:column;
+    overscroll-behavior:none;
+    position:relative;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 32%, rgba(200,151,58,0.08), transparent 70%);
+  }
+  .stage-wrap{ position:relative; z-index:1; }
+
+  .stage-wrap{
+    flex:1;
+    display:flex; align-items:center; justify-content:center;
+    padding:calc(var(--nav-h) + 14px) 1.1rem 1.25rem;
+    touch-action:none;
+  }
+  .game-col{
+    width:100%; max-width:420px;
+    display:flex; flex-direction:column; align-items:center; gap:0.9rem;
+  }
+
+  .stat-strip{
+    width:100%; display:grid; grid-template-columns:1fr 1fr 1fr;
+    border:1px solid var(--border-strong); border-radius:6px; overflow:hidden;
+    background:var(--bg-card);
+  }
+  .stat-box{ padding:0.6rem 0.4rem; text-align:center; border-right:1px solid var(--border); }
+  .stat-box:last-child{ border-right:none; }
+  .stat-box .label{ font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.25rem; }
+  .stat-box .value{ font-size:18px; font-weight:700; color:var(--gold-light); font-family:var(--font-mono); }
+  .stat-box .value.pulse{ animation:statPulse .4s ease; }
+  @keyframes statPulse{ 0%{ transform:scale(1); } 40%{ transform:scale(1.18); } 100%{ transform:scale(1); } }
+
+  .board-wrap{
+    position:relative; width:100%; max-width:380px; touch-action:none;
+  }
+  .board{
+    position:relative;
+    width:100%;
+    aspect-ratio:1;
+    display:grid;
+    gap:7px;
+    background:var(--border);
+    border:1px solid var(--border-strong);
+    border-radius:10px;
+    padding:7px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.5);
+  }
+  .cell{
+    position:relative;
+    border-radius:6px;
+    background:var(--bg-card);
+    display:flex; align-items:center; justify-content:center;
+    overflow:hidden;
+  }
+  .cell .tile-fill{
+    position:absolute; inset:0; border-radius:6px;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transform:scale(0.6);
+    font-family:var(--font-mono); font-weight:700;
+    color:#0c0c0b;
+  }
+  .cell.filled .tile-fill{ opacity:1; transform:scale(1); }
+  .cell.spawn .tile-fill{ animation:tileIn .22s cubic-bezier(.2,.9,.3,1.35); }
+  .cell.merged .tile-fill{ animation:tilePop .26s ease; }
+  @keyframes tileIn{ from{ opacity:0; transform:scale(0.35); } to{ opacity:1; transform:scale(1); } }
+  @keyframes tilePop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.16); } 100%{ transform:scale(1); } }
+  @media (prefers-reduced-motion: reduce){
+    .cell.spawn .tile-fill, .cell.merged .tile-fill{ animation:none; }
+  }
+  html.reduced-motion .cell.spawn .tile-fill,
+  html.reduced-motion .cell.merged .tile-fill{ animation:none; }
+
+  .hint-row{
+    display:flex; align-items:center; justify-content:center; gap:0.5rem;
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .hint-row svg{ width:12px; height:12px; }
+
+  .restart-btn{
+    display:inline-flex; align-items:center; gap:0.4rem;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary); background:none; border:1px solid var(--border-strong);
+    border-radius:20px; padding:0.5rem 1rem; cursor:pointer; transition:border-color .2s ease, color .2s ease;
+  }
+  .restart-btn:hover{ color:var(--gold-light); border-color:var(--gold); }
+  .restart-btn svg{ width:13px; height:13px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Aurum Merge</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="stage-wrap">
+  <div class="game-col">
+
+    <div class="stat-strip">
+      <div class="stat-box"><div class="label">Score</div><div class="value mono" id="scoreVal">0</div></div>
+      <div class="stat-box"><div class="label">Best <span id="bestDiffTag"></span></div><div class="value mono" id="bestVal">0</div></div>
+      <div class="stat-box"><div class="label">Top Tile</div><div class="value mono" id="topTileVal">—</div></div>
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="hint-row mono">
+      <span>Swipe or</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M11 5l-6 7 6 7"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M13 5l6 7-6 7"/></svg>
+      <span>to slide tiles</span>
+    </div>
+
+    <button type="button" class="restart-btn" id="restartBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+      New Board
+    </button>
+  </div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Merge your way to gold.</h1>
+    <div class="sub">Swipe or arrow keys · Same tiles combine into one</div>
+    <div class="option-list" id="diffRow">
+      <button type="button" class="option-btn" data-diff="easy">
+        <div class="opt-title">Easy</div>
+        <div class="opt-desc">5&times;5 board. More room to plan ahead.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="medium">
+        <div class="opt-title">Medium</div>
+        <div class="opt-desc">The classic 4&times;4 board.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="hard">
+        <div class="opt-title">Hard</div>
+        <div class="opt-desc">3&times;3 board. Every move counts.</div>
+      </button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Slide tiles in a direction — matching values merge into their sum.<br>Keep merging until no move is left.</div>
+  </div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="overOverlay">
+  <div class="panel">
+    <h1>No moves left.</h1>
+    <div class="sub">The board has settled</div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Top Tile</span><b id="finalTopTile">—</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
+    <div class="hint">Space · Click · Tap to retry</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+ try {
+  const GOLD = '#c8973a', GOLD_LIGHT = '#e8b55a', GOLD_DARK = '#9c7328';
+  const CREAM = '#f0ede6', EMBER = '#e8683a', EMBER_DARK = '#b3502e';
+  const VIOLET = '#b39cf0', VIOLET_LIGHT = '#d6c8ff', VIOLET_DARK = '#7a63b0';
+
+  // Tile color progression: pale cream -> gold -> ember -> violet, echoing
+  // the accent colors already used elsewhere in the hub (ember for heat,
+  // violet for the "premium" tiles), so the palette reads as one family.
+  const TILE_STYLES = {
+    2:    { bg: '#e7e4da', fg: '#3a3730' },
+    4:    { bg: '#dccb9e', fg: '#2c2515' },
+    8:    { bg: GOLD_LIGHT, fg: '#2c2010' },
+    16:   { bg: GOLD, fg: '#1c1509' },
+    32:   { bg: GOLD_DARK, fg: CREAM },
+    64:   { bg: '#7a5a20', fg: CREAM },
+    128:  { bg: EMBER, fg: '#1c0c05' },
+    256:  { bg: '#d8562f', fg: CREAM },
+    512:  { bg: EMBER_DARK, fg: CREAM },
+    1024: { bg: VIOLET, fg: '#1c1530' },
+    2048: { bg: VIOLET_LIGHT, fg: '#1c1530' },
+    4096: { bg: VIOLET_DARK, fg: CREAM }
+  };
+  function tileStyle(v){
+    if (TILE_STYLES[v]) return TILE_STYLES[v];
+    return { bg: '#4a3d70', fg: CREAM }; // anything past 4096
+  }
+
+  const DIFFICULTY_PRESETS = {
+    easy:   { size: 5 },
+    medium: { size: 4 },
+    hard:   { size: 3 }
+  };
+  const DIFF_KEY = 'aurummerge_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  const STORAGE_KEY = 'aurummerge_al_best';
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  let best = 0;
+  function refreshBest(){
+    best = Arcade.getBest(bestKey());
+    document.getElementById('startBest').textContent = String(best);
+    document.getElementById('bestVal').textContent = String(best);
+    const t1 = document.getElementById('startBestDiff'); if (t1) t1.textContent = diffLabel();
+    const t2 = document.getElementById('bestDiffTag'); if (t2) t2.textContent = diffLabel();
+  }
+  refreshBest();
+
+  const boardEl = document.getElementById('board');
+  let N = 4;
+  let grid = [];       // N x N array of numbers, 0 = empty
+  let score = 0;
+  let topTile = 0;
+  let cellEls = [];     // flat array of {cell, fill}
+  let state = 'start';  // start | playing | over
+  let runStartTime = 0;
+  let reachedWinTile = false;
+
+  function motionOK(){ return !Arcade.getSettings().reducedMotion; }
+  function particlesOK(){ return Arcade.getSettings().particles !== false; }
+
+  function buildBoardDOM(){
+    N = preset().size;
+    boardEl.style.gridTemplateColumns = 'repeat(' + N + ', 1fr)';
+    boardEl.style.gridTemplateRows = 'repeat(' + N + ', 1fr)';
+    boardEl.innerHTML = '';
+    cellEls = [];
+    const fontPx = N <= 3 ? 30 : (N === 4 ? 24 : 18);
+    for (let i = 0; i < N * N; i++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      const fill = document.createElement('div');
+      fill.className = 'tile-fill';
+      fill.style.fontSize = fontPx + 'px';
+      cell.appendChild(fill);
+      boardEl.appendChild(cell);
+      cellEls.push({ cell, fill, lastValue: 0 });
+    }
+  }
+
+  function emptyGrid(){
+    const g = [];
+    for (let r = 0; r < N; r++){ g.push(new Array(N).fill(0)); }
+    return g;
+  }
+
+  function emptyCells(){
+    const out = [];
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] === 0) out.push([r, c]);
+    return out;
+  }
+
+  function spawnTile(markSpawn){
+    const free = emptyCells();
+    if (!free.length) return null;
+    const [r, c] = free[(Math.random() * free.length) | 0];
+    grid[r][c] = Math.random() < 0.9 ? 2 : 4;
+    if (markSpawn) markSpawn.push([r, c]);
+    return [r, c];
+  }
+
+  function collapseLine(values){
+    const nonzero = values.filter(v => v !== 0);
+    const out = [];
+    const mergedIdx = [];
+    let gained = 0;
+    let i = 0;
+    while (i < nonzero.length){
+      if (i + 1 < nonzero.length && nonzero[i] === nonzero[i + 1]){
+        const merged = nonzero[i] * 2;
+        out.push(merged);
+        mergedIdx.push(out.length - 1);
+        gained += merged;
+        i += 2;
+      } else {
+        out.push(nonzero[i]);
+        i += 1;
+      }
+    }
+    while (out.length < values.length) out.push(0);
+    return { out, gained, mergedIdx };
+  }
+
+  function lineCoords(dir, i){
+    // Returns a coordFor(idx) function mapping a position within the
+    // line back to [row, col], plus the raw values along that line in
+    // slide order (so index 0 is always the direction the tiles move toward).
+    if (dir === 'left'){
+      return { values: grid[i].slice(), coordFor: (idx) => [i, idx] };
+    }
+    if (dir === 'right'){
+      return { values: grid[i].slice().reverse(), coordFor: (idx) => [i, N - 1 - idx] };
+    }
+    if (dir === 'up'){
+      const values = []; for (let r = 0; r < N; r++) values.push(grid[r][i]);
+      return { values, coordFor: (idx) => [idx, i] };
+    }
+    // down
+    const values = []; for (let r = N - 1; r >= 0; r--) values.push(grid[r][i]);
+    return { values, coordFor: (idx) => [N - 1 - idx, i] };
+  }
+
+  function move(dir){
+    if (state !== 'playing') return;
+    let moved = false, gained = 0;
+    const mergedCells = [];
+    const before = grid.map(row => row.slice());
+
+    for (let i = 0; i < N; i++){
+      const { values, coordFor } = lineCoords(dir, i);
+      const { out, gained: g, mergedIdx } = collapseLine(values);
+      gained += g;
+      for (let idx = 0; idx < N; idx++){
+        const [r, c] = coordFor(idx);
+        if (grid[r][c] !== out[idx]) moved = true;
+        grid[r][c] = out[idx];
+      }
+      mergedIdx.forEach(idx => mergedCells.push(coordFor(idx)));
+    }
+
+    if (!moved) return;
+
+    if (gained > 0){
+      score += gained;
+      sfxMerge(mergedCells.length);
+    } else {
+      sfxSlide();
+    }
+
+    const spawned = [];
+    spawnTile(spawned);
+
+    render(mergedCells, spawned);
+    updateStatsUI();
+
+    for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) if (grid[r][c] > topTile) topTile = grid[r][c];
+    document.getElementById('topTileVal').textContent = topTile >= 2 ? String(topTile) : '—';
+
+    if (!reachedWinTile && topTile >= 2048){
+      reachedWinTile = true;
+      Arcade.unlock('aurummerge_2048', 'Aurum Ascendant', 'Reach the 2048 tile in Aurum Merge');
+      Arcade.celebrate();
+      Arcade.toast('2048! Keep merging for a higher score.');
+    }
+    if (topTile >= 128) Arcade.unlock('aurummerge_128', 'Gilded', 'Reach the 128 tile in Aurum Merge');
+
+    if (!hasMoves()) endGame();
+  }
+
+  function hasMoves(){
+    if (emptyCells().length) return true;
+    for (let r = 0; r < N; r++){
+      for (let c = 0; c < N; c++){
+        const v = grid[r][c];
+        if (c + 1 < N && grid[r][c + 1] === v) return true;
+        if (r + 1 < N && grid[r + 1][c] === v) return true;
+      }
+    }
+    return false;
+  }
+
+  function render(mergedCells, spawnCells){
+    const mergedSet = new Set((mergedCells || []).map(([r, c]) => r + ',' + c));
+    const spawnSet = new Set((spawnCells || []).map(([r, c]) => r + ',' + c));
+    for (let r = 0; r < N; r++){
+      for (let c = 0; c < N; c++){
+        const idx = r * N + c;
+        const v = grid[r][c];
+        const entry = cellEls[idx];
+        const { cell, fill } = entry;
+        cell.classList.remove('spawn', 'merged');
+        if (v === 0){
+          cell.classList.remove('filled');
+          fill.textContent = '';
+          entry.lastValue = 0;
+          continue;
+        }
+        cell.classList.add('filled');
+        fill.textContent = String(v);
+        const st = tileStyle(v);
+        fill.style.background = st.bg;
+        fill.style.color = st.fg;
+        entry.lastValue = v;
+        const key = r + ',' + c;
+        if (motionOK() && particlesOK()){
+          if (spawnSet.has(key)) { void cell.offsetWidth; cell.classList.add('spawn'); }
+          else if (mergedSet.has(key)) { void cell.offsetWidth; cell.classList.add('merged'); }
+        }
+      }
+    }
+  }
+
+  function updateStatsUI(){
+    const el = document.getElementById('scoreVal');
+    el.textContent = String(score);
+    el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+  }
+
+  function sfxMerge(mergeCount){
+    const n = Math.min(4, mergeCount || 1);
+    Arcade.tone(420 + n * 60, 0.08, 'triangle', 0.16, { sweepTo: 680 + n * 80 });
+  }
+  function sfxSlide(){ Arcade.tone(220, 0.03, 'sine', 0.05); }
+  function sfxGameOver(){
+    Arcade.noiseBurst(0.22, 0.14, 700);
+    Arcade.tone(180, 0.22, 'sawtooth', 0.12, { sweepTo: 70 });
+  }
+
+  function newRun(){
+    N = preset().size;
+    grid = emptyGrid();
+    score = 0; topTile = 0; reachedWinTile = false;
+    buildBoardDOM();
+    const spawned = [];
+    spawnTile(spawned); spawnTile(spawned);
+    render([], spawned);
+    updateStatsUI();
+    document.getElementById('topTileVal').textContent = '—';
+  }
+
+  function startGame(diff){
+    if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
+    newRun();
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    runStartTime = performance.now();
+  }
+
+  function endGame(){
+    state = 'over';
+    sfxGameOver();
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; Arcade.setBest(bestKey(), best); }
+    document.getElementById('finalScore').textContent = String(score);
+    document.getElementById('finalTopTile').textContent = topTile >= 2 ? String(topTile) : '—';
+    document.getElementById('finalBest').textContent = String(best);
+    document.getElementById('finalBestDiff').textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+
+    const durationSec = Math.max(1, Math.round((performance.now() - runStartTime) / 1000));
+    Arcade.logRun('aurummerge', score, difficulty, durationSec);
+    if (difficulty === 'hard') Arcade.unlock('hard_try_aurummerge', 'Hard Mode', 'Play Aurum Merge on Hard');
+
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+    else if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e){} }
+  }
+
+  // ---- Input: keyboard ----
+  function handleKeyDown(e){
+    if (Arcade.isPaused()) return;
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault();
+      Arcade.audioCtx();
+      if (state === 'start' || state === 'over') startGame();
+      return;
+    }
+    const map = {
+      ArrowLeft: 'left', a: 'left', A: 'left',
+      ArrowRight: 'right', d: 'right', D: 'right',
+      ArrowUp: 'up', w: 'up', W: 'up',
+      ArrowDown: 'down', s: 'down', S: 'down'
+    };
+    const dir = map[e.key];
+    if (dir){
+      e.preventDefault();
+      Arcade.audioCtx();
+      move(dir);
+    }
+  }
+  window.addEventListener('keydown', handleKeyDown);
+
+  // ---- Input: swipe ----
+  const boardWrap = document.querySelector('.board-wrap');
+  let touchStart = null;
+  boardWrap.addEventListener('pointerdown', (e) => {
+    if (state !== 'playing' || Arcade.isPaused()) return;
+    touchStart = { x: e.clientX, y: e.clientY };
+  }, { passive: true });
+  boardWrap.addEventListener('pointerup', (e) => {
+    if (!touchStart || state !== 'playing' || Arcade.isPaused()) return;
+    const dx = e.clientX - touchStart.x, dy = e.clientY - touchStart.y;
+    touchStart = null;
+    const THRESH = 22;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < THRESH) return;
+    Arcade.audioCtx();
+    if (Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 'right' : 'left');
+    else move(dy > 0 ? 'down' : 'up');
+  }, { passive: true });
+  ['touchstart', 'touchmove'].forEach(evt => {
+    boardWrap.addEventListener(evt, (e) => { if (state === 'playing') e.preventDefault(); }, { passive: false });
+  });
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.option-btn')) return;
+    e.preventDefault();
+  }, { passive: false });
+  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    Arcade.audioCtx();
+    startGame();
+  }, { passive: false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame();
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    if (state === 'start') return;
+    startGame();
+  });
+
+  buildBoardDOM();
+  Arcade.mountPanels({ gameId: 'aurummerge' });
+  Arcade.mountPauseMenu();
+ } catch (err) {
+   console.error('Aurum Merge failed to start:', err);
+   document.body.innerHTML =
+     '<div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:2rem;text-align:center;font-family:monospace;color:#f0ede6;background:#0c0c0b;">' +
+       '<div style="font-size:14px;letter-spacing:.08em;color:#c8973a;text-transform:uppercase;">Aurum Merge hit a snag</div>' +
+       '<div style="font-size:12px;color:#8a8880;max-width:420px;">' + (err && err.message ? err.message : 'Unknown error') + '</div>' +
+       '<a href="../index.html" style="margin-top:.5rem;font-size:12px;letter-spacing:.06em;color:#e8b55a;text-decoration:none;border:1px solid rgba(200,151,58,0.35);border-radius:20px;padding:.6rem 1.2rem;">&larr; Back to Hub</a>' +
+     '</div>';
+ }
+})();
+</script>
+</body>
+</html>

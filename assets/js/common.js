@@ -146,6 +146,18 @@ window.Arcade = (function () {
       <circle cx="50" cy="15" r="4.6" fill="#f0ede6" stroke="rgba(12,12,11,0.35)" stroke-width="1"/>
       <path d="M79 50 l7 -4 3 4 -3 4 Z" fill="#e8683a"/>
       <path d="M22 63 L28 63 L25 68 Z" fill="#b39cf0"/>`
+    },
+    {
+      id: 'aurummerge', title: 'Aurum Merge', href: 'aurum-merge/index.html',
+      accent: '#e0a63c', category: 'Puzzle', difficulty: 'Medium', playTime: '3–8 min',
+      desc: 'Slide and merge matching tiles into ever-higher gold, ember and violet values.',
+      icon: `<defs><linearGradient id="g-merge" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="15" y="15" width="32" height="32" rx="5" fill="url(#g-merge)"/>
+      <rect x="53" y="15" width="32" height="32" rx="5" fill="rgba(240,237,230,0.9)"/>
+      <rect x="15" y="53" width="32" height="32" rx="5" fill="#e8683a"/>
+      <rect x="53" y="53" width="32" height="32" rx="5" fill="#b39cf0"/>`
     }
   ];
 
@@ -303,13 +315,16 @@ window.Arcade = (function () {
     { id: 'hard_try_bouncetail', title: 'Hard Mode', desc: 'Play Bounce Tail on Hard' },
     { id: 'novadrift_800', title: 'Steady Orbit', desc: 'Score 800 in Nova Drift' },
     { id: 'novadrift_2200', title: 'Solar Ace', desc: 'Score 2200 in Nova Drift' },
-    { id: 'hard_try_novadrift', title: 'Hard Mode', desc: 'Play Nova Drift on Hard' }
+    { id: 'hard_try_novadrift', title: 'Hard Mode', desc: 'Play Nova Drift on Hard' },
+    { id: 'aurummerge_128', title: 'Gilded', desc: 'Reach the 128 tile in Aurum Merge' },
+    { id: 'aurummerge_2048', title: 'Aurum Ascendant', desc: 'Reach the 2048 tile in Aurum Merge' },
+    { id: 'hard_try_aurummerge', title: 'Hard Mode', desc: 'Play Aurum Merge on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {
@@ -510,7 +525,7 @@ window.Arcade = (function () {
      that represents "progress" — but intentionally leaves favorites and
      preferences (theme, sound, difficulty) untouched. */
   const GAME_BEST_KEYS = {
-    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best', bouncetail: 'bouncetail_al_best', novadrift: 'novadrift_al_best'
+    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best', bouncetail: 'bouncetail_al_best', novadrift: 'novadrift_al_best', aurummerge: 'aurummerge_al_best'
   };
   const EXTRA_SCORE_KEYS = ['ttt_al_pvc_scores', 'ttt_al_pvp_scores'];
   function resetAllProgress() {
