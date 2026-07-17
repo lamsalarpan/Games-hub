@@ -158,6 +158,20 @@ window.Arcade = (function () {
       <rect x="53" y="15" width="32" height="32" rx="5" fill="rgba(240,237,230,0.9)"/>
       <rect x="15" y="53" width="32" height="32" rx="5" fill="#e8683a"/>
       <rect x="53" y="53" width="32" height="32" rx="5" fill="#b39cf0"/>`
+    },
+    {
+      id: 'goldrush', title: 'Gold Rush', href: 'gold-rush/index.html',
+      accent: '#7fc4e8', category: 'Chase', difficulty: 'Medium', playTime: '3–7 min',
+      desc: 'Guide a gold coin through a maze, dodge roaming wisps, and turn the tables with power cores.',
+      icon: `<defs><radialGradient id="g-rush" cx="35%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#f0ede6"/><stop offset="100%" stop-color="#e8b55a"/>
+      </radialGradient></defs>
+      <rect x="8" y="8" width="84" height="84" rx="8" fill="none" stroke="rgba(240,237,230,0.16)" stroke-width="3"/>
+      <path d="M8 34 h20 v20 h-20 Z M64 34 h20 v20 h-20 Z M34 8 v20 M34 64 v20" stroke="rgba(240,237,230,0.16)" stroke-width="3" fill="none"/>
+      <path d="M50 42 a12 12 0 1 1 -0.1 0 Z" fill="url(#g-rush)"/>
+      <circle cx="70" cy="50" r="9" fill="#e8683a"/>
+      <circle cx="65" cy="46" r="1.8" fill="#0c0c0b"/>
+      <circle cx="75" cy="46" r="1.8" fill="#0c0c0b"/>`
     }
   ];
 
@@ -318,13 +332,16 @@ window.Arcade = (function () {
     { id: 'hard_try_novadrift', title: 'Hard Mode', desc: 'Play Nova Drift on Hard' },
     { id: 'aurummerge_128', title: 'Gilded', desc: 'Reach the 128 tile in Aurum Merge' },
     { id: 'aurummerge_2048', title: 'Aurum Ascendant', desc: 'Reach the 2048 tile in Aurum Merge' },
-    { id: 'hard_try_aurummerge', title: 'Hard Mode', desc: 'Play Aurum Merge on Hard' }
+    { id: 'hard_try_aurummerge', title: 'Hard Mode', desc: 'Play Aurum Merge on Hard' },
+    { id: 'goldrush_3000', title: 'Gold Rush', desc: 'Score 3000 in Gold Rush' },
+    { id: 'goldrush_wave5', title: 'Deep Maze', desc: 'Reach wave 5 in Gold Rush' },
+    { id: 'hard_try_goldrush', title: 'Hard Mode', desc: 'Play Gold Rush on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {
@@ -525,7 +542,7 @@ window.Arcade = (function () {
      that represents "progress" — but intentionally leaves favorites and
      preferences (theme, sound, difficulty) untouched. */
   const GAME_BEST_KEYS = {
-    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best', bouncetail: 'bouncetail_al_best', novadrift: 'novadrift_al_best', aurummerge: 'aurummerge_al_best'
+    flappy: 'flappy_al_best', dino: 'dino_al_best', snake: 'snake_al_best', roadfighter: 'roadfighter_al_best', stacktower: 'stacktower_al_best', brickbreaker: 'brickbreaker_al_best', bouncetail: 'bouncetail_al_best', novadrift: 'novadrift_al_best', aurummerge: 'aurummerge_al_best', goldrush: 'goldrush_al_best'
   };
   const EXTRA_SCORE_KEYS = ['ttt_al_pvc_scores', 'ttt_al_pvp_scores'];
   function resetAllProgress() {

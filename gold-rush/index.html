@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Gold Rush — Arpan Lamsal</title>
+<meta name="description" content="A premium maze-chase game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 34%, rgba(200,151,58,0.10), transparent 70%);
+  }
+
+  .stage-wrap{
+    position:fixed; inset:0; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+  }
+  #game{
+    display:block;
+    background:#0c0c0b;
+    border:1px solid var(--border-strong);
+    border-radius:4px;
+    box-shadow:0 40px 100px rgba(0,0,0,0.55);
+    touch-action:none;
+  }
+
+  .wave-tag{
+    font-family:var(--font-mono); font-weight:700; font-size:13px;
+    letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--gold-light);
+  }
+  .lives-row{
+    display:flex; align-items:center; gap:4px;
+  }
+  .lives-row svg{ width:15px; height:15px; }
+
+  .combo-tag{
+    position:fixed; z-index:3; pointer-events:none;
+    font-family:var(--font-mono); font-weight:700; font-size:15px;
+    color:var(--gold-light); text-shadow:0 2px 10px rgba(0,0,0,0.7);
+    opacity:0; transform:translate(-50%, -50%);
+    transition:opacity .5s ease, transform .5s ease;
+  }
+  .combo-tag.show{ opacity:1; transform:translate(-50%, -140%); }
+
+  .swipe-hint{
+    position:fixed; left:0; right:0; bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);
+    z-index:2; display:flex; justify-content:center; gap:0.5rem;
+    font-family:var(--font-mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted); pointer-events:none; opacity:0; transition:opacity .3s ease;
+  }
+  .swipe-hint.show{ opacity:1; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Gold Rush</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="score mono" id="score">0</div>
+  <div class="wave-tag mono" id="waveTag">Wave 1</div>
+  <div class="lives-row" id="livesRow"></div>
+</div>
+
+<div class="stage-wrap">
+  <canvas id="game"></canvas>
+</div>
+
+<div class="combo-tag mono" id="comboTag"></div>
+
+<div class="swipe-hint mono" id="swipeHint">
+  <span>Swipe or arrow keys to steer the coin through the maze</span>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Chase the gold. Dodge the wisps.</h1>
+    <div class="sub">Swipe or ←/→/↑/↓ · Grab the power core to turn the tables</div>
+    <div class="option-list" id="diffRow">
+      <button type="button" class="option-btn" data-diff="easy">
+        <div class="opt-title">Easy</div>
+        <div class="opt-desc">2 wisps, slower and less alert. 4 lives.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="medium">
+        <div class="opt-title">Medium</div>
+        <div class="opt-desc">3 wisps hunting steadily. 3 lives.</div>
+      </button>
+      <button type="button" class="option-btn" data-diff="hard">
+        <div class="opt-title">Hard</div>
+        <div class="opt-desc">4 sharp, fast wisps. Only 2 lives.</div>
+      </button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Clear every shard and power core to advance the wave.<br>Power cores turn wisps blue — eat them for a rising combo.</div>
+  </div>
+</div>
+
+<!-- Game over overlay -->
+<div class="overlay" id="overOverlay">
+  <div class="panel">
+    <h1>Caught in the maze.</h1>
+    <div class="sub">Out of lives</div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Wave Reached</span><b id="finalWave">1</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
+    <div class="hint">Space · Click · Tap to retry</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+ try {
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+  const GOLD = '#c8973a', GOLD_LIGHT = '#e8b55a', GOLD_DARK = '#9c7328';
+  const CREAM = '#f0ede6', EMBER = '#e8683a', VIOLET = '#b39cf0', VIOLET_LIGHT = '#d6c8ff';
+  const FRIGHT_BLUE = '#6fa8d0', FRIGHT_FLASH = '#e6e6e1';
+
+  const IS_COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const DPR_CAP = IS_COARSE ? 1.5 : 2;
+
+  // ---- Maze definition ----
+  // '#' wall, '.' dot, 'o' power pellet, ' ' open floor (no pickup).
+  // Verified offline: fully connected from the player's start tile, with
+  // a wraparound tunnel on the middle row and no isolated pockets.
+  const TEMPLATE = [
+    "#############",
+    "#o.........o#",
+    "#.##.###.##.#",
+    "#.##.....##.#",
+    "#...........#",
+    "###..###..###",
+    "###... ...###",
+    ".....   .....",
+    "#...........#",
+    "#.##.....##.#",
+    "#.##.###.##.#",
+    "#...........#",
+    "#..##...##..#",
+    "#o.... ....o#",
+    "#############"
+  ];
+  const ROWS = TEMPLATE.length, COLS = TEMPLATE[0].length;
+  const PLAYER_START = { r: 13, c: 6 };
+  const GHOST_SPAWNS = [ {r:7,c:5}, {r:7,c:7}, {r:6,c:6}, {r:7,c:6} ];
+  const TUNNEL_ROW = 7;
+
+  const DIRS = { up: [-1, 0], down: [1, 0], left: [0, -1], right: [0, 1] };
+  const OPPOSITE = { up: 'down', down: 'up', left: 'right', right: 'left' };
+
+  let maze = [];
+  function resetMazeDots(){ maze = TEMPLATE.map(row => row.split('')); }
+
+  function wrapCol(c){ if (c < 0) return COLS - 1; if (c >= COLS) return 0; return c; }
+  function isWallTile(r, c){
+    if (r < 0 || r >= ROWS) return true;
+    return maze[r][wrapCol(c)] === '#';
+  }
+  function validMoves(r, c, excludeDir){
+    const out = [];
+    for (const dir of Object.keys(DIRS)){
+      if (excludeDir && dir === excludeDir) continue;
+      const [dr, dc] = DIRS[dir];
+      if (!isWallTile(r + dr, c + dc)) out.push(dir);
+    }
+    return out;
+  }
+  function candidatesFor(r, c, curDir){
+    const primary = validMoves(r, c, curDir ? OPPOSITE[curDir] : null);
+    return primary.length ? primary : validMoves(r, c, null);
+  }
+
+  // ---- Responsive sizing ----
+  let TILE = 20, W = 0, H = 0, DPR = 1;
+  function viewportH(){ return window.visualViewport ? window.visualViewport.height : window.innerHeight; }
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    const maxW = Math.min(window.innerWidth * 0.96, 480);
+    const maxH = Math.max(380, viewportH() - 64 - 16);
+    TILE = Math.max(14, Math.floor(Math.min(maxW / COLS, maxH / ROWS)));
+    W = TILE * COLS; H = TILE * ROWS;
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  let resizeQueued = false;
+  function queueResize(){ if (resizeQueued) return; resizeQueued = true; requestAnimationFrame(() => { resizeQueued = false; resize(); }); }
+  window.addEventListener('resize', queueResize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', queueResize);
+
+  function tileCenterX(c){ return c * TILE + TILE / 2; }
+  function tileCenterY(r){ return r * TILE + TILE / 2; }
+
+  // ---- Difficulty ----
+  const DIFFICULTY_PRESETS = {
+    easy:   { ghostCount: 2, speedFactor: 0.80, chaseAccuracy: 0.50, frightSec: 8, frightSpeedFactor: 0.55, lives: 4 },
+    medium: { ghostCount: 3, speedFactor: 0.95, chaseAccuracy: 0.70, frightSec: 6, frightSpeedFactor: 0.60, lives: 3 },
+    hard:   { ghostCount: 4, speedFactor: 1.10, chaseAccuracy: 0.88, frightSec: 4, frightSpeedFactor: 0.65, lives: 2 }
+  };
+  const DIFF_KEY = 'goldrush_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return DIFFICULTY_PRESETS[difficulty] || DIFFICULTY_PRESETS.medium; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  const STORAGE_KEY = 'goldrush_al_best';
+  function bestKey(){ return STORAGE_KEY + '_' + difficulty; }
+  let best = 0;
+  function refreshBest(){
+    best = Arcade.getBest(bestKey());
+    document.getElementById('startBest').textContent = String(best);
+    const t = document.getElementById('startBestDiff'); if (t) t.textContent = diffLabel();
+  }
+  refreshBest();
+
+  // ---- Game state ----
+  let state = 'start'; // start | playing | over
+  let score = 0, wave = 1, lives = 3;
+  let dotsRemaining = 0;
+  let player = null;
+  let ghosts = [];
+  let particles = [];
+  let frightened = false, frightTimer = 0, comboIndex = 0;
+  let waveSpeedBoost = 0;
+  let runStartTime = 0;
+  let hintTimer = 0;
+  let shakeTime = 0, shakeMag = 0;
+  const COMBO_SCORES = [200, 400, 800, 1600];
+
+  function motionOK(){ return !Arcade.getSettings().reducedMotion; }
+  function particlesOK(){ return Arcade.getSettings().particles !== false; }
+
+  function newPlayerEntity(){
+    return {
+      px: tileCenterX(PLAYER_START.c), py: tileCenterY(PLAYER_START.r),
+      dir: null, nextDir: null, mouthPhase: 0, invuln: 0
+    };
+  }
+  function newGhostEntity(spawn, idx){
+    return {
+      px: tileCenterX(spawn.c), py: tileCenterY(spawn.r),
+      dir: 'up', color: [EMBER, VIOLET, GOLD_DARK, CREAM][idx % 4],
+      state: 'chase', respawnTimer: 0, wobble: Math.random() * Math.PI * 2
+    };
+  }
+
+  function countPickups(){
+    let n = 0;
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (maze[r][c] === '.' || maze[r][c] === 'o') n++;
+    return n;
+  }
+
+  function setupWave(freshRun){
+    resetMazeDots();
+    dotsRemaining = countPickups();
+    player = newPlayerEntity();
+    const p = preset();
+    const count = Math.min(GHOST_SPAWNS.length, p.ghostCount + (freshRun ? 0 : Math.min(1, wave - 1)));
+    ghosts = [];
+    for (let i = 0; i < count; i++) ghosts.push(newGhostEntity(GHOST_SPAWNS[i % GHOST_SPAWNS.length], i));
+    frightened = false; frightTimer = 0; comboIndex = 0;
+    waveSpeedBoost = Math.min(0.35, (wave - 1) * 0.06);
+  }
+
+  function speeds(){
+    const p = preset();
+    const base = TILE * 0.098;
+    const playerSpeed = base;
+    const chaseSpeed = base * (p.speedFactor + waveSpeedBoost);
+    const frightSpeed = base * p.frightSpeedFactor;
+    return { playerSpeed, chaseSpeed, frightSpeed };
+  }
+
+  function reset(){
+    score = 0; wave = 1; lives = preset().lives;
+    setupWave(true);
+    particles = [];
+    shakeTime = 0; shakeMag = 0;
+    hintTimer = 240;
+    document.getElementById('score').textContent = '0';
+    document.getElementById('score').classList.remove('show');
+    document.getElementById('waveTag').textContent = 'Wave 1';
+    renderLives();
+    document.getElementById('swipeHint').classList.remove('show');
+  }
+
+  function renderLives(){
+    const row = document.getElementById('livesRow');
+    row.innerHTML = '';
+    for (let i = 0; i < lives; i++){
+      row.insertAdjacentHTML('beforeend',
+        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="' + GOLD_LIGHT + '"/></svg>');
+    }
+  }
+
+  function updateScoreUI(){
+    const el = document.getElementById('score');
+    el.textContent = String(score);
+    el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
+  }
+
+  function showCombo(text, x, y){
+    const tag = document.getElementById('comboTag');
+    tag.textContent = text;
+    const rect = canvas.getBoundingClientRect();
+    tag.style.left = (rect.left + x) + 'px';
+    tag.style.top = (rect.top + y) + 'px';
+    tag.classList.remove('show'); void tag.offsetWidth; tag.classList.add('show');
+  }
+
+  function spawnBurst(x, y, color, count){
+    if (!particlesOK()) return;
+    for (let i = 0; i < (count || 8); i++){
+      particles.push({
+        x, y,
+        vx: (Math.random() * 2 - 1) * 2.2, vy: (Math.random() * 2 - 1) * 2.2,
+        life: 20, maxLife: 20, size: 2 + Math.random() * 2, color
+      });
+    }
+  }
+  function updateParticles(){
+    for (let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.x += p.vx; p.y += p.vy; p.vx *= 0.94; p.vy *= 0.94; p.life--;
+      if (p.life <= 0) particles.splice(i, 1);
+    }
+  }
+  function drawParticles(){
+    for (const p of particles){
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function sfxDot(){ Arcade.tone(660, 0.035, 'square', 0.08, { sweepTo: 720 }); }
+  function sfxPellet(){ Arcade.tone(300, 0.14, 'sine', 0.18, { sweepTo: 520 }); }
+  function sfxEatGhost(){ Arcade.tone(500, 0.1, 'triangle', 0.2, { sweepTo: 900 }); }
+  function sfxDeath(){
+    Arcade.noiseBurst(0.3, 0.2, 800);
+    Arcade.tone(180, 0.28, 'sawtooth', 0.15, { sweepTo: 50 });
+  }
+  function sfxWave(){ Arcade.tone(440, 0.12, 'triangle', 0.16, { sweepTo: 660 }); }
+
+  // ---- Input ----
+  let bufferedDir = null;
+  function requestDir(dir){
+    bufferedDir = dir;
+    if (player) player.nextDir = dir;
+  }
+  const KEY_MAP = {
+    ArrowLeft: 'left', a: 'left', A: 'left',
+    ArrowRight: 'right', d: 'right', D: 'right',
+    ArrowUp: 'up', w: 'up', W: 'up',
+    ArrowDown: 'down', s: 'down', S: 'down'
+  };
+  function handleKeyDown(e){
+    if (e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar'){
+      e.preventDefault();
+      Arcade.audioCtx();
+      if (state === 'start' || state === 'over') startGame();
+      return;
+    }
+    const dir = KEY_MAP[e.key];
+    if (dir){ e.preventDefault(); Arcade.audioCtx(); requestDir(dir); }
+  }
+  window.addEventListener('keydown', handleKeyDown);
+
+  let touchStart = null;
+  canvas.addEventListener('pointerdown', (e) => {
+    Arcade.audioCtx();
+    if (state === 'over'){ startGame(); return; }
+    if (state === 'start') return;
+    const rect = canvas.getBoundingClientRect();
+    touchStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }, { passive: true });
+  canvas.addEventListener('pointerup', (e) => {
+    if (!touchStart || state !== 'playing') { touchStart = null; return; }
+    const rect = canvas.getBoundingClientRect();
+    const dx = (e.clientX - rect.left) - touchStart.x, dy = (e.clientY - rect.top) - touchStart.y;
+    touchStart = null;
+    const THRESH = 14;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < THRESH) return;
+    if (Math.abs(dx) > Math.abs(dy)) requestDir(dx > 0 ? 'right' : 'left');
+    else requestDir(dy > 0 ? 'down' : 'up');
+  }, { passive: true });
+  ['touchstart', 'touchmove', 'touchend'].forEach(evt => {
+    canvas.addEventListener(evt, e => e.preventDefault(), { passive: false });
+  });
+
+  // ---- Overlays ----
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.option-btn')) return;
+    e.preventDefault();
+  }, { passive: false });
+  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    Arcade.audioCtx();
+    startGame();
+  }, { passive: false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  function startGame(diff){
+    if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
+    reset();
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('score').classList.add('show');
+    runStartTime = performance.now();
+  }
+
+  function endGame(){
+    state = 'over';
+    sfxDeath();
+    if (motionOK()){ shakeTime = 20; shakeMag = Math.max(6, TILE * 0.28); }
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; Arcade.setBest(bestKey(), best); }
+    document.getElementById('finalScore').textContent = String(score);
+    document.getElementById('finalWave').textContent = String(wave);
+    document.getElementById('finalBest').textContent = String(best);
+    document.getElementById('finalBestDiff').textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+
+    const durationSec = Math.max(1, Math.round((performance.now() - runStartTime) / 1000));
+    Arcade.logRun('goldrush', score, difficulty, durationSec);
+    if (score >= 3000) Arcade.unlock('goldrush_3000', 'Gold Rush', 'Score 3000 in Gold Rush');
+    if (wave >= 5) Arcade.unlock('goldrush_wave5', 'Deep Maze', 'Reach wave 5 in Gold Rush');
+    if (difficulty === 'hard') Arcade.unlock('hard_try_goldrush', 'Hard Mode', 'Play Gold Rush on Hard');
+
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+    else if (navigator.vibrate) { try { navigator.vibrate(40); } catch(e){} }
+  }
+
+  function loseLife(){
+    lives--;
+    renderLives();
+    if (lives <= 0){ endGame(); return; }
+    // Reset positions only; dots/pellets and score are kept.
+    player.px = tileCenterX(PLAYER_START.c); player.py = tileCenterY(PLAYER_START.r);
+    player.dir = null; player.nextDir = null; player.invuln = 90;
+    ghosts.forEach((g, i) => {
+      const spawn = GHOST_SPAWNS[i % GHOST_SPAWNS.length];
+      g.px = tileCenterX(spawn.c); g.py = tileCenterY(spawn.r);
+      g.dir = 'up'; g.state = 'chase'; g.respawnTimer = 0;
+    });
+    frightened = false; frightTimer = 0;
+    if (navigator.vibrate) { try { navigator.vibrate(60); } catch(e){} }
+  }
+
+  function tileOf(px, py){
+    return { r: Math.round((py - TILE / 2) / TILE), c: wrapCol(Math.round((px - TILE / 2) / TILE)) };
+  }
+
+  function stepEntityCommon(entity, speed, chooseDir){
+    const { r, c } = tileOf(entity.px, entity.py);
+    const cx = tileCenterX(c), cy = tileCenterY(r);
+    const eps = Math.min(speed * 0.5, TILE * 0.2);
+    const centered = Math.abs(entity.px - cx) < eps && Math.abs(entity.py - cy) < eps;
+
+    if (centered){
+      entity.px = cx; entity.py = cy;
+      const cands = candidatesFor(r, c, entity.dir);
+      const chosen = chooseDir(entity, r, c, cands);
+      if (chosen === null) entity.dir = null;
+      else entity.dir = cands.includes(chosen) ? chosen : (cands.length ? cands[0] : null);
+    }
+
+    if (entity.dir){
+      const [dr, dc] = DIRS[entity.dir];
+      entity.px += dc * speed;
+      entity.py += dr * speed;
+      // Tunnel wraparound (only reachable on the open tunnel row).
+      const mazeWidthPx = COLS * TILE;
+      if (entity.px < 0) entity.px += mazeWidthPx;
+      else if (entity.px > mazeWidthPx) entity.px -= mazeWidthPx;
+    }
+    return { r, c };
+  }
+
+  function updatePlayer(speed){
+    if (player.nextDir && player.dir && player.nextDir === OPPOSITE[player.dir]){
+      player.dir = player.nextDir; // instant reversal, classic maze-game feel
+    }
+    const { r, c } = stepEntityCommon(player, speed, (entity, rr, cc, cands) => {
+      if (entity.nextDir && cands.includes(entity.nextDir)) return entity.nextDir;
+      if (entity.dir && cands.includes(entity.dir)) return entity.dir;
+      return null; // no valid input yet or a dead end — stay put until redirected
+    });
+
+    const tile = tileOf(player.px, player.py);
+    const cell = maze[tile.r][tile.c];
+    if (cell === '.' || cell === 'o'){
+      if (Math.abs(player.px - tileCenterX(tile.c)) < 2 && Math.abs(player.py - tileCenterY(tile.r)) < 2){
+        maze[tile.r][tile.c] = ' ';
+        dotsRemaining--;
+        if (cell === '.'){
+          score += 10;
+          sfxDot();
+        } else {
+          score += 50;
+          comboIndex = 0;
+          frightened = true;
+          frightTimer = Math.round(preset().frightSec * 60);
+          ghosts.forEach(g => { if (g.state === 'chase') g.state = 'fright'; });
+          sfxPellet();
+          spawnBurst(player.px, player.py, GOLD_LIGHT, 12);
+        }
+        updateScoreUI();
+      }
+    }
+    if (player.invuln > 0) player.invuln--;
+    player.mouthPhase += 0.22;
+  }
+
+  function updateGhost(g, idx, chaseSpeed, frightSpeed, accuracy){
+    if (g.state === 'respawning'){
+      g.respawnTimer--;
+      if (g.respawnTimer <= 0){ g.state = frightened ? 'fright' : 'chase'; }
+      return;
+    }
+    const speed = g.state === 'fright' ? frightSpeed : chaseSpeed;
+    stepEntityCommon(g, speed, (entity, r, c, cands) => {
+      if (!cands.length) return null;
+      const flee = g.state === 'fright';
+      if (Math.random() > accuracy) return cands[(Math.random() * cands.length) | 0];
+      let best = null, bestScore = flee ? -Infinity : Infinity;
+      for (const dir of cands){
+        const [dr, dc] = DIRS[dir];
+        const nr = r + dr, nc = wrapCol(c + dc);
+        const ptile = tileOf(player.px, player.py);
+        const ddr = nr - ptile.r, ddc = nc - ptile.c;
+        const d = ddr * ddr + ddc * ddc;
+        if (flee ? d > bestScore : d < bestScore){ bestScore = d; best = dir; }
+      }
+      return best;
+    });
+    g.wobble += 0.14;
+  }
+
+  function handleCollisions(){
+    const COLLIDE_R = TILE * 0.62;
+    for (const g of ghosts){
+      if (g.state === 'respawning') continue;
+      const dx = g.px - player.px, dy = g.py - player.py;
+      if (dx * dx + dy * dy > COLLIDE_R * COLLIDE_R) continue;
+      if (g.state === 'fright'){
+        const gain = COMBO_SCORES[Math.min(comboIndex, COMBO_SCORES.length - 1)];
+        score += gain; comboIndex++;
+        updateScoreUI();
+        sfxEatGhost();
+        spawnBurst(g.px, g.py, VIOLET_LIGHT, 12);
+        showCombo('+' + gain, g.px, g.py);
+        g.state = 'respawning';
+        g.respawnTimer = 90;
+      } else if (player.invuln <= 0){
+        loseLife();
+        return;
+      }
+    }
+  }
+
+  function checkWaveClear(){
+    if (dotsRemaining > 0) return;
+    wave++;
+    score += 200 * wave;
+    updateScoreUI();
+    sfxWave();
+    Arcade.toast('Wave ' + wave);
+    document.getElementById('waveTag').textContent = 'Wave ' + wave;
+    setupWave(false);
+  }
+
+  function update(){
+    if (Arcade.isPaused()) return;
+    if (state !== 'playing'){
+      if (shakeTime > 0){ shakeTime--; shakeMag *= 0.88; }
+      updateParticles();
+      return;
+    }
+    const { playerSpeed, chaseSpeed, frightSpeed } = speeds();
+    const p = preset();
+
+    updatePlayer(playerSpeed);
+    ghosts.forEach((g, i) => updateGhost(g, i, chaseSpeed, frightSpeed, p.chaseAccuracy));
+    handleCollisions();
+    if (state !== 'playing') return;
+
+    if (frightened){
+      frightTimer--;
+      if (frightTimer <= 0){
+        frightened = false;
+        ghosts.forEach(g => { if (g.state === 'fright') g.state = 'chase'; });
+      }
+    }
+
+    checkWaveClear();
+    if (hintTimer > 0){
+      hintTimer--;
+      document.getElementById('swipeHint').classList.toggle('show', hintTimer > 30 && hintTimer < 200);
+    }
+    if (shakeTime > 0){ shakeTime--; shakeMag *= 0.88; }
+    updateParticles();
+  }
+
+  // ---- Drawing ----
+  function drawMaze(){
+    ctx.fillStyle = '#0c0c0b';
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = 'rgba(200,151,58,0.35)';
+    ctx.lineWidth = 2;
+    for (let r = 0; r < ROWS; r++){
+      for (let c = 0; c < COLS; c++){
+        if (maze[r][c] !== '#') continue;
+        const x = c * TILE, y = r * TILE;
+        ctx.strokeRect(x + 1, y + 1, TILE - 2, TILE - 2);
+      }
+    }
+    const pulse = 0.75 + Math.sin(Date.now() * 0.006) * 0.25;
+    for (let r = 0; r < ROWS; r++){
+      for (let c = 0; c < COLS; c++){
+        const cell = maze[r][c];
+        if (cell === '.'){
+          ctx.fillStyle = 'rgba(232,181,90,0.85)';
+          ctx.beginPath();
+          ctx.arc(tileCenterX(c), tileCenterY(r), Math.max(1.6, TILE * 0.07), 0, Math.PI * 2);
+          ctx.fill();
+        } else if (cell === 'o'){
+          ctx.save();
+          ctx.globalAlpha = pulse;
+          ctx.fillStyle = GOLD_LIGHT;
+          ctx.shadowColor = 'rgba(232,181,90,0.8)';
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.arc(tileCenterX(c), tileCenterY(r), TILE * 0.22, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+  }
+
+  function drawPlayer(){
+    if (!player) return;
+    const facing = { up: -Math.PI / 2, down: Math.PI / 2, left: Math.PI, right: 0 }[player.dir || 'right'];
+    const mouth = Math.abs(Math.sin(player.mouthPhase)) * 0.72 + 0.06;
+    ctx.save();
+    ctx.translate(player.px, player.py);
+    ctx.rotate(facing);
+    if (player.invuln > 0) ctx.globalAlpha = 0.5 + 0.5 * Math.sin(player.invuln * 0.5);
+    ctx.fillStyle = GOLD_LIGHT;
+    ctx.shadowColor = 'rgba(232,181,90,0.7)';
+    ctx.shadowBlur = 8;
+    const r = TILE * 0.42;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, mouth, Math.PI * 2 - mouth);
+    ctx.lineTo(0, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawGhost(g){
+    if (g.state === 'respawning') return;
+    const r = TILE * 0.4;
+    const frightened_ = g.state === 'fright';
+    const flashing = frightened_ && frightTimer < 90 && Math.floor(frightTimer / 8) % 2 === 0;
+    ctx.save();
+    ctx.translate(g.px, g.py);
+    ctx.fillStyle = flashing ? FRIGHT_FLASH : (frightened_ ? FRIGHT_BLUE : g.color);
+    ctx.shadowColor = frightened_ ? 'rgba(111,168,208,0.6)' : 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 6;
+    const wob = Math.sin(g.wobble) * r * 0.12;
+    ctx.beginPath();
+    ctx.arc(0, -r * 0.15, r, Math.PI, 0);
+    ctx.lineTo(r, r * 0.55 + wob);
+    ctx.lineTo(r * 0.5, r * 0.3 + wob);
+    ctx.lineTo(0, r * 0.55 + wob);
+    ctx.lineTo(-r * 0.5, r * 0.3 + wob);
+    ctx.lineTo(-r, r * 0.55 + wob);
+    ctx.closePath();
+    ctx.fill();
+    if (!frightened_){
+      ctx.fillStyle = '#0c0c0b';
+      ctx.beginPath(); ctx.arc(-r * 0.32, -r * 0.2, r * 0.16, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(r * 0.32, -r * 0.2, r * 0.16, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.strokeStyle = '#0c0c0b'; ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(-r * 0.42, -r * 0.2); ctx.lineTo(-r * 0.14, -r * 0.2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(r * 0.14, -r * 0.2); ctx.lineTo(r * 0.42, -r * 0.2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function draw(){
+    ctx.save();
+    if (shakeTime > 0 && motionOK()){
+      const dx = (Math.random() * 2 - 1) * shakeMag, dy = (Math.random() * 2 - 1) * shakeMag * 0.6;
+      ctx.translate(dx, dy);
+    }
+    drawMaze();
+    if (state !== 'start'){
+      ghosts.forEach(drawGhost);
+      drawPlayer();
+    }
+    drawParticles();
+    ctx.restore();
+  }
+
+  function loop(){ update(); draw(); requestAnimationFrame(loop); }
+
+  resize();
+  resetMazeDots();
+  player = newPlayerEntity();
+  ghosts = GHOST_SPAWNS.slice(0, 3).map((s, i) => newGhostEntity(s, i));
+  draw();
+  loop();
+  Arcade.mountPanels({ gameId: 'goldrush' });
+  Arcade.mountPauseMenu();
+ } catch (err) {
+   console.error('Gold Rush failed to start:', err);
+   document.body.innerHTML =
+     '<div style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;padding:2rem;text-align:center;font-family:monospace;color:#f0ede6;background:#0c0c0b;">' +
+       '<div style="font-size:14px;letter-spacing:.08em;color:#c8973a;text-transform:uppercase;">Gold Rush hit a snag</div>' +
+       '<div style="font-size:12px;color:#8a8880;max-width:420px;">' + (err && err.message ? err.message : 'Unknown error') + '</div>' +
+       '<a href="../index.html" style="margin-top:.5rem;font-size:12px;letter-spacing:.06em;color:#e8b55a;text-decoration:none;border:1px solid rgba(200,151,58,0.35);border-radius:20px;padding:.6rem 1.2rem;">&larr; Back to Hub</a>' +
+     '</div>';
+ }
+})();
+</script>
+</body>
+</html>
