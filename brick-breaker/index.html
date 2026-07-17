@@ -91,23 +91,15 @@
 
 <!-- Start overlay -->
 <div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
   <div class="panel">
     <img class="mark" src="../faviconset/logo.png" alt="">
     <h1>Clear the wall.</h1>
     <div class="sub">Drag · Arrow keys · Space to launch</div>
-    <div class="option-list" id="diffRow">
-      <button type="button" class="option-btn" data-diff="easy">
-        <div class="opt-title">Relaxed</div>
-        <div class="opt-desc">Slower ball, wider paddle, forgiving angles.</div>
-      </button>
-      <button type="button" class="option-btn" data-diff="medium">
-        <div class="opt-title">Classic</div>
-        <div class="opt-desc">The standard clear. Balanced speed and paddle.</div>
-      </button>
-      <button type="button" class="option-btn" data-diff="hard">
-        <div class="opt-title">Rapid</div>
-        <div class="opt-desc">Fast ball, narrow paddle. One miss ends it.</div>
-      </button>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Relaxed</button>
+      <button type="button" class="diff-btn" data-diff="medium">Classic</button>
+      <button type="button" class="diff-btn" data-diff="hard">Rapid</button>
     </div>
     <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
     <div class="hint">Move the paddle to keep the ball alive.<br>Clear every brick to advance a level — the wall gets denser each time.</div>
@@ -116,6 +108,7 @@
 
 <!-- Game over overlay -->
 <div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
   <div class="panel">
     <h1>Wall stands.</h1>
     <div class="sub">Every clear starts with one brick</div>
@@ -124,7 +117,6 @@
     <div class="stat-row"><span>Levels Cleared</span><b id="finalLevel">0</b></div>
     <span class="new-best" id="newBestTag">New Record</span>
     <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
-    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
     <div class="hint">Space · Click · Tap to retry</div>
   </div>
 </div>
@@ -592,10 +584,10 @@
   canvas.addEventListener('mousemove', function(e){ movePaddleTo(e.clientX); });
 
   document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
-    if (e.target.closest('.option-btn')) return;
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
     e.preventDefault();
   }, { passive: false });
-  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       focusCanvas();

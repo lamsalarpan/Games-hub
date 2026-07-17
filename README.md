@@ -22,6 +22,10 @@ snake/index.html
 stack-tower/index.html
 brick-breaker/index.html
 bounce-tail/index.html
+nova-drift/index.html
+aurum-merge/index.html
+gold-rush/index.html
+memory-match/index.html
 faviconset/ (favicons + logo.png)
 ```
 
@@ -52,13 +56,28 @@ depends on it yet, but it's there for a future "Favorites only" filter.
 - **Nav**: identical everywhere — logo (`faviconset/logo.png`, 38px, given visual
   priority) + game title on the left, immediately followed by a "← Hub"
   pill that always links to `../index.html`. Nothing on the right.
-- **Difficulty / mode selection**: every game that has one uses the same
-  `.option-list` / `.option-btn` card pattern (title + one-line description),
-  and **picking an option starts the game immediately** — there is no
+- **Difficulty selection**: every game that has one uses the same
+  `.diff-row` / `.diff-btn` minimal pill row (label only, no description),
+  and **picking a pill starts the game immediately** — there is no
   separate "now tap to start" step. This is deliberate: an earlier version
   used small pill buttons for Flappy/Dino that required a second tap to
   begin, which read as the game being "stuck." Do not reintroduce a
-  two-step start flow.
+  two-step start flow — the pill click handler must call `startGame(...)`
+  directly, same as before.
+- **Mode selection** (a genuine fork with different rules, not a difficulty
+  tier — e.g. tic-tac-toe's Player vs Player / Player vs Computer) still
+  uses the older `.option-list` / `.option-btn` card pattern (title + one-line
+  description), since the two choices actually need explaining.
+- **"Back to hub" while an overlay is open**: every `.overlay` gets a small
+  circular `.overlay-home-btn` icon pinned to its own top-left corner
+  (inserted as the first child of the `.overlay` div, before `.panel`).
+  This replaced an older full-width "Back to Home" button that lived inside
+  the game-over panel — the overlay's backdrop sits above the nav
+  (`z-index`-wise), so the nav's own Hub link isn't clickable while any
+  overlay is showing, and every overlay needs its own way out. The overlay
+  that used to hold the old button keeps `id="homeBtn"` so existing
+  click-guards (`e.target.closest('#homeBtn')`) keep working unchanged;
+  every other overlay's corner button is just a plain link, no id needed.
 - **Panels**: `.overlay` / `.panel`, same max-width (360px), same
   `.stat-row` for Best Score, same `.btn-primary` / `.btn-secondary` /
   `.back-link` for actions.
@@ -75,16 +94,19 @@ depends on it yet, but it's there for a future "Favorites only" filter.
 2. Copy the nav block verbatim from any existing game page (logo + Hub
    button) — do not redesign it.
 3. Reuse the existing building blocks: `.overlay`/`.panel`,
-   `.btn-primary`/`.btn-secondary`, `.option-list`/`.option-btn` for
-   difficulty or mode selection, `.stat-row`, `.new-best`.
+   `.btn-primary`/`.btn-secondary`, `.diff-row`/`.diff-btn` for difficulty
+   selection (`.option-list`/`.option-btn` only for a genuine mode choice
+   that needs a description), `.stat-row`, `.new-best`.
 4. If the game has a score, use `Arcade.tone(...)` / `Arcade.noiseBurst(...)`
    for sound and `Arcade.getBest`/`setBest` for the high score.
-5. Add a "Back to Home" link/button (`<a class="btn-secondary" href="../index.html">Back to Home</a>`)
-   on the game-over screen, in addition to the nav's Hub button.
-6. Add an entry to the `GAMES` array in the hub's `index.html` (folder,
-   title, description, small inline SVG icon) — the numbered list,
-   keyboard navigation, and offline caching all pick it up automatically.
-   Also add the new page's path to `PRECACHE_URLS` in `sw.js`.
+5. Give every `.overlay` a corner `.overlay-home-btn` (first child, before
+   `.panel`) linking to `../index.html`. The overlay that ends a run keeps
+   `id="homeBtn"` on that button so the standard
+   `e.target.closest('#homeBtn')` click-guard pattern still applies.
+6. Add an entry to the `GAMES` array in `assets/js/common.js` (folder,
+   title, description, small inline SVG icon) — the hub's grid, the
+   numbered list, keyboard navigation, and offline caching all pick it up
+   automatically. Also add the new page's path to `PRECACHE_URLS` in `sw.js`.
 7. Bump `CACHE_NAME` in `sw.js` so returning visitors pick up the change —
    the service worker is network-first, so this mostly matters for anyone
    currently offline, but it's still good hygiene.

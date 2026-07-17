@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Memory Match — Arpan Lamsal</title>
+<meta name="description" content="A card-flip memory matching game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 34%, rgba(179,156,240,0.09), transparent 70%);
+  }
+
+  .mm-stat-row{
+    display:flex; align-items:center; gap:14px;
+    font-family:var(--font-mono); font-size:12px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+    opacity:0; transition:opacity .3s ease;
+  }
+  .mm-stat-row.show{ opacity:1; }
+  .mm-stat-row b{ color:var(--gold-light); font-size:14px; margin-left:4px; }
+
+  .mm-stage{
+    position:fixed; inset:0; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+    touch-action:none;
+  }
+  .mm-grid{
+    display:grid;
+    gap:8px;
+    touch-action:manipulation;
+  }
+  .mm-card{
+    position:relative;
+    background:none; border:none; padding:0; margin:0;
+    cursor:pointer; perspective:700px;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .mm-card-inner{
+    position:relative; width:100%; height:100%;
+    transition:transform .45s cubic-bezier(.3,.9,.3,1.05);
+    transform-style:preserve-3d;
+  }
+  .mm-card.flipped .mm-card-inner,
+  .mm-card.matched .mm-card-inner{ transform:rotateY(180deg); }
+  .mm-card-face{
+    position:absolute; inset:0;
+    backface-visibility:hidden;
+    border-radius:8px;
+    border:1px solid var(--border-strong);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .mm-card-front{ background:var(--bg-2); }
+  .mm-card-front svg{ width:34%; height:34%; opacity:0.4; color:var(--gold-light); }
+  .mm-card-back{
+    background:var(--bg-card); transform:rotateY(180deg);
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .mm-card-back svg{ width:52%; height:52%; }
+  .mm-card.matched .mm-card-back{
+    background:rgba(200,151,58,0.1); border-color:var(--gold);
+  }
+  .mm-card.matched{ cursor:default; }
+  @media (hover:hover){
+    .mm-card:not(.flipped):not(.matched):hover .mm-card-front{ border-color:var(--gold); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .mm-card-inner{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Memory Match</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="mm-stat-row" id="hud">
+    <span>Moves <b id="movesTag">0</b></span>
+    <span>Time <b id="timeTag">0:00</b></span>
+  </div>
+</div>
+
+<div class="mm-stage">
+  <div class="mm-grid" id="grid"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Flip. Remember. Match.</h1>
+    <div class="sub">Tap two cards · Clear every pair</div>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Fewer moves and a faster clock mean a higher score.</div>
+  </div>
+</div>
+
+<!-- Round over overlay -->
+<div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <h1>Board cleared.</h1>
+    <div class="sub" id="overSub">Every pair found</div>
+    <div class="stat-row"><span>Moves</span><b id="finalMoves">0</b></div>
+    <div class="stat-row"><span>Time</span><b id="finalTime">0:00</b></div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <div class="hint">Tap to play again</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+
+  /* ---- 10 distinct card faces — shape carries the identity, color is
+     just a bonus cue, so matching still works for colorblind players. ---- */
+  const SYMBOLS = [
+    { color:'#e8b55a', path:'<path d="M12 2.5l2.9 6.9 7.1.6-5.5 4.8 1.8 7.2-6.3-3.9-6.3 3.9 1.8-7.2L2 10l7.1-.6Z"/>' },
+    { color:'#e8683a', path:'<path d="M12 21s-7.5-4.6-10-9.3C.3 8.4 2 5 5.4 5c2 0 3.4 1.1 4.6 2.7C11.2 6.1 12.6 5 14.6 5 18 5 19.7 8.4 18 11.7 15.5 16.4 12 21 12 21Z"/>' },
+    { color:'#b39cf0', path:'<path d="M12 2 22 12 12 22 2 12Z"/>' },
+    { color:'#f0ede6', path:'<circle cx="12" cy="12" r="7.2" fill="none" stroke="currentColor" stroke-width="3"/>' },
+    { color:'#e0a63c', path:'<path d="M13 2 4 14h6l-1.4 8L20 10h-6.4Z"/>' },
+    { color:'#7fc4e8', path:'<path d="M20.2 14.7A8.6 8.6 0 1 1 9.3 3.8a7.1 7.1 0 0 0 10.9 10.9Z"/>' },
+    { color:'#6fd0a8', path:'<path d="M12 2 20.6 7v10L12 22 3.4 17V7Z"/>' },
+    { color:'#c8973a', path:'<path d="M12 3 21.5 20H2.5Z"/>' },
+    { color:'#9c7328', path:'<path d="M10.6 3h2.8v7.6H21v2.8h-7.6V21h-2.8v-7.6H3v-2.8h7.6Z"/>' },
+    { color:'#d6c8ff', path:'<path d="M12 2v20M4.5 6l15 12M19.5 6l-15 12" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/>' }
+  ];
+
+  const CARD_BACK_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 22 12 12 22 2 12Z"/></svg>';
+
+  const PRESETS = {
+    easy:   { cols:3, rows:4 },
+    medium: { cols:4, rows:4 },
+    hard:   { cols:4, rows:5 }
+  };
+
+  const DIFF_KEY = 'memorymatch_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return PRESETS[difficulty] || PRESETS.medium; }
+  function pairCount(){ const p = preset(); return (p.cols * p.rows) / 2; }
+  function bestKey(){ return 'memorymatch_al_best_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const tag = document.getElementById('startBestDiff'); if (tag) tag.textContent = diffLabel();
+  }
+  refreshBest();
+
+  const grid = document.getElementById('grid');
+  let state = 'start';
+  let cards = [];          // { sym, matched }
+  let flipped = [];        // indices currently face-up, not yet resolved
+  let busy = false;
+  let moves = 0;
+  let startTime = 0;
+  let timerHandle = null;
+
+  function formatTime(sec){
+    sec = Math.max(0, sec | 0);
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+  function elapsedSec(){ return startTime ? (Date.now() - startTime) / 1000 : 0; }
+
+  function tickTimer(){
+    document.getElementById('timeTag').textContent = formatTime(elapsedSec());
+  }
+
+  function shuffledDeck(pairs){
+    const idxPool = [];
+    for (let i = 0; i < pairs; i++){ idxPool.push(i); idxPool.push(i); }
+    for (let i = idxPool.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [idxPool[i], idxPool[j]] = [idxPool[j], idxPool[i]];
+    }
+    return idxPool;
+  }
+
+  function resizeGrid(){
+    const p = preset();
+    const gap = 8;
+    const availW = Math.min(window.innerWidth * 0.94, 520);
+    const availH = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - var_navGap();
+    const cellW = (availW - gap * (p.cols - 1)) / p.cols;
+    const cellH = (availH - gap * (p.rows - 1)) / p.rows;
+    const cell = Math.max(44, Math.floor(Math.min(cellW, cellH, 108)));
+    grid.style.gridTemplateColumns = 'repeat(' + p.cols + ', ' + cell + 'px)';
+    grid.style.gridTemplateRows = 'repeat(' + p.rows + ', ' + cell + 'px)';
+    grid.style.width = (cell * p.cols + gap * (p.cols - 1)) + 'px';
+    grid.style.height = (cell * p.rows + gap * (p.rows - 1)) + 'px';
+  }
+  function var_navGap(){
+    const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68;
+    return navH + 70;
+  }
+  window.addEventListener('resize', resizeGrid);
+  window.addEventListener('orientationchange', () => setTimeout(resizeGrid, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resizeGrid);
+
+  function buildBoard(){
+    const pairs = pairCount();
+    const deck = shuffledDeck(pairs);
+    cards = deck.map(sym => ({ sym, matched:false }));
+    grid.innerHTML = cards.map((c, i) => `
+      <button type="button" class="mm-card" data-idx="${i}">
+        <div class="mm-card-inner">
+          <div class="mm-card-face mm-card-front">${CARD_BACK_SVG}</div>
+          <div class="mm-card-face mm-card-back" style="color:${SYMBOLS[c.sym].color}">
+            <svg viewBox="0 0 24 24" fill="currentColor">${SYMBOLS[c.sym].path}</svg>
+          </div>
+        </div>
+      </button>`).join('');
+    resizeGrid();
+
+    grid.querySelectorAll('.mm-card').forEach(el => {
+      el.addEventListener('click', () => onCardClick(parseInt(el.getAttribute('data-idx'), 10)));
+    });
+  }
+
+  function startGame(diff){
+    if (diff){ difficulty = diff; localStorage.setItem(DIFF_KEY, diff); }
+    refreshBest();
+    moves = 0;
+    flipped = [];
+    busy = false;
+    startTime = Date.now();
+    document.getElementById('movesTag').textContent = '0';
+    tickTimer();
+    if (timerHandle) clearInterval(timerHandle);
+    timerHandle = setInterval(tickTimer, 1000);
+    buildBoard();
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('hud').classList.add('show');
+  }
+
+  function onCardClick(idx){
+    if (state !== 'playing' || busy) return;
+    const cardEl = grid.children[idx];
+    const card = cards[idx];
+    if (!card || card.matched || cardEl.classList.contains('flipped')) return;
+    if (flipped.length >= 2) return;
+
+    Arcade.audioCtx();
+    cardEl.classList.add('flipped');
+    flipped.push(idx);
+    sfxFlip();
+
+    if (flipped.length === 2){
+      moves++;
+      document.getElementById('movesTag').textContent = moves;
+      const [a, b] = flipped;
+      if (cards[a].sym === cards[b].sym){
+        cards[a].matched = true; cards[b].matched = true;
+        grid.children[a].classList.add('matched');
+        grid.children[b].classList.add('matched');
+        flipped = [];
+        sfxMatch();
+        if (cards.every(c => c.matched)) setTimeout(endGame, 350);
+      } else {
+        busy = true;
+        setTimeout(() => {
+          grid.children[a].classList.remove('flipped');
+          grid.children[b].classList.remove('flipped');
+          flipped = [];
+          busy = false;
+          sfxMiss();
+        }, 750);
+      }
+    }
+  }
+
+  function endGame(){
+    state = 'over';
+    if (timerHandle) clearInterval(timerHandle);
+    document.getElementById('hud').classList.remove('show');
+    const pairs = pairCount();
+    const seconds = elapsedSec();
+    const extraMoves = Math.max(0, moves - pairs);
+    const timePenalty = Math.floor(seconds / 5);
+    const score = Math.max(0, pairs * 100 - extraMoves * 8 - timePenalty * 2);
+
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+
+    document.getElementById('finalMoves').textContent = moves;
+    document.getElementById('finalTime').textContent = formatTime(seconds);
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+
+    Arcade.logRun('memorymatch', score, difficulty, Math.round(seconds));
+    if (moves === pairs) Arcade.unlock('memorymatch_flawless', 'Total Recall', 'Clear a Memory Match round in the minimum possible moves');
+    if (score >= 150) Arcade.unlock('memorymatch_150', 'Sharp Memory', 'Score 150+ in Memory Match');
+  }
+
+  // ---- Synthesized SFX — thin wrappers around the shared Arcade audio engine ----
+  function sfxFlip(){ Arcade.tone(420, 0.06, 'triangle', 0.12, { sweepTo: 520 }); }
+  function sfxMatch(){
+    Arcade.tone(660, 0.09, 'triangle', 0.15, { sweepTo: 880 });
+    setTimeout(() => Arcade.tone(880, 0.11, 'triangle', 0.13, { sweepTo: 1180 }), 80);
+  }
+  function sfxMiss(){ Arcade.tone(220, 0.12, 'sawtooth', 0.1, { sweepTo: 140 }); }
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
+    e.preventDefault();
+  }, { passive:false });
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    startGame(difficulty);
+  }, { passive:false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame(difficulty);
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  Arcade.mountPanels({ gameId: 'memorymatch' });
+  Arcade.mountPauseMenu();
+})();
+</script>
+</body>
+</html>

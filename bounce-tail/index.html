@@ -82,23 +82,15 @@
 
 <!-- Start overlay -->
 <div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
   <div class="panel">
     <img class="mark" src="../faviconset/logo.png" alt="">
     <h1>Bounce as high as you dare.</h1>
     <div class="sub">Drag · Arrow keys · Screen wraps at the edges</div>
-    <div class="option-list" id="diffRow">
-      <button type="button" class="option-btn" data-diff="easy">
-        <div class="opt-title">Easy</div>
-        <div class="opt-desc">Wider platforms, gentle bounce. A relaxed climb.</div>
-      </button>
-      <button type="button" class="option-btn" data-diff="medium">
-        <div class="opt-title">Medium</div>
-        <div class="opt-desc">The standard climb. Balanced gaps and hazards.</div>
-      </button>
-      <button type="button" class="option-btn" data-diff="hard">
-        <div class="opt-title">Hard</div>
-        <div class="opt-desc">Narrow platforms, more spikes. One slip ends it.</div>
-      </button>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
     </div>
     <div class="stat-row"><span>Best Height <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0m</b></div>
     <div class="hint">Steer the ball across platforms — it bounces on its own.<br>Gold springs launch you higher. Spikes and gaps end the run.</div>
@@ -107,6 +99,7 @@
 
 <!-- Game over overlay -->
 <div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
   <div class="panel">
     <h1>Gravity wins.</h1>
     <div class="sub">Every great climb starts with a fall</div>
@@ -114,7 +107,6 @@
     <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0m</b></div>
     <span class="new-best" id="newBestTag">New Record</span>
     <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
-    <a class="btn-secondary" id="homeBtn" href="../index.html">Back to Home</a>
     <div class="hint">Space · Click · Tap to retry</div>
   </div>
 </div>
@@ -577,10 +569,10 @@
   canvas.addEventListener('mousemove', function(e){ setPointerFromClientX(e.clientX); });
 
   document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
-    if (e.target.closest('.option-btn')) return;
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
     e.preventDefault();
   }, { passive: false });
-  document.querySelectorAll('#startOverlay .option-btn').forEach(btn => {
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       focusCanvas();

@@ -172,6 +172,18 @@ window.Arcade = (function () {
       <circle cx="70" cy="50" r="9" fill="#e8683a"/>
       <circle cx="65" cy="46" r="1.8" fill="#0c0c0b"/>
       <circle cx="75" cy="46" r="1.8" fill="#0c0c0b"/>`
+    },
+    {
+      id: 'memorymatch', title: 'Memory Match', href: 'memory-match/index.html',
+      accent: '#b39cf0', category: 'Memory', difficulty: 'Medium', playTime: '2–4 min',
+      desc: 'Flip two cards at a time and clear the board in as few moves as you can.',
+      icon: `<defs><linearGradient id="g-memory" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="14" y="22" width="34" height="46" rx="6" fill="url(#g-memory)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5" transform="rotate(-8 31 45)"/>
+      <rect x="52" y="30" width="34" height="46" rx="6" fill="#f0ede6" stroke="rgba(12,12,11,0.3)" stroke-width="1.5" transform="rotate(6 69 53)"/>
+      <path d="M63 46 L71 59 L63 72 L55 59 Z" fill="#b39cf0"/>
+      <path d="M31 34 L38.6 45.6 L31 57.2 L23.4 45.6 Z" fill="rgba(12,12,11,0.3)"/>`
     }
   ];
 
@@ -335,13 +347,16 @@ window.Arcade = (function () {
     { id: 'hard_try_aurummerge', title: 'Hard Mode', desc: 'Play Aurum Merge on Hard' },
     { id: 'goldrush_3000', title: 'Gold Rush', desc: 'Score 3000 in Gold Rush' },
     { id: 'goldrush_wave5', title: 'Deep Maze', desc: 'Reach wave 5 in Gold Rush' },
-    { id: 'hard_try_goldrush', title: 'Hard Mode', desc: 'Play Gold Rush on Hard' }
+    { id: 'hard_try_goldrush', title: 'Hard Mode', desc: 'Play Gold Rush on Hard' },
+    { id: 'memorymatch_flawless', title: 'Total Recall', desc: 'Clear a Memory Match round in the minimum possible moves' },
+    { id: 'memorymatch_150', title: 'Sharp Memory', desc: 'Score 150+ in Memory Match' },
+    { id: 'hard_try_memorymatch', title: 'Hard Mode', desc: 'Play Memory Match on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {

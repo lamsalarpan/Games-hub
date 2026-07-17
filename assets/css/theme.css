@@ -386,6 +386,26 @@ canvas:focus-visible{ outline-offset:-2px; }
   background:var(--gold); color:#0c0c0b; border-color:var(--gold);
 }
 
+/* ---- Overlay home button — small icon-only pill pinned to the
+   top-left corner of any start/game-over overlay. Replaces the old
+   full-width "Back to Home" button; the nav's own Hub link sits
+   underneath the overlay backdrop and isn't reachable while an
+   overlay is open, so this gives every overlay its own way out. ---- */
+.overlay-home-btn{
+  position:absolute;
+  top:max(14px, env(safe-area-inset-top)); left:max(14px, env(safe-area-inset-left));
+  display:flex; align-items:center; justify-content:center;
+  width:34px; height:34px; flex-shrink:0;
+  background:rgba(12,12,11,0.4); border:1px solid var(--border-strong); border-radius:50%;
+  color:var(--text-secondary); text-decoration:none; cursor:pointer;
+  transition:border-color .22s ease, color .22s ease, transform .18s ease, background .22s ease;
+  touch-action:manipulation;
+  z-index:2;
+}
+.overlay-home-btn svg{ width:16px; height:16px; display:block; }
+.overlay-home-btn:hover{ border-color:var(--gold); color:var(--gold-light); background:rgba(var(--gold-rgb),0.1); transform:translateY(-1px); }
+.overlay-home-btn:active{ transform:translateY(0); }
+
 /* ---- Difficulty / mode selector (full option cards) ---- */
 .option-list{ display:flex; flex-direction:column; gap:0.65rem; text-align:left; }
 .option-btn{
