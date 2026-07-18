@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Pong — Arpan Lamsal</title>
+<meta name="description" content="A classic paddle-and-ball game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{ height:100%; }
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 50% at 50% 38%, rgba(95,201,214,0.09), transparent 70%);
+  }
+
+  .pg-stat-row{
+    display:flex; align-items:center; gap:20px;
+    font-family:var(--font-mono); font-size:12px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+    opacity:0; transition:opacity .3s ease;
+  }
+  .pg-stat-row.show{ opacity:1; }
+  .pg-stat-row b{ color:var(--gold-light); font-size:20px; margin-left:6px; }
+  .pg-stat-row .ai b{ color:#e2795a; }
+
+  .stage-wrap{
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+  }
+  #game{
+    display:block;
+    background:linear-gradient(180deg, #0e1418 0%, #0c0c0b 100%);
+    border:1px solid var(--border-strong);
+    border-radius:4px;
+    box-shadow:0 40px 100px rgba(0,0,0,0.55);
+    touch-action:none;
+    outline:none;
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Pong</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="pg-stat-row" id="hud">
+    <span>You <b id="playerScoreTag">0</b></span>
+    <span class="ai">AI <b id="aiScoreTag">0</b></span>
+  </div>
+</div>
+
+<div class="stage-wrap">
+  <canvas id="game"></canvas>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Rally to seven.</h1>
+    <div class="sub">Drag or arrow keys · First to 7 wins</div>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Drag your paddle along the bottom edge.</div>
+  </div>
+</div>
+
+<!-- Match over overlay -->
+<div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <h1 id="overTitle">Match won.</h1>
+    <div class="sub" id="overSub">7 – 0</div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <div class="hint">Tap to play again</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+
+  const CYAN = '#5fc9d6';
+  const CYAN_LIGHT = '#8fe0e8';
+  const AI_COLOR = '#e2795a';
+  const BALL_COLOR = '#f0ede6';
+
+  const IS_COARSE = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const DPR_CAP = IS_COARSE ? 1.5 : 2;
+  const ASPECT = 0.72; // width / height — portrait court
+
+  let W, H, DPR;
+  function viewportH(){ return window.visualViewport ? window.visualViewport.height : window.innerHeight; }
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+    const availW = Math.min(window.innerWidth * 0.94, 420);
+    const availH = viewportH() - 64 - 40;
+    let w = availW, h = w / ASPECT;
+    if (h > availH){ h = availH; w = h * ASPECT; }
+    W = Math.floor(w); H = Math.floor(h);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    canvas.width = W * DPR;
+    canvas.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    layoutEntities();
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', () => setTimeout(resize, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+
+  const PRESETS = {
+    easy:   { ballSpeed: 3.6, aiMax: 3.0, aiError: 26, speedRamp: 1.03, maxMul: 1.6 },
+    medium: { ballSpeed: 4.6, aiMax: 4.0, aiError: 15, speedRamp: 1.045, maxMul: 1.9 },
+    hard:   { ballSpeed: 5.8, aiMax: 5.3, aiError: 6,  speedRamp: 1.06,  maxMul: 2.3 }
+  };
+  const DIFF_KEY = 'pong_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return PRESETS[difficulty] || PRESETS.medium; }
+  function bestKey(){ return 'pong_al_best_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const startTag = document.getElementById('startBestDiff'); if (startTag) startTag.textContent = diffLabel();
+  }
+  document.querySelectorAll('#diffRow .diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-diff') === difficulty);
+  });
+
+  const MATCH_POINT = 7;
+  let state = 'start'; // start | playing | over
+  let playerScore = 0, aiScore = 0;
+  let playerX, aiX, paddleW, paddleH, ballR;
+  let ballX, ballY, ballVX, ballVY, speedMul;
+  let startTime = 0;
+
+  function layoutEntities(){
+    paddleW = W * 0.26;
+    paddleH = Math.max(8, H * 0.018);
+    ballR = Math.max(6, W * 0.03);
+    if (playerX == null) playerX = W / 2;
+    if (aiX == null) aiX = W / 2;
+    playerX = Math.min(Math.max(playerX, paddleW / 2), W - paddleW / 2);
+    aiX = Math.min(Math.max(aiX, paddleW / 2), W - paddleW / 2);
+  }
+
+  function serveBall(towardPlayer){
+    ballX = W / 2; ballY = H / 2;
+    speedMul = 1;
+    const p = preset();
+    const angle = (Math.random() * 0.7 - 0.35); // radians off vertical
+    const dir = towardPlayer ? 1 : -1;
+    ballVX = p.ballSpeed * Math.sin(angle);
+    ballVY = p.ballSpeed * Math.cos(angle) * dir;
+  }
+
+  function resetMatch(){
+    playerScore = 0; aiScore = 0;
+    document.getElementById('playerScoreTag').textContent = '0';
+    document.getElementById('aiScoreTag').textContent = '0';
+    playerX = W / 2; aiX = W / 2;
+    serveBall(Math.random() < 0.5);
+    startTime = Date.now();
+  }
+
+  // ---- Player paddle control (drag along bottom, or arrow keys) ----
+  let dragging = false;
+  function setPlayerFromClientX(clientX){
+    const rect = canvas.getBoundingClientRect();
+    const x = (clientX - rect.left) * (W / rect.width);
+    playerX = Math.min(Math.max(x, paddleW / 2), W - paddleW / 2);
+  }
+  canvas.addEventListener('pointerdown', (e) => {
+    Arcade.audioCtx();
+    dragging = true;
+    setPlayerFromClientX(e.clientX);
+  });
+  window.addEventListener('pointermove', (e) => { if (dragging) setPlayerFromClientX(e.clientX); });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  window.addEventListener('pointercancel', () => { dragging = false; });
+
+  const keys = {};
+  window.addEventListener('keydown', (e) => {
+    if (['ArrowLeft','ArrowRight','a','A','d','D'].includes(e.key)) { keys[e.key] = true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+  function applyKeyboard(){
+    const speed = W * 0.02;
+    if (keys['ArrowLeft'] || keys['a'] || keys['A']) playerX -= speed;
+    if (keys['ArrowRight'] || keys['d'] || keys['D']) playerX += speed;
+    playerX = Math.min(Math.max(playerX, paddleW / 2), W - paddleW / 2);
+  }
+
+  function updateAI(){
+    const p = preset();
+    const target = ballX + (Math.random() * 2 - 1) * p.aiError;
+    const diff = target - aiX;
+    const step = Math.min(Math.abs(diff), p.aiMax);
+    aiX += Math.sign(diff) * step;
+    aiX = Math.min(Math.max(aiX, paddleW / 2), W - paddleW / 2);
+  }
+
+  function step(){
+    applyKeyboard();
+    updateAI();
+
+    ballX += ballVX;
+    ballY += ballVY;
+
+    if (ballX - ballR < 0){ ballX = ballR; ballVX *= -1; }
+    if (ballX + ballR > W){ ballX = W - ballR; ballVX *= -1; }
+
+    const p = preset();
+    // Player paddle (bottom)
+    const playerY = H - 26;
+    if (ballVY > 0 && ballY + ballR >= playerY - paddleH / 2 && ballY - ballR <= playerY + paddleH / 2 &&
+        ballX >= playerX - paddleW / 2 - ballR && ballX <= playerX + paddleW / 2 + ballR){
+      ballY = playerY - paddleH / 2 - ballR;
+      ballVY *= -1;
+      const hitOffset = (ballX - playerX) / (paddleW / 2);
+      ballVX += hitOffset * 1.6;
+      speedMul = Math.min(p.maxMul, speedMul * p.speedRamp);
+      normalizeSpeed();
+      sfxHit();
+    }
+    // AI paddle (top)
+    const aiY = 26;
+    if (ballVY < 0 && ballY - ballR <= aiY + paddleH / 2 && ballY + ballR >= aiY - paddleH / 2 &&
+        ballX >= aiX - paddleW / 2 - ballR && ballX <= aiX + paddleW / 2 + ballR){
+      ballY = aiY + paddleH / 2 + ballR;
+      ballVY *= -1;
+      const hitOffset = (ballX - aiX) / (paddleW / 2);
+      ballVX += hitOffset * 1.2;
+      speedMul = Math.min(p.maxMul, speedMul * p.speedRamp);
+      normalizeSpeed();
+      sfxHit();
+    }
+
+    if (ballY - ballR > H){ // AI scores
+      aiScore++;
+      document.getElementById('aiScoreTag').textContent = aiScore;
+      sfxScore(false);
+      if (aiScore >= MATCH_POINT) { endMatch(false); return; }
+      serveBall(false);
+    } else if (ballY + ballR < 0){ // Player scores
+      playerScore++;
+      document.getElementById('playerScoreTag').textContent = playerScore;
+      sfxScore(true);
+      if (playerScore >= MATCH_POINT) { endMatch(true); return; }
+      serveBall(true);
+    }
+  }
+
+  function normalizeSpeed(){
+    const p = preset();
+    const baseSpeed = p.ballSpeed * speedMul;
+    const mag = Math.hypot(ballVX, ballVY) || 1;
+    const scale = baseSpeed / mag;
+    ballVX *= scale; ballVY *= scale;
+    ballVX = Math.max(-baseSpeed * 1.1, Math.min(baseSpeed * 1.1, ballVX));
+  }
+
+  function draw(){
+    ctx.fillStyle = '#0c0c0b';
+    ctx.fillRect(0, 0, W, H);
+
+    // center line
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.setLineDash([6, 8]);
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // court border
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, W - 2, H - 2);
+
+    // AI paddle
+    ctx.fillStyle = AI_COLOR;
+    roundRect(aiX - paddleW / 2, 26 - paddleH / 2, paddleW, paddleH, paddleH / 2);
+    ctx.fill();
+
+    // player paddle
+    const grad = ctx.createLinearGradient(playerX - paddleW / 2, 0, playerX + paddleW / 2, 0);
+    grad.addColorStop(0, CYAN_LIGHT); grad.addColorStop(1, CYAN);
+    ctx.fillStyle = grad;
+    roundRect(playerX - paddleW / 2, H - 26 - paddleH / 2, paddleW, paddleH, paddleH / 2);
+    ctx.fill();
+
+    // ball
+    if (state === 'playing'){
+      ctx.fillStyle = BALL_COLOR;
+      ctx.beginPath();
+      ctx.arc(ballX, ballY, ballR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  function roundRect(x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function loop(){
+    if (Arcade.isPaused()) { requestAnimationFrame(loop); return; }
+    if (state === 'playing') step();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function startGame(diff){
+    if (diff){
+      difficulty = diff;
+      localStorage.setItem(DIFF_KEY, diff);
+      document.querySelectorAll('#diffRow .diff-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === diff));
+    }
+    refreshBest();
+    resize();
+    resetMatch();
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('hud').classList.add('show');
+  }
+
+  function endMatch(won){
+    state = 'over';
+    document.getElementById('hud').classList.remove('show');
+    const seconds = Math.round((Date.now() - startTime) / 1000);
+
+    let score;
+    if (won) score = 500 + (MATCH_POINT - aiScore) * 50;
+    else score = playerScore * 40;
+
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+
+    document.getElementById('overTitle').textContent = won ? 'Match won.' : 'Match lost.';
+    document.getElementById('overSub').textContent = playerScore + ' – ' + aiScore;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+
+    Arcade.logRun('pong', score, difficulty, seconds);
+    if (won){
+      Arcade.unlock('pong_win', 'Match Point', 'Win a match of Pong');
+      if (aiScore === 0) Arcade.unlock('pong_shutout', 'Flawless Rally', 'Win a match of Pong without the AI scoring');
+    }
+  }
+
+  // ---- Synthesized SFX ----
+  function sfxHit(){ Arcade.tone(420, 0.05, 'square', 0.1, { sweepTo: 520 }); }
+  function sfxScore(playerWon){
+    if (playerWon){ Arcade.tone(660, 0.09, 'triangle', 0.15, { sweepTo: 880 }); }
+    else { Arcade.tone(220, 0.12, 'sawtooth', 0.12, { sweepTo: 140 }); }
+  }
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
+    e.preventDefault();
+  }, { passive:false });
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    startGame(difficulty);
+  }, { passive:false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame(difficulty);
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  resize();
+  draw();
+  refreshBest();
+  Arcade.mountPanels({ gameId: 'pong' });
+  Arcade.mountPauseMenu();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

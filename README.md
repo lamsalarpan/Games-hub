@@ -28,6 +28,7 @@ gold-rush/index.html
 memory-match/index.html
 gold-vault/index.html
 aurum-echo/index.html
+pong/index.html
 faviconset/ (favicons + logo.png)
 ```
 
