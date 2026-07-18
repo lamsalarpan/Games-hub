@@ -202,6 +202,20 @@ window.Arcade = (function () {
       <rect x="48.5" y="50" width="9" height="2.6" fill="#0c0c0b" transform="rotate(35 50 50)"/>
       <path d="M25 76 L31 66 L37 76 Z" fill="#e8683a"/>
       <line x1="31" y1="66" x2="31" y2="52" stroke="#8a8880" stroke-width="2"/>`
+    },
+    {
+      id: 'aurumecho', title: 'Aurum Echo', href: 'aurum-echo/index.html',
+      accent: '#e8b55a', category: 'Rhythm', difficulty: 'Medium', playTime: '2–6 min',
+      desc: 'Watch the panels glow, then echo the sequence back — one panel longer each round.',
+      icon: `<defs><linearGradient id="g-echo" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="14" y="14" width="32" height="32" rx="8" fill="url(#g-echo)"/>
+      <rect x="54" y="14" width="32" height="32" rx="8" fill="#e8683a" opacity="0.85"/>
+      <rect x="14" y="54" width="32" height="32" rx="8" fill="#6fd0a8" opacity="0.85"/>
+      <rect x="54" y="54" width="32" height="32" rx="8" fill="#7fc4e8" opacity="0.85"/>
+      <circle cx="50" cy="50" r="9" fill="#0c0c0b"/>
+      <circle cx="50" cy="50" r="9" fill="none" stroke="rgba(240,237,230,0.4)" stroke-width="1.5"/>`
     }
   ];
 
@@ -372,13 +386,16 @@ window.Arcade = (function () {
     { id: 'goldvault_win', title: 'Vault Cracked', desc: 'Clear the vault on any difficulty' },
     { id: 'goldvault_hard_win', title: 'Master Safecracker', desc: 'Clear the vault on Hard difficulty' },
     { id: 'goldvault_speed', title: 'Quick Fingers', desc: 'Clear the Easy vault in under 30 seconds' },
-    { id: 'hard_try_goldvault', title: 'Hard Mode', desc: 'Play Gold Vault on Hard' }
+    { id: 'hard_try_goldvault', title: 'Hard Mode', desc: 'Play Gold Vault on Hard' },
+    { id: 'aurumecho_10', title: 'Sharp Ears', desc: 'Reach round 10 in Aurum Echo' },
+    { id: 'aurumecho_20', title: 'Perfect Pitch', desc: 'Reach round 20 in Aurum Echo' },
+    { id: 'hard_try_aurumecho', title: 'Hard Mode', desc: 'Play Aurum Echo on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90, goldvault: 150 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90, goldvault: 150, aurumecho: 120 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {

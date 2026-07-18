@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Aurum Echo — Arpan Lamsal</title>
+<meta name="description" content="A glowing sequence-memory game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 34%, rgba(200,151,58,0.09), transparent 70%);
+  }
+
+  .ae-stat-row{
+    display:flex; align-items:center; gap:14px;
+    font-family:var(--font-mono); font-size:12px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+    opacity:0; transition:opacity .3s ease;
+  }
+  .ae-stat-row.show{ opacity:1; }
+  .ae-stat-row b{ color:var(--gold-light); font-size:14px; margin-left:4px; }
+
+  .ae-stage{
+    position:fixed; inset:0; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+  }
+  .ae-board{
+    position:relative;
+    display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
+    gap:10px;
+    width:min(78vw, 340px); height:min(78vw, 340px);
+  }
+  .ae-pad{
+    border:none; border-radius:16px; cursor:pointer;
+    touch-action:manipulation; -webkit-tap-highlight-color:transparent;
+    opacity:0.38; transform:scale(0.96);
+    transition:opacity .12s ease, transform .12s ease, filter .12s ease;
+    filter:brightness(0.75);
+  }
+  .ae-pad.active{ opacity:1; transform:scale(1); filter:brightness(1.35); }
+  .ae-pad:disabled{ cursor:default; }
+  .ae-pad-0{ background:linear-gradient(135deg,#e8b55a,#c8973a); border-radius:16px 6px 6px 6px; }
+  .ae-pad-1{ background:linear-gradient(135deg,#e8683a,#c8432a); border-radius:6px 16px 6px 6px; }
+  .ae-pad-2{ background:linear-gradient(135deg,#6fd0a8,#3f9c74); border-radius:6px 6px 6px 16px; }
+  .ae-pad-3{ background:linear-gradient(135deg,#7fc4e8,#4a92c4); border-radius:6px 6px 16px 6px; }
+  .ae-center{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:30%; height:30%; border-radius:50%;
+    background:var(--bg); border:2px solid var(--border-strong);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-mono); font-weight:700; font-size:clamp(16px, 4vw, 26px);
+    color:var(--gold-light); pointer-events:none; z-index:2;
+  }
+  .ae-status{
+    position:fixed; top:calc(var(--nav-h) + 14px); left:0; right:0; z-index:2;
+    text-align:center;
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.1em;
+    text-transform:uppercase; color:var(--text-muted);
+    pointer-events:none;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ae-pad{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Aurum Echo</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="ae-status" id="status"></div>
+
+<div class="hud">
+  <div class="ae-stat-row" id="hud">
+    <span>Round <b id="roundTag">0</b></span>
+  </div>
+</div>
+
+<div class="ae-stage">
+  <div class="ae-board" id="board">
+    <button type="button" class="ae-pad ae-pad-0" data-pad="0" disabled></button>
+    <button type="button" class="ae-pad ae-pad-1" data-pad="1" disabled></button>
+    <button type="button" class="ae-pad ae-pad-2" data-pad="2" disabled></button>
+    <button type="button" class="ae-pad ae-pad-3" data-pad="3" disabled></button>
+    <div class="ae-center" id="centerTag">0</div>
+  </div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Watch. Then echo.</h1>
+    <div class="sub">Repeat the glowing sequence · One panel longer each round</div>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <div class="stat-row"><span>Best Round <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">One wrong tap ends the run.</div>
+  </div>
+</div>
+
+<!-- Round over overlay -->
+<div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <h1>Sequence broken.</h1>
+    <div class="sub" id="overSub">Reached round 0</div>
+    <div class="stat-row"><span>Round Reached</span><b id="finalRound">0</b></div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <div class="hint">Tap to play again</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+
+  const PAD_TONES = [329.63, 261.63, 220.0, 164.81]; // E4, C4, A3, E3
+
+  const PRESETS = {
+    easy:   { baseMs:750, floorMs:420, decrement:12, pause:600 },
+    medium: { baseMs:580, floorMs:300, decrement:14, pause:480 },
+    hard:   { baseMs:440, floorMs:220, decrement:16, pause:360 }
+  };
+
+  const DIFF_KEY = 'aurumecho_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return PRESETS[difficulty] || PRESETS.medium; }
+  function bestKey(){ return 'aurumecho_al_best_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+  function scoreMultiplier(){ return difficulty === 'hard' ? 50 : (difficulty === 'medium' ? 35 : 25); }
+
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const startTag = document.getElementById('startBestDiff'); if (startTag) startTag.textContent = diffLabel();
+  }
+  document.querySelectorAll('#diffRow .diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-diff') === difficulty);
+  });
+
+  const pads = Array.from(document.querySelectorAll('.ae-pad'));
+  const centerTag = document.getElementById('centerTag');
+  const statusEl = document.getElementById('status');
+
+  let state = 'start'; // start | watching | input | over
+  let sequence = [];
+  let playerIdx = 0;
+  let round = 0;
+  let playTimer = null;
+
+  function stepDelay(){
+    const p = preset();
+    return Math.max(p.floorMs, p.baseMs - round * p.decrement);
+  }
+
+  function flashPad(i, dur, cb){
+    const pad = pads[i];
+    pad.classList.add('active');
+    Arcade.tone(PAD_TONES[i], Math.max(0.12, dur / 1000 * 0.7), 'sine', 0.14);
+    setTimeout(() => {
+      pad.classList.remove('active');
+      if (cb) cb();
+    }, dur);
+  }
+
+  function playSequence(){
+    state = 'watching';
+    statusEl.textContent = 'Watch closely';
+    setPadsEnabled(false);
+    playerIdx = 0;
+    const delay = stepDelay();
+    const glowDur = Math.round(delay * 0.62);
+    let i = 0;
+    function step(){
+      if (i >= sequence.length){
+        state = 'input';
+        statusEl.textContent = 'Your turn';
+        setPadsEnabled(true);
+        return;
+      }
+      flashPad(sequence[i], glowDur, () => {
+        i++;
+        playTimer = setTimeout(step, delay - glowDur);
+      });
+    }
+    playTimer = setTimeout(step, 500);
+  }
+
+  function setPadsEnabled(on){
+    pads.forEach(p => { p.disabled = !on; });
+  }
+
+  function nextRound(){
+    round++;
+    centerTag.textContent = round;
+    document.getElementById('roundTag').textContent = round;
+    sequence.push(Math.floor(Math.random() * 4));
+    playSequence();
+  }
+
+  function onPadTap(i){
+    if (state !== 'input') return;
+    const pad = pads[i];
+    pad.classList.add('active');
+    Arcade.tone(PAD_TONES[i], 0.14, 'sine', 0.16);
+    setTimeout(() => pad.classList.remove('active'), 160);
+
+    if (sequence[playerIdx] === i){
+      playerIdx++;
+      if (playerIdx >= sequence.length){
+        state = 'watching';
+        statusEl.textContent = '';
+        setPadsEnabled(false);
+        setTimeout(nextRound, preset().pause);
+      }
+    } else {
+      failRun();
+    }
+  }
+
+  pads.forEach(pad => {
+    pad.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      Arcade.audioCtx();
+      onPadTap(parseInt(pad.getAttribute('data-pad'), 10));
+    });
+  });
+
+  function startGame(diff){
+    if (diff){
+      difficulty = diff;
+      localStorage.setItem(DIFF_KEY, diff);
+      document.querySelectorAll('#diffRow .diff-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === diff));
+    }
+    refreshBest();
+    clearTimeout(playTimer);
+    sequence = [];
+    playerIdx = 0;
+    round = 0;
+    centerTag.textContent = '0';
+    document.getElementById('roundTag').textContent = '0';
+    setPadsEnabled(false);
+    state = 'start';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('hud').classList.add('show');
+    setTimeout(nextRound, 500);
+  }
+
+  function failRun(){
+    state = 'over';
+    clearTimeout(playTimer);
+    setPadsEnabled(false);
+    statusEl.textContent = '';
+    document.getElementById('hud').classList.remove('show');
+    Arcade.noiseBurst(0.28, 0.18, 400);
+    Arcade.tone(110, 0.3, 'sawtooth', 0.14, { sweepTo: 55 });
+
+    const roundsCleared = Math.max(0, round - 1);
+    const score = roundsCleared * scoreMultiplier();
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+
+    document.getElementById('overSub').textContent = 'Reached round ' + round;
+    document.getElementById('finalRound').textContent = roundsCleared;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+
+    Arcade.logRun('aurumecho', score, difficulty, roundsCleared * 3);
+    if (roundsCleared >= 10) Arcade.unlock('aurumecho_10', 'Sharp Ears', 'Reach round 10 in Aurum Echo');
+    if (roundsCleared >= 20) Arcade.unlock('aurumecho_20', 'Perfect Pitch', 'Reach round 20 in Aurum Echo');
+  }
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
+    e.preventDefault();
+  }, { passive:false });
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    startGame(difficulty);
+  }, { passive:false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame(difficulty);
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  refreshBest();
+  Arcade.mountPanels({ gameId: 'aurumecho' });
+  Arcade.mountPauseMenu();
+})();
+</script>
+</body>
+</html>

@@ -27,6 +27,7 @@ aurum-merge/index.html
 gold-rush/index.html
 memory-match/index.html
 gold-vault/index.html
+aurum-echo/index.html
 faviconset/ (favicons + logo.png)
 ```
 
