@@ -184,6 +184,24 @@ window.Arcade = (function () {
       <rect x="52" y="30" width="34" height="46" rx="6" fill="#f0ede6" stroke="rgba(12,12,11,0.3)" stroke-width="1.5" transform="rotate(6 69 53)"/>
       <path d="M63 46 L71 59 L63 72 L55 59 Z" fill="#b39cf0"/>
       <path d="M31 34 L38.6 45.6 L31 57.2 L23.4 45.6 Z" fill="rgba(12,12,11,0.3)"/>`
+    },
+    {
+      id: 'goldvault', title: 'Gold Vault', href: 'gold-vault/index.html',
+      accent: '#7a94b8', category: 'Logic', difficulty: 'Medium', playTime: '3–8 min',
+      desc: 'Clear every safe tile and flag the hidden charges before one catches you out.',
+      icon: `<defs><linearGradient id="g-vault" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="14" y="14" width="72" height="72" rx="8" fill="rgba(240,237,230,0.05)" stroke="rgba(240,237,230,0.16)" stroke-width="3"/>
+      <rect x="14" y="14" width="22" height="22" fill="rgba(240,237,230,0.08)"/>
+      <rect x="64" y="14" width="22" height="22" fill="rgba(240,237,230,0.08)"/>
+      <rect x="14" y="64" width="22" height="22" fill="rgba(240,237,230,0.08)"/>
+      <rect x="64" y="64" width="22" height="22" fill="rgba(240,237,230,0.08)"/>
+      <circle cx="50" cy="50" r="15" fill="url(#g-vault)" stroke="rgba(12,12,11,0.35)" stroke-width="1.5"/>
+      <circle cx="50" cy="50" r="6" fill="#0c0c0b"/>
+      <rect x="48.5" y="50" width="9" height="2.6" fill="#0c0c0b" transform="rotate(35 50 50)"/>
+      <path d="M25 76 L31 66 L37 76 Z" fill="#e8683a"/>
+      <line x1="31" y1="66" x2="31" y2="52" stroke="#8a8880" stroke-width="2"/>`
     }
   ];
 
@@ -350,13 +368,17 @@ window.Arcade = (function () {
     { id: 'hard_try_goldrush', title: 'Hard Mode', desc: 'Play Gold Rush on Hard' },
     { id: 'memorymatch_flawless', title: 'Total Recall', desc: 'Clear a Memory Match round in the minimum possible moves' },
     { id: 'memorymatch_150', title: 'Sharp Memory', desc: 'Score 150+ in Memory Match' },
-    { id: 'hard_try_memorymatch', title: 'Hard Mode', desc: 'Play Memory Match on Hard' }
+    { id: 'hard_try_memorymatch', title: 'Hard Mode', desc: 'Play Memory Match on Hard' },
+    { id: 'goldvault_win', title: 'Vault Cracked', desc: 'Clear the vault on any difficulty' },
+    { id: 'goldvault_hard_win', title: 'Master Safecracker', desc: 'Clear the vault on Hard difficulty' },
+    { id: 'goldvault_speed', title: 'Quick Fingers', desc: 'Clear the Easy vault in under 30 seconds' },
+    { id: 'hard_try_goldvault', title: 'Hard Mode', desc: 'Play Gold Vault on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90, goldvault: 150 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {

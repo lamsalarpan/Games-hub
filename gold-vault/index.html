@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Gold Vault — Arpan Lamsal</title>
+<meta name="description" content="A minesweeper-style vault-cracking puzzle built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 34%, rgba(122,148,184,0.09), transparent 70%);
+  }
+
+  .gv-stat-row{
+    display:flex; align-items:center; gap:12px;
+    font-family:var(--font-mono); font-size:12px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+    opacity:0; transition:opacity .3s ease;
+    pointer-events:auto;
+  }
+  .gv-stat-row.show{ opacity:1; }
+  .gv-stat-row b{ color:var(--gold-light); font-size:14px; margin-left:4px; }
+  .gv-flag-btn{
+    display:flex; align-items:center; gap:0.35rem;
+    background:var(--bg-2); border:1px solid var(--border-strong); border-radius:100px;
+    color:var(--text-secondary); font-family:var(--font-mono); font-size:10.5px;
+    letter-spacing:0.08em; text-transform:uppercase;
+    padding:0.4rem 0.8rem 0.4rem 0.6rem; cursor:pointer;
+    transition:border-color .2s ease, color .2s ease, background .2s ease;
+    touch-action:manipulation;
+  }
+  .gv-flag-btn svg{ width:13px; height:13px; display:block; }
+  .gv-flag-btn.active{ background:rgba(var(--gold-rgb),0.16); border-color:var(--gold); color:var(--gold-light); }
+
+  .gv-stage{
+    position:fixed; inset:0; z-index:1;
+    display:flex; align-items:center; justify-content:center;
+    padding-top:var(--nav-h);
+    touch-action:none;
+  }
+  .gv-grid{
+    display:grid;
+    gap:3px;
+    background:var(--border);
+    border:1px solid var(--border-strong);
+    border-radius:8px;
+    padding:3px;
+    touch-action:manipulation;
+  }
+  .gv-cell{
+    position:relative;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg-2);
+    border:none; border-radius:2px;
+    padding:0; margin:0; cursor:pointer;
+    font-family:var(--font-mono); font-weight:700;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .12s ease;
+  }
+  @media (hover:hover){
+    .gv-cell:not(.revealed):hover{ background:var(--bg-3); }
+  }
+  .gv-cell.revealed{ background:var(--bg-card); cursor:default; }
+  .gv-cell.mine-hit{ background:rgba(224,102,90,0.28); }
+  .gv-cell svg{ width:60%; height:60%; display:block; }
+  .gv-cell.n1{ color:#7fc4e8; } .gv-cell.n2{ color:#6fd0a8; }
+  .gv-cell.n3{ color:#e8683a; } .gv-cell.n4{ color:#b39cf0; }
+  .gv-cell.n5{ color:#e0a63c; } .gv-cell.n6{ color:#7fd88f; }
+  .gv-cell.n7{ color:#f0ede6; } .gv-cell.n8{ color:#8a8880; }
+  .gv-flag-icon{ color:var(--gold-light); }
+  .gv-mine-icon{ color:var(--text-primary); }
+  .gv-mine-icon.wrong{ color:#e0665a; opacity:0.7; }
+
+  @media (prefers-reduced-motion: reduce){
+    .gv-cell{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Gold Vault</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="gv-stat-row" id="hud">
+    <span>Charges <b id="minesTag">0</b></span>
+    <span>Time <b id="timeTag">0:00</b></span>
+    <button type="button" class="gv-flag-btn" id="flagModeBtn" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2v20h2v-8h9.5l-2-4 2-4H8V2Z"/></svg>
+      <span>Flag Mode</span>
+    </button>
+  </div>
+</div>
+
+<div class="gv-stage">
+  <div class="gv-grid" id="grid"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Crack the vault.</h1>
+    <div class="sub">Clear every safe tile · Flag every charge</div>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Tap a tile to clear it. Long-press (or right-click) to flag a suspected charge.</div>
+  </div>
+</div>
+
+<!-- Round over overlay -->
+<div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <h1 id="overTitle">Vault cracked.</h1>
+    <div class="sub" id="overSub">Every safe tile cleared</div>
+    <div class="stat-row"><span>Time</span><b id="finalTime">0:00</b></div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <div class="hint">Tap to try again</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+
+  const PRESETS = {
+    easy:   { cols:9,  rows:9,  mines:10 },
+    medium: { cols:12, rows:12, mines:24 },
+    hard:   { cols:15, rows:15, mines:45 }
+  };
+
+  const DIFF_KEY = 'goldvault_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return PRESETS[difficulty] || PRESETS.medium; }
+  function bestKey(){ return 'goldvault_al_best_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const startTag = document.getElementById('startBestDiff'); if (startTag) startTag.textContent = diffLabel();
+  }
+  document.querySelectorAll('#diffRow .diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-diff') === difficulty);
+  });
+
+  const gridEl = document.getElementById('grid');
+  const FLAG_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" class="gv-flag-icon"><path d="M6 2v20h2v-8h9.5l-2-4 2-4H8V2Z"/></svg>';
+  const MINE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="13" r="7"/><path d="M12 2v3M12 21v-3M2 13h3M21 13h-3M4.5 5.5l2 2M19.5 5.5l-2 2M4.5 20.5l2-2M19.5 20.5l-2-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+  let state = 'start';      // start | playing | over
+  let cells = [];           // flat array, row-major: { mine, adj, revealed, flagged }
+  let minesPlaced = false;
+  let flagCount = 0;
+  let revealedSafe = 0;
+  let startTime = 0;
+  let timerHandle = null;
+  let flagMode = false;
+  let longPressTimer = null;
+  let longPressFired = false;
+  let pointerMoved = false;
+
+  function idx(r, c){ const p = preset(); return r * p.cols + c; }
+  function inBounds(r, c){ const p = preset(); return r >= 0 && r < p.rows && c >= 0 && c < p.cols; }
+  function neighbors(r, c){
+    const out = [];
+    for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++){
+      if (dr === 0 && dc === 0) continue;
+      if (inBounds(r + dr, c + dc)) out.push([r + dr, c + dc]);
+    }
+    return out;
+  }
+
+  function formatTime(sec){
+    sec = Math.max(0, sec | 0);
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+  function elapsedSec(){ return startTime ? (Date.now() - startTime) / 1000 : 0; }
+  function tickTimer(){ document.getElementById('timeTag').textContent = formatTime(elapsedSec()); }
+
+  function buildEmptyBoard(){
+    const p = preset();
+    cells = new Array(p.rows * p.cols).fill(null).map(() => ({ mine:false, adj:0, revealed:false, flagged:false }));
+    minesPlaced = false;
+    flagCount = 0;
+    revealedSafe = 0;
+  }
+
+  function placeMines(excludeR, excludeC){
+    const p = preset();
+    const excluded = new Set(neighbors(excludeR, excludeC).map(([r,c]) => idx(r,c)));
+    excluded.add(idx(excludeR, excludeC));
+    let placed = 0;
+    while (placed < p.mines){
+      const i = Math.floor(Math.random() * cells.length);
+      if (cells[i].mine || excluded.has(i)) continue;
+      cells[i].mine = true;
+      placed++;
+    }
+    for (let r = 0; r < p.rows; r++) for (let c = 0; c < p.cols; c++){
+      const cell = cells[idx(r,c)];
+      if (cell.mine) continue;
+      cell.adj = neighbors(r, c).filter(([nr,nc]) => cells[idx(nr,nc)].mine).length;
+    }
+    minesPlaced = true;
+  }
+
+  function renderGrid(){
+    const p = preset();
+    gridEl.style.gridTemplateColumns = 'repeat(' + p.cols + ', var(--gv-cell))';
+    gridEl.style.gridTemplateRows = 'repeat(' + p.rows + ', var(--gv-cell))';
+    gridEl.innerHTML = cells.map((c, i) => '<button type="button" class="gv-cell" data-idx="' + i + '"></button>').join('');
+    sizeCells();
+    gridEl.querySelectorAll('.gv-cell').forEach(el => attachCellHandlers(el));
+  }
+
+  function sizeCells(){
+    const p = preset();
+    const gap = 3;
+    const availW = Math.min(window.innerWidth * 0.96, 560);
+    const navH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--nav-h')) || 68;
+    const availH = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - navH - 78;
+    const cellW = (availW - gap * (p.cols - 1) - 6) / p.cols;
+    const cellH = (availH - gap * (p.rows - 1) - 6) / p.rows;
+    const cell = Math.max(16, Math.floor(Math.min(cellW, cellH, 42)));
+    document.documentElement.style.setProperty('--gv-cell', cell + 'px');
+    gridEl.querySelectorAll('.gv-cell').forEach(el => {
+      el.style.fontSize = Math.max(9, Math.floor(cell * 0.46)) + 'px';
+    });
+  }
+  window.addEventListener('resize', sizeCells);
+  window.addEventListener('orientationchange', () => setTimeout(sizeCells, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeCells);
+
+  function updateCellVisual(i){
+    const el = gridEl.children[i];
+    if (!el) return;
+    const cell = cells[i];
+    el.className = 'gv-cell';
+    el.innerHTML = '';
+    if (cell.flagged && !cell.revealed){
+      el.innerHTML = FLAG_SVG;
+      return;
+    }
+    if (!cell.revealed) return;
+    el.classList.add('revealed');
+    if (cell.mine){
+      el.innerHTML = MINE_SVG;
+      return;
+    }
+    if (cell.adj > 0){
+      el.classList.add('n' + cell.adj);
+      el.textContent = cell.adj;
+    }
+  }
+
+  function revealFlood(startR, startC){
+    const p = preset();
+    const stack = [[startR, startC]];
+    const seen = new Set();
+    while (stack.length){
+      const [r, c] = stack.pop();
+      const i = idx(r, c);
+      if (seen.has(i)) continue;
+      seen.add(i);
+      const cell = cells[i];
+      if (cell.revealed || cell.flagged) continue;
+      cell.revealed = true;
+      if (!cell.mine) revealedSafe++;
+      updateCellVisual(i);
+      if (!cell.mine && cell.adj === 0){
+        neighbors(r, c).forEach(([nr, nc]) => {
+          const ni = idx(nr, nc);
+          if (!cells[ni].revealed && !cells[ni].flagged) stack.push([nr, nc]);
+        });
+      }
+    }
+  }
+
+  function revealCell(r, c){
+    if (state !== 'playing') return;
+    const i = idx(r, c);
+    const cell = cells[i];
+    if (cell.revealed || cell.flagged) return;
+
+    Arcade.audioCtx();
+    if (!minesPlaced){
+      placeMines(r, c);
+      startTime = Date.now();
+      tickTimer();
+      if (timerHandle) clearInterval(timerHandle);
+      timerHandle = setInterval(tickTimer, 1000);
+    }
+
+    if (cell.mine){
+      cell.revealed = true;
+      gridEl.children[i].classList.add('mine-hit');
+      sfxBoom();
+      endGame(false, i);
+      return;
+    }
+
+    revealFlood(r, c);
+    sfxReveal();
+
+    const p = preset();
+    const safeTotal = p.rows * p.cols - p.mines;
+    if (revealedSafe >= safeTotal) endGame(true, i);
+  }
+
+  function toggleFlag(r, c){
+    if (state !== 'playing') return;
+    const i = idx(r, c);
+    const cell = cells[i];
+    if (cell.revealed) return;
+    cell.flagged = !cell.flagged;
+    flagCount += cell.flagged ? 1 : -1;
+    updateCellVisual(i);
+    updateMinesTag();
+    sfxFlag();
+  }
+
+  function updateMinesTag(){
+    const p = preset();
+    document.getElementById('minesTag').textContent = Math.max(0, p.mines - flagCount);
+  }
+
+  function attachCellHandlers(el){
+    const i = parseInt(el.getAttribute('data-idx'), 10);
+    const p = preset();
+    const r = Math.floor(i / p.cols), c = i % p.cols;
+
+    el.addEventListener('contextmenu', (e) => { e.preventDefault(); toggleFlag(r, c); });
+
+    el.addEventListener('pointerdown', (e) => {
+      if (e.button === 2) return;
+      pointerMoved = false;
+      longPressFired = false;
+      clearTimeout(longPressTimer);
+      longPressTimer = setTimeout(() => {
+        longPressFired = true;
+        toggleFlag(r, c);
+        if (navigator.vibrate) { try { navigator.vibrate(12); } catch (err) {} }
+      }, 420);
+    });
+    el.addEventListener('pointermove', () => { pointerMoved = true; clearTimeout(longPressTimer); });
+    el.addEventListener('pointerup', (e) => {
+      clearTimeout(longPressTimer);
+      if (longPressFired || pointerMoved) return;
+      if (flagMode) toggleFlag(r, c); else revealCell(r, c);
+    });
+    el.addEventListener('pointerleave', () => clearTimeout(longPressTimer));
+    el.addEventListener('pointercancel', () => clearTimeout(longPressTimer));
+  }
+
+  document.getElementById('flagModeBtn').addEventListener('click', () => {
+    flagMode = !flagMode;
+    const btn = document.getElementById('flagModeBtn');
+    btn.classList.toggle('active', flagMode);
+    btn.setAttribute('aria-pressed', String(flagMode));
+  });
+
+  function revealAllMines(hitIdx){
+    cells.forEach((cell, i) => {
+      if (cell.mine && !cell.revealed){
+        cell.revealed = true;
+        updateCellVisual(i);
+      }
+      if (cell.flagged && !cell.mine){
+        gridEl.children[i].classList.add('mine-hit');
+        gridEl.children[i].innerHTML = MINE_SVG.replace('<svg viewBox', '<svg class="gv-mine-icon wrong" viewBox');
+      }
+    });
+  }
+
+  function startGame(diff){
+    if (diff){
+      difficulty = diff;
+      localStorage.setItem(DIFF_KEY, diff);
+      document.querySelectorAll('#diffRow .diff-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === diff));
+    }
+    refreshBest();
+    buildEmptyBoard();
+    renderGrid();
+    updateMinesTag();
+    document.getElementById('timeTag').textContent = '0:00';
+    if (timerHandle) clearInterval(timerHandle);
+    startTime = 0;
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('hud').classList.add('show');
+  }
+
+  function endGame(won, hitIdx){
+    state = 'over';
+    if (timerHandle) clearInterval(timerHandle);
+    document.getElementById('hud').classList.remove('show');
+    revealAllMines(hitIdx);
+
+    const p = preset();
+    const seconds = elapsedSec();
+    const safeTotal = p.rows * p.cols - p.mines;
+    let score;
+    if (won){
+      const speedFactor = difficulty === 'hard' ? 2 : (difficulty === 'medium' ? 3 : 4);
+      score = Math.max(50, Math.round(safeTotal * 20 - Math.floor(seconds) * speedFactor));
+    } else {
+      score = Math.round(revealedSafe * 8);
+    }
+
+    const isNewBest = won && score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+
+    document.getElementById('overTitle').textContent = won ? 'Vault cracked.' : 'Charge triggered.';
+    document.getElementById('overSub').textContent = won ? 'Every safe tile cleared' : 'Cleared ' + revealedSafe + ' of ' + safeTotal + ' safe tiles';
+    document.getElementById('finalTime').textContent = formatTime(seconds);
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+
+    Arcade.logRun('goldvault', score, difficulty, Math.round(seconds));
+    if (won){
+      Arcade.unlock('goldvault_win', 'Vault Cracked', 'Clear the vault on any difficulty');
+      if (difficulty === 'hard') Arcade.unlock('goldvault_hard_win', 'Master Safecracker', 'Clear the vault on Hard difficulty');
+      if (difficulty === 'easy' && seconds < 30) Arcade.unlock('goldvault_speed', 'Quick Fingers', 'Clear the Easy vault in under 30 seconds');
+    }
+  }
+
+  // ---- Synthesized SFX ----
+  function sfxReveal(){ Arcade.tone(360, 0.05, 'triangle', 0.08, { sweepTo: 420 }); }
+  function sfxFlag(){ Arcade.tone(520, 0.06, 'square', 0.08, { sweepTo: 640 }); }
+  function sfxBoom(){ Arcade.noiseBurst(0.32, 0.22, 500); Arcade.tone(90, 0.28, 'sawtooth', 0.16, { sweepTo: 40 }); }
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
+    e.preventDefault();
+  }, { passive:false });
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    startGame(difficulty);
+  }, { passive:false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame(difficulty);
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  refreshBest();
+  Arcade.mountPanels({ gameId: 'goldvault' });
+  Arcade.mountPauseMenu();
+})();
+</script>
+</body>
+</html>

@@ -26,6 +26,7 @@ nova-drift/index.html
 aurum-merge/index.html
 gold-rush/index.html
 memory-match/index.html
+gold-vault/index.html
 faviconset/ (favicons + logo.png)
 ```
 
