@@ -159,6 +159,7 @@
 (function(){
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const scoreEl = document.getElementById('score');
 
   const GOLD = '#c8973a';
   const GOLD_LIGHT = '#e8b55a';
@@ -262,7 +263,7 @@
     spawnTimer = 60;
     pickupTimer = 260;
     rampTimer = 320;
-    document.getElementById('score').textContent = '0';
+    scoreEl.textContent = '0';
     updateFuelUI();
   }
 
@@ -327,14 +328,14 @@
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
     document.getElementById('overOverlay').classList.remove('show');
-    document.getElementById('score').classList.add('show');
+    scoreEl.classList.add('show');
     document.getElementById('fuelWrap').classList.add('show');
     document.getElementById('steerHint').classList.add('show');
   }
 
   function goHome(){
     state = 'start';
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     document.getElementById('fuelWrap').classList.remove('show');
     document.getElementById('steerHint').classList.remove('show');
     document.getElementById('overOverlay').classList.remove('show');
@@ -344,7 +345,7 @@
   function endGame(reason){
     state = 'over';
     sfxCrash();
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     document.getElementById('fuelWrap').classList.remove('show');
     document.getElementById('steerHint').classList.remove('show');
     const isNewBest = score > best;
@@ -644,7 +645,7 @@
       if (!t.passed && t.y - t.height/2 > player.y + player.height/2){
         t.passed = true;
         score++;
-        document.getElementById('score').textContent = score;
+        scoreEl.textContent = score;
         sfxPass();
       }
     }
@@ -774,7 +775,6 @@
     if ((e.code === 'ArrowRight' || e.code === 'KeyD') && heldDir === 1) heldDir = 0;
   }
   window.addEventListener('keydown', handleKeyDown);
-  document.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
   document.addEventListener('keyup', handleKeyUp);
 

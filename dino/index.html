@@ -121,6 +121,7 @@
 (function(){
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const scoreEl = document.getElementById('score');
 
   const GOLD = '#c8973a';
   const GOLD_LIGHT = '#e8b55a';
@@ -263,7 +264,7 @@
     groundOffset = 0;
     hillOffset1 = 0; hillOffset2 = 0;
     shakeTime = 0; shakeMag = 0;
-    document.getElementById('score').textContent = '0';
+    scoreEl.textContent = '0';
     initStars();
   }
 
@@ -317,7 +318,7 @@
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
     document.getElementById('overOverlay').classList.remove('show');
-    document.getElementById('score').classList.add('show');
+    scoreEl.classList.add('show');
     nextSpawnFrame = 55;
   }
 
@@ -327,7 +328,7 @@
     landscapeLockActive = false;
     applyRotation();
     shakeTime = 14; shakeMag = Math.max(6, H*0.03);
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     const isNewBest = score > best;
     if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
     document.getElementById('finalScore').textContent = score;
@@ -791,7 +792,7 @@
 
       distance += speed;
       score = Math.floor(distance / 26);
-      document.getElementById('score').textContent = score;
+      scoreEl.textContent = score;
 
       if (!dino.onGround){
         dino.vy += g;
@@ -897,7 +898,6 @@
       lastScoreTick = Math.floor(score/100);
       tone(880, 0.10, 'sine', 0.16);
       setTimeout(()=> tone(1180, 0.12, 'sine', 0.14), 60);
-      const scoreEl = document.getElementById('score');
       scoreEl.classList.remove('pulse'); void scoreEl.offsetWidth; scoreEl.classList.add('pulse');
     }
   }
@@ -939,7 +939,6 @@
     }
   }
   window.addEventListener('keydown', handleKeyDown);
-  document.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
   document.addEventListener('keyup', handleKeyUp);
 

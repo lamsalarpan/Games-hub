@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Connect Four — Arpan Lamsal</title>
+<meta name="description" content="A drop-disc strategy game with a minimax AI, built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 34%, rgba(201,85,107,0.09), transparent 70%);
+  }
+
+  .cf-stat-row{
+    display:flex; align-items:center; gap:14px;
+    font-family:var(--font-mono); font-size:12px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+    opacity:0; transition:opacity .3s ease;
+  }
+  .cf-stat-row.show{ opacity:1; }
+  .cf-stat-row .you b{ color:var(--gold-light); font-size:14px; margin-left:4px; }
+  .cf-stat-row .ai b{ color:#d97286; font-size:14px; margin-left:4px; }
+
+  .cf-stage{
+    position:fixed; inset:0; z-index:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px;
+    padding-top:var(--nav-h);
+  }
+  .cf-turn{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--text-muted); height:16px;
+  }
+  .cf-board{
+    position:relative;
+    display:grid;
+    background:#233149;
+    border:1px solid var(--border-strong);
+    border-radius:10px;
+    padding:var(--cf-gap);
+    gap:var(--cf-gap);
+    box-shadow:0 30px 80px rgba(0,0,0,0.5);
+  }
+  .cf-col{
+    display:grid;
+    gap:var(--cf-gap);
+    cursor:pointer;
+    touch-action:manipulation;
+    border-radius:6px;
+    transition:background .15s ease;
+  }
+  @media (hover:hover){
+    .cf-col:hover{ background:rgba(255,255,255,0.04); }
+  }
+  .cf-cell{
+    width:var(--cf-cell); height:var(--cf-cell);
+    border-radius:50%;
+    background:#0c0f16;
+    box-shadow:inset 0 2px 5px rgba(0,0,0,0.5);
+    position:relative;
+  }
+  .cf-cell .disc{
+    position:absolute; inset:0; border-radius:50%;
+    opacity:0; transform:translateY(-140%);
+    transition:transform .38s cubic-bezier(.5,0,.3,1.4), opacity .05s ease;
+  }
+  .cf-cell.filled .disc{ opacity:1; transform:translateY(0); }
+  .disc.p1{ background:linear-gradient(135deg,#f0cf8a,#c8973a); box-shadow:0 2px 4px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.3); }
+  .disc.p2{ background:linear-gradient(135deg,#e18ba0,#a83f57); box-shadow:0 2px 4px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.25); }
+  .cf-cell.win .disc{ box-shadow:0 0 0 3px var(--gold-light), 0 2px 4px rgba(0,0,0,0.35); }
+
+  @media (prefers-reduced-motion: reduce){
+    .cf-cell .disc{ transition:opacity .05s ease; transform:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Connect Four</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="cf-stat-row" id="hud">
+    <span class="you">You <b id="youTag">0</b></span>
+    <span class="ai">AI <b id="aiTag">0</b></span>
+  </div>
+</div>
+
+<div class="cf-stage">
+  <div class="cf-turn" id="turnTag"></div>
+  <div class="cf-board" id="board"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Four in a row.</h1>
+    <div class="sub">Drop discs · Block the AI · Connect four to win</div>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Tap a column to drop your disc there.</div>
+  </div>
+</div>
+
+<!-- Round over overlay -->
+<div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <h1 id="overTitle">You won.</h1>
+    <div class="sub" id="overSub">Connected four</div>
+    <div class="stat-row"><span>Moves</span><b id="finalMoves">0</b></div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <div class="hint">Tap to play again</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+
+  const COLS = 7, ROWS = 6;
+  const EMPTY = 0, HUMAN = 1, AI = 2;
+
+  const DIFF_KEY = 'connectfour_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function bestKey(){ return 'connectfour_al_best_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+  function aiDepth(){ return difficulty === 'hard' ? 6 : (difficulty === 'medium' ? 4 : 2); }
+  function aiRandomness(){ return difficulty === 'hard' ? 0 : (difficulty === 'medium' ? 0.12 : 0.4); }
+
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const startTag = document.getElementById('startBestDiff'); if (startTag) startTag.textContent = diffLabel();
+  }
+  document.querySelectorAll('#diffRow .diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-diff') === difficulty);
+  });
+
+  const boardEl = document.getElementById('board');
+  const turnTag = document.getElementById('turnTag');
+  const youTag = document.getElementById('youTag');
+  const aiTag = document.getElementById('aiTag');
+
+  let grid = [];        // grid[col][row], row 0 = bottom
+  let cellEls = [];      // cellEls[col][row]
+  let heights = [];       // number filled per column
+  let state = 'start';    // start | player | ai | over
+  let movesMade = 0;
+  let youWins = 0, aiWins = 0;
+  let thinking = false;
+
+  function sizeBoard(){
+    const availW = Math.min(window.innerWidth * 0.94, 480);
+    const navH = 68;
+    const availH = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - navH - 100;
+    const gap = 6;
+    const cellW = (availW - gap * (COLS + 1)) / COLS;
+    const cellH = (availH - gap * (ROWS + 1)) / ROWS;
+    const cell = Math.max(24, Math.floor(Math.min(cellW, cellH, 58)));
+    document.documentElement.style.setProperty('--cf-cell', cell + 'px');
+    document.documentElement.style.setProperty('--cf-gap', gap + 'px');
+  }
+  window.addEventListener('resize', sizeBoard);
+  window.addEventListener('orientationchange', () => setTimeout(sizeBoard, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeBoard);
+
+  function buildBoard(){
+    grid = Array.from({ length: COLS }, () => new Array(ROWS).fill(EMPTY));
+    heights = new Array(COLS).fill(0);
+    boardEl.style.gridTemplateColumns = 'repeat(' + COLS + ', var(--cf-cell))';
+    boardEl.innerHTML = '';
+    cellEls = [];
+    for (let c = 0; c < COLS; c++){
+      const colEl = document.createElement('div');
+      colEl.className = 'cf-col';
+      colEl.style.gridTemplateRows = 'repeat(' + ROWS + ', var(--cf-cell))';
+      colEl.style.display = 'grid';
+      colEl.dataset.col = c;
+      const colCells = [];
+      for (let r = ROWS - 1; r >= 0; r--){
+        const cell = document.createElement('div');
+        cell.className = 'cf-cell';
+        cell.dataset.row = r;
+        const disc = document.createElement('div');
+        disc.className = 'disc';
+        cell.appendChild(disc);
+        colEl.appendChild(cell);
+        colCells[r] = cell;
+      }
+      cellEls.push(colCells);
+      colEl.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        onColumnTap(c);
+      });
+      boardEl.appendChild(colEl);
+    }
+  }
+
+  function lowestEmptyRow(col){
+    const h = heights[col];
+    return h < ROWS ? h : -1;
+  }
+
+  function placeDisc(col, player, animate){
+    const row = lowestEmptyRow(col);
+    if (row === -1) return -1;
+    grid[col][row] = player;
+    heights[col]++;
+    const cellEl = cellEls[col][row];
+    cellEl.classList.add('filled');
+    cellEl.querySelector('.disc').classList.add(player === HUMAN ? 'p1' : 'p2');
+    return row;
+  }
+
+  function checkWinner(g){
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    for (let c = 0; c < COLS; c++){
+      for (let r = 0; r < ROWS; r++){
+        const p = g[c][r];
+        if (p === EMPTY) continue;
+        for (const [dc, dr] of dirs){
+          let line = [[c,r]];
+          for (let k = 1; k < 4; k++){
+            const nc = c + dc * k, nr = r + dr * k;
+            if (nc < 0 || nc >= COLS || nr < 0 || nr >= ROWS || g[nc][nr] !== p) break;
+            line.push([nc, nr]);
+          }
+          if (line.length === 4) return { player: p, line };
+        }
+      }
+    }
+    return null;
+  }
+
+  function boardFull(){ return heights.every(h => h === ROWS); }
+
+  // ---- Minimax with alpha-beta pruning ----
+  function scoreWindow(cells, player){
+    const opp = player === AI ? HUMAN : AI;
+    const countP = cells.filter(v => v === player).length;
+    const countO = cells.filter(v => v === opp).length;
+    const countE = cells.filter(v => v === EMPTY).length;
+    if (countP === 4) return 1000;
+    if (countP === 3 && countE === 1) return 12;
+    if (countP === 2 && countE === 2) return 3;
+    if (countO === 3 && countE === 1) return -14;
+    return 0;
+  }
+
+  function evaluate(g, player){
+    let score = 0;
+    // center column preference
+    for (let r = 0; r < ROWS; r++) if (g[Math.floor(COLS / 2)][r] === player) score += 3;
+    const dirs = [[1,0],[0,1],[1,1],[1,-1]];
+    for (let c = 0; c < COLS; c++){
+      for (let r = 0; r < ROWS; r++){
+        for (const [dc, dr] of dirs){
+          const cells = [];
+          let ok = true;
+          for (let k = 0; k < 4; k++){
+            const nc = c + dc * k, nr = r + dr * k;
+            if (nc < 0 || nc >= COLS || nr < 0 || nr >= ROWS) { ok = false; break; }
+            cells.push(g[nc][nr]);
+          }
+          if (ok) score += scoreWindow(cells, player);
+        }
+      }
+    }
+    return score;
+  }
+
+  function validCols(g){
+    const out = [];
+    for (let c = 0; c < COLS; c++) if (g[c][ROWS - 1] === EMPTY) out.push(c);
+    return out;
+  }
+  function dropSim(g, col, player){
+    for (let r = 0; r < ROWS; r++){
+      if (g[col][r] === EMPTY){ g[col][r] = player; return r; }
+    }
+    return -1;
+  }
+  function cloneGrid(g){ return g.map(col => col.slice()); }
+
+  function minimax(g, depth, alpha, beta, maximizing){
+    const winner = checkWinner(g);
+    const cols = validCols(g);
+    if (winner){
+      if (winner.player === AI) return { score: 1000000 + depth };
+      if (winner.player === HUMAN) return { score: -1000000 - depth };
+    }
+    if (cols.length === 0) return { score: 0 };
+    if (depth === 0) return { score: evaluate(g, AI) };
+
+    // order columns by center-first for better pruning
+    cols.sort((a, b) => Math.abs(a - COLS / 2) - Math.abs(b - COLS / 2));
+
+    if (maximizing){
+      let best = { score: -Infinity, col: cols[0] };
+      for (const c of cols){
+        const g2 = cloneGrid(g);
+        dropSim(g2, c, AI);
+        const res = minimax(g2, depth - 1, alpha, beta, false);
+        if (res.score > best.score) best = { score: res.score, col: c };
+        alpha = Math.max(alpha, res.score);
+        if (alpha >= beta) break;
+      }
+      return best;
+    } else {
+      let best = { score: Infinity, col: cols[0] };
+      for (const c of cols){
+        const g2 = cloneGrid(g);
+        dropSim(g2, c, HUMAN);
+        const res = minimax(g2, depth - 1, alpha, beta, true);
+        if (res.score < best.score) best = { score: res.score, col: c };
+        beta = Math.min(beta, res.score);
+        if (alpha >= beta) break;
+      }
+      return best;
+    }
+  }
+
+  function chooseAiColumn(){
+    const cols = validCols(grid);
+    // Immediate win check
+    for (const c of cols){
+      const g2 = cloneGrid(grid); dropSim(g2, c, AI);
+      if (checkWinner(g2)) return c;
+    }
+    // Immediate block check
+    for (const c of cols){
+      const g2 = cloneGrid(grid); dropSim(g2, c, HUMAN);
+      if (checkWinner(g2)) return c;
+    }
+    if (Math.random() < aiRandomness()){
+      return cols[Math.floor(Math.random() * cols.length)];
+    }
+    const result = minimax(grid, aiDepth(), -Infinity, Infinity, true);
+    return result.col != null ? result.col : cols[Math.floor(Math.random() * cols.length)];
+  }
+
+  function onColumnTap(col){
+    if (state !== 'player' || thinking) return;
+    if (lowestEmptyRow(col) === -1) return;
+    Arcade.audioCtx();
+    doMove(col, HUMAN);
+  }
+
+  function doMove(col, player){
+    const row = placeDisc(col, player);
+    if (row === -1) return;
+    movesMade++;
+    Arcade.tone(player === HUMAN ? 300 : 240, 0.07, 'triangle', 0.12, { sweepTo: player === HUMAN ? 220 : 180 });
+
+    const winner = checkWinner(grid);
+    if (winner){
+      highlightWin(winner.line);
+      setTimeout(() => endGame(winner.player), 380);
+      return;
+    }
+    if (boardFull()){
+      setTimeout(() => endGame(null), 200);
+      return;
+    }
+
+    if (player === HUMAN){
+      state = 'ai';
+      turnTag.textContent = 'AI thinking…';
+      thinking = true;
+      setTimeout(() => {
+        const col2 = chooseAiColumn();
+        thinking = false;
+        doMove(col2, AI);
+        if (state === 'ai') { state = 'player'; turnTag.textContent = 'Your turn'; }
+      }, 420);
+    }
+  }
+
+  function highlightWin(line){
+    line.forEach(([c, r]) => cellEls[c][r].classList.add('win'));
+  }
+
+  function startGame(diff){
+    if (diff){
+      difficulty = diff;
+      localStorage.setItem(DIFF_KEY, diff);
+      document.querySelectorAll('#diffRow .diff-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === diff));
+    }
+    refreshBest();
+    sizeBoard();
+    buildBoard();
+    movesMade = 0;
+    youWins = 0; aiWins = 0;
+    youTag.textContent = '0'; aiTag.textContent = '0';
+    state = 'player';
+    thinking = false;
+    turnTag.textContent = 'Your turn';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('hud').classList.add('show');
+  }
+
+  function endGame(winner){
+    state = 'over';
+    turnTag.textContent = '';
+    document.getElementById('hud').classList.remove('show');
+
+    const diffMul = difficulty === 'hard' ? 1000 : (difficulty === 'medium' ? 700 : 400);
+    let score, won = winner === HUMAN;
+
+    if (winner === HUMAN){
+      score = Math.max(80, diffMul - movesMade * 10);
+      youTag.textContent = ++youWins;
+      Arcade.celebrateHaptic();
+    } else if (winner === AI){
+      score = Math.round(movesMade * 5);
+      aiTag.textContent = ++aiWins;
+    } else {
+      score = 150; // draw
+    }
+
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+
+    document.getElementById('overTitle').textContent = winner === HUMAN ? 'You won.' : (winner === AI ? 'AI won.' : 'Board full.');
+    document.getElementById('overSub').textContent = winner === HUMAN ? 'You connected four' : (winner === AI ? 'The AI connected four' : 'No one connected four');
+    document.getElementById('finalMoves').textContent = movesMade;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) Arcade.celebrate();
+
+    Arcade.logRun('connectfour', score, difficulty, movesMade * 3);
+    if (winner === HUMAN){
+      Arcade.unlock('connectfour_win', 'Four in a Row', 'Win a game of Connect Four');
+      if (difficulty === 'hard') Arcade.unlock('connectfour_hard_win', 'Outplayed', 'Beat the AI on Hard difficulty');
+      if (movesMade <= 10) Arcade.unlock('connectfour_flawless', 'Ruthless', 'Win in 10 moves or fewer');
+    }
+  }
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
+    e.preventDefault();
+  }, { passive:false });
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    startGame(difficulty);
+  }, { passive:false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame(difficulty);
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  sizeBoard();
+  refreshBest();
+  Arcade.mountPanels({ gameId: 'connectfour' });
+  Arcade.mountPauseMenu();
+})();
+</script>
+</body>
+</html>

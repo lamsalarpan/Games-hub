@@ -127,6 +127,7 @@
  try {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const scoreEl = document.getElementById('score');
 
   const GOLD = '#c8973a';
   const GOLD_LIGHT = '#e8b55a';
@@ -247,8 +248,8 @@
     particles = []; confetti = [];
     shakeTime = 0; shakeMag = 0; flashTime = 0;
     camLayers = 0;
-    document.getElementById('score').textContent = '0';
-    document.getElementById('score').classList.remove('show');
+    scoreEl.textContent = '0';
+    scoreEl.classList.remove('show');
     const comboEl = document.getElementById('combo');
     comboEl.classList.remove('show', 'pulse'); comboEl.textContent = '';
     spawnMover();
@@ -329,7 +330,7 @@
   }
 
   function updateScoreUI(){
-    const el = document.getElementById('score');
+    const el = scoreEl;
     el.textContent = score;
     el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
   }
@@ -374,7 +375,7 @@
 
   function endGame(){
     state = 'over';
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     document.getElementById('combo').classList.remove('show');
     const isNewBest = score > best;
     if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
@@ -475,7 +476,7 @@
       countdownDisplay = secLeft;
       if (countdownFrames <= 0){
         state = 'playing';
-        document.getElementById('score').classList.add('show');
+        scoreEl.classList.add('show');
         sfxGo();
       }
       return;
@@ -594,7 +595,6 @@
     }
   }
   window.addEventListener('keydown', handleKeyDown);
-  document.addEventListener('keydown', handleKeyDown);
 
   canvas.addEventListener('pointerdown', function(e){
     e.preventDefault();

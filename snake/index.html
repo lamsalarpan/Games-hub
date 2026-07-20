@@ -108,6 +108,7 @@
 (function(){
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const scoreEl = document.getElementById('score');
 
   const GREEN = '#3f9c74';
   const GREEN_LIGHT = '#6fd0a8';
@@ -183,7 +184,7 @@
     growPending = 0;
     tickTimer = 0;
     frame = 0;
-    document.getElementById('score').textContent = '0';
+    scoreEl.textContent = '0';
     placeFood();
   }
 
@@ -202,13 +203,13 @@
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
     document.getElementById('overOverlay').classList.remove('show');
-    document.getElementById('score').classList.add('show');
+    scoreEl.classList.add('show');
   }
 
   function endGame(){
     state = 'over';
     sfxCrash();
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     const isNewBest = score > best;
     if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
     document.getElementById('finalScore').textContent = score;
@@ -253,9 +254,9 @@
     snake.unshift(head);
     if (head.x === food.x && head.y === food.y){
       score++;
-      document.getElementById('score').textContent = score;
-      document.getElementById('score').classList.add('pulse');
-      setTimeout(() => document.getElementById('score').classList.remove('pulse'), 500);
+      scoreEl.textContent = score;
+      scoreEl.classList.add('pulse');
+      setTimeout(() => scoreEl.classList.remove('pulse'), 500);
       sfxEat();
       if (score % 5 === 0) sfxLevelUp();
       placeFood();
@@ -390,7 +391,6 @@
     else if (k === ' '){ if (state !== 'playing') startGame(); }
   }
   window.addEventListener('keydown', handleKey);
-  document.addEventListener('keydown', handleKey);
 
   // ---- Swipe controls ----
   let touchStartX = 0, touchStartY = 0, touchActive = false;

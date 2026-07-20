@@ -131,6 +131,7 @@
  try {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const scoreEl = document.getElementById('score');
 
   const GOLD = '#c8973a';
   const GOLD_LIGHT = '#e8b55a';
@@ -260,8 +261,8 @@
     elapsedFrames = 0;
     shakeTime = 0; shakeMag = 0;
     hintTimer = 260;
-    document.getElementById('score').textContent = '0';
-    document.getElementById('score').classList.remove('show');
+    scoreEl.textContent = '0';
+    scoreEl.classList.remove('show');
     document.getElementById('comboTag').classList.remove('show');
     document.getElementById('laneHint').classList.remove('show');
   }
@@ -298,7 +299,7 @@
   }
 
   function updateScoreUI(){
-    const el = document.getElementById('score');
+    const el = scoreEl;
     el.textContent = score;
     el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
     const combo = document.getElementById('comboTag');
@@ -322,7 +323,7 @@
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
     document.getElementById('overOverlay').classList.remove('show');
-    document.getElementById('score').classList.add('show');
+    scoreEl.classList.add('show');
     runStartTime = performance.now();
     focusCanvas();
   }
@@ -331,7 +332,7 @@
     state = 'over';
     sfxHit();
     if (motionOK()){ shakeTime = 18; shakeMag = Math.max(7, BASE_R * 0.05); }
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     document.getElementById('laneHint').classList.remove('show');
     const isNewBest = score > best;
     if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
@@ -691,7 +692,6 @@
     }
   }
   window.addEventListener('keydown', handleKeyDown);
-  document.addEventListener('keydown', handleKeyDown);
 
   function audioCtxWake(){ Arcade.audioCtx(); }
 

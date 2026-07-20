@@ -29,6 +29,8 @@ memory-match/index.html
 gold-vault/index.html
 aurum-echo/index.html
 pong/index.html
+connect-four/index.html
+whack-a-mole/index.html
 faviconset/ (favicons + logo.png)
 ```
 

@@ -229,6 +229,41 @@ window.Arcade = (function () {
       <rect x="30" y="14" width="26" height="8" rx="4" fill="url(#g-pong)"/>
       <rect x="46" y="78" width="26" height="8" rx="4" fill="url(#g-pong)"/>
       <circle cx="60" cy="46" r="6.5" fill="#f0ede6"/>`
+    },
+    {
+      id: 'connectfour', title: 'Connect Four', href: 'connect-four/index.html',
+      accent: '#c9556b', category: 'Strategy', difficulty: 'Medium', playTime: '3–7 min',
+      desc: 'Drop discs, block the AI, and connect four in a row before it does.',
+      icon: `<defs><linearGradient id="g-c4" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="10" y="14" width="80" height="72" rx="8" fill="#2a3a52"/>
+      <circle cx="27" cy="30" r="8" fill="url(#g-c4)"/>
+      <circle cx="49" cy="30" r="8" fill="#0c0c0b"/>
+      <circle cx="71" cy="30" r="8" fill="#c9556b"/>
+      <circle cx="27" cy="50" r="8" fill="#c9556b"/>
+      <circle cx="49" cy="50" r="8" fill="url(#g-c4)"/>
+      <circle cx="71" cy="50" r="8" fill="#0c0c0b"/>
+      <circle cx="27" cy="70" r="8" fill="url(#g-c4)"/>
+      <circle cx="49" cy="70" r="8" fill="#c9556b"/>
+      <circle cx="71" cy="70" r="8" fill="url(#g-c4)"/>`
+    },
+    {
+      id: 'whackamole', title: 'Whack-a-Mole', href: 'whack-a-mole/index.html',
+      accent: '#8fbf6b', category: 'Reflex', difficulty: 'Medium', playTime: '45 sec',
+      desc: 'Tap the coins as they pop up. Miss the charges — one hit costs you the streak.',
+      icon: `<defs><linearGradient id="g-mole" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#f0cf8a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="8" y="8" width="84" height="84" rx="12" fill="#213326"/>
+      <ellipse cx="30" cy="70" rx="14" ry="7" fill="#0c0c0b"/>
+      <ellipse cx="70" cy="70" rx="14" ry="7" fill="#0c0c0b"/>
+      <ellipse cx="50" cy="34" rx="15" ry="7" fill="#0c0c0b"/>
+      <circle cx="50" cy="24" r="13" fill="url(#g-mole)"/>
+      <circle cx="45" cy="21" r="2.2" fill="#0c0c0b"/>
+      <circle cx="55" cy="21" r="2.2" fill="#0c0c0b"/>
+      <path d="M62 66 L74 50 L80 56 L68 72 Z" fill="#c9556b"/>
+      <rect x="61" y="60" width="16" height="7" rx="3" fill="#8a8880" transform="rotate(-38 61 60)"/>`
     }
   ];
 
@@ -405,13 +440,20 @@ window.Arcade = (function () {
     { id: 'hard_try_aurumecho', title: 'Hard Mode', desc: 'Play Aurum Echo on Hard' },
     { id: 'pong_win', title: 'Match Point', desc: 'Win a match of Pong' },
     { id: 'pong_shutout', title: 'Flawless Rally', desc: 'Win a match of Pong without the AI scoring' },
-    { id: 'hard_try_pong', title: 'Hard Mode', desc: 'Play Pong on Hard' }
+    { id: 'hard_try_pong', title: 'Hard Mode', desc: 'Play Pong on Hard' },
+    { id: 'connectfour_win', title: 'Four in a Row', desc: 'Win a game of Connect Four' },
+    { id: 'connectfour_hard_win', title: 'Outplayed', desc: 'Beat the AI on Hard difficulty' },
+    { id: 'connectfour_flawless', title: 'Ruthless', desc: 'Win in 10 moves or fewer' },
+    { id: 'hard_try_connectfour', title: 'Hard Mode', desc: 'Play Connect Four on Hard' },
+    { id: 'whackamole_100', title: 'Fast Hands', desc: 'Score 100+ in Whack-a-Mole' },
+    { id: 'whackamole_streak', title: 'Unshakeable', desc: 'Reach a 10-hit streak without hitting a charge' },
+    { id: 'hard_try_whackamole', title: 'Hard Mode', desc: 'Play Whack-a-Mole on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90, goldvault: 150, aurumecho: 120, pong: 150 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90, goldvault: 150, aurumecho: 120, pong: 150, connectfour: 180, whackamole: 60 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {

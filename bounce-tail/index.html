@@ -117,6 +117,7 @@
  try {
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const scoreEl = document.getElementById('score');
 
   const GOLD = '#c8973a';
   const GOLD_LIGHT = '#e8b55a';
@@ -251,8 +252,8 @@
     score = 0;
     particles = [];
     shakeTime = 0; shakeMag = 0;
-    document.getElementById('score').textContent = '0';
-    document.getElementById('score').classList.remove('show');
+    scoreEl.textContent = '0';
+    scoreEl.classList.remove('show');
     document.getElementById('heightTag').classList.remove('show');
   }
 
@@ -287,7 +288,7 @@
   }
 
   function updateScoreUI(){
-    const el = document.getElementById('score');
+    const el = scoreEl;
     el.textContent = score;
     el.classList.remove('pulse'); void el.offsetWidth; el.classList.add('pulse');
     document.getElementById('heightTag').textContent = score + 'm';
@@ -309,7 +310,7 @@
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
     document.getElementById('overOverlay').classList.remove('show');
-    document.getElementById('score').classList.add('show');
+    scoreEl.classList.add('show');
     document.getElementById('heightTag').classList.add('show');
     runStartTime = performance.now();
     focusCanvas();
@@ -319,7 +320,7 @@
     state = 'over';
     sfxHazard();
     if (motionOK()){ shakeTime = 16; shakeMag = Math.max(7, H * 0.02); }
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     document.getElementById('heightTag').classList.remove('show');
     const isNewBest = score > best;
     if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
@@ -351,6 +352,8 @@
   }
 
   function updateBall(){
+    if (keyLeft) ball.vx = Math.max(ball.vx - 0.9, -7);
+    if (keyRight) ball.vx = Math.min(ball.vx + 0.9, 7);
     ball.vy += GRAVITY;
     ball.y += ball.vy;
     ball.x += ball.vx;
@@ -550,13 +553,7 @@
     if (e.code === 'ArrowRight' || e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keyRight = false;
   }
   window.addEventListener('keydown', handleKeyDown);
-  document.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
-  setInterval(() => {
-    if (!ball || state !== 'playing') return;
-    if (keyLeft) ball.vx = Math.max(ball.vx - 0.9, -7);
-    if (keyRight) ball.vx = Math.min(ball.vx + 0.9, 7);
-  }, 16);
 
   canvas.addEventListener('pointerdown', function(e){
     e.preventDefault();

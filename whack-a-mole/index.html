@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Whack-a-Mole — Arpan Lamsal</title>
+<meta name="description" content="A fast-paced reflex tapping game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 34%, rgba(143,191,107,0.09), transparent 70%);
+  }
+
+  .wm-stat-row{
+    display:flex; align-items:center; gap:16px;
+    font-family:var(--font-mono); font-size:12px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+    opacity:0; transition:opacity .3s ease;
+  }
+  .wm-stat-row.show{ opacity:1; }
+  .wm-stat-row b{ color:var(--gold-light); font-size:14px; margin-left:4px; }
+  .wm-stat-row .time-low b{ color:#e0665a; }
+
+  .wm-stage{
+    position:fixed; inset:0; z-index:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px;
+    padding-top:var(--nav-h);
+  }
+  .wm-combo{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--gold-light); height:18px; opacity:0; transition:opacity .2s ease, transform .2s ease;
+  }
+  .wm-combo.show{ opacity:1; }
+  .wm-combo.pulse{ transform:scale(1.15); }
+
+  .wm-field{
+    display:grid; grid-template-columns:repeat(3, var(--wm-hole));
+    grid-template-rows:repeat(3, var(--wm-hole));
+    gap:calc(var(--wm-hole) * 0.22);
+  }
+  .wm-hole{
+    position:relative;
+    width:var(--wm-hole); height:var(--wm-hole);
+    border-radius:50%;
+    background:radial-gradient(ellipse at 50% 40%, #1a2a1e 0%, #0c140f 70%);
+    box-shadow:inset 0 6px 14px rgba(0,0,0,0.6), 0 2px 0 rgba(255,255,255,0.04);
+    overflow:hidden;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .wm-critter{
+    position:absolute; left:12%; right:12%; bottom:-100%;
+    height:88%;
+    border-radius:50% 50% 46% 46%;
+    transition:bottom .12s cubic-bezier(.3,0,.2,1);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .wm-hole.up .wm-critter{ bottom:6%; }
+  .wm-critter.coin{ background:linear-gradient(135deg,#f0cf8a,#c8973a); }
+  .wm-critter.bomb{ background:linear-gradient(135deg,#5a6470,#33383f); }
+  .wm-critter svg{ width:46%; height:46%; }
+  .wm-hole.hit .wm-critter{ bottom:-100%; transition-duration:.08s; }
+
+  @media (prefers-reduced-motion: reduce){
+    .wm-critter{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Whack-a-Mole</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="wm-stat-row" id="hud">
+    <span>Score <b id="scoreTag">0</b></span>
+    <span class="time-low" id="timeWrap">Time <b id="timeTag">45</b></span>
+  </div>
+</div>
+
+<div class="wm-stage">
+  <div class="wm-combo" id="comboTag"></div>
+  <div class="wm-field" id="field"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>45 seconds. Go.</h1>
+    <div class="sub">Tap the coins · Avoid the charges</div>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">A charge costs points and breaks your streak.</div>
+  </div>
+</div>
+
+<!-- Round over overlay -->
+<div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <h1>Time's up.</h1>
+    <div class="sub" id="overSub">Round complete</div>
+    <div class="stat-row"><span>Best Streak</span><b id="finalStreak">0</b></div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <div class="hint">Tap to play again</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+
+  const HOLE_COUNT = 9;
+  const ROUND_MS = 45000;
+  const COIN_SVG = '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" fill="#0c0c0b" opacity="0.25"/><path d="M9 8h4a2.5 2.5 0 0 1 0 5H9m0-5v9m0-9H8m1 5h3.5a2.5 2.5 0 0 1 0 5H9" stroke="#0c0c0b" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const BOMB_SVG = '<svg viewBox="0 0 24 24" fill="#e0665a"><circle cx="12" cy="13" r="7"/><path d="M12 2v3M12 21v-3M2 13h3M21 13h-3M4.5 5.5l2 2M19.5 5.5l-2 2M4.5 20.5l2-2M19.5 20.5l-2-2" stroke="#e0665a" stroke-width="1.8" stroke-linecap="round"/></svg>';
+
+  const PRESETS = {
+    easy:   { upTime: 950, spawnGap: 780, bombChance: 0.10, maxActive: 1 },
+    medium: { upTime: 680, spawnGap: 560, bombChance: 0.18, maxActive: 2 },
+    hard:   { upTime: 480, spawnGap: 400, bombChance: 0.27, maxActive: 2 }
+  };
+
+  const DIFF_KEY = 'whackamole_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return PRESETS[difficulty] || PRESETS.medium; }
+  function bestKey(){ return 'whackamole_al_best_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const startTag = document.getElementById('startBestDiff'); if (startTag) startTag.textContent = diffLabel();
+  }
+  document.querySelectorAll('#diffRow .diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-diff') === difficulty);
+  });
+
+  const fieldEl = document.getElementById('field');
+  const scoreTag = document.getElementById('scoreTag');
+  const timeTag = document.getElementById('timeTag');
+  const timeWrap = document.getElementById('timeWrap');
+  const comboTag = document.getElementById('comboTag');
+
+  let holes = []; // { el, critterEl, active, isBomb, expireAt }
+  let state = 'start'; // start | playing | over
+  let score = 0, combo = 0, bestStreak = 0, activeCount = 0;
+  let roundEndAt = 0, nextSpawnAt = 0;
+
+  function sizeField(){
+    const availW = Math.min(window.innerWidth * 0.92, 420);
+    const navH = 68;
+    const availH = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - navH - 130;
+    const size = Math.max(56, Math.floor(Math.min(availW / 3.9, availH / 3.9, 108)));
+    document.documentElement.style.setProperty('--wm-hole', size + 'px');
+  }
+  window.addEventListener('resize', sizeField);
+  window.addEventListener('orientationchange', () => setTimeout(sizeField, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeField);
+
+  function buildField(){
+    fieldEl.innerHTML = '';
+    holes = [];
+    for (let i = 0; i < HOLE_COUNT; i++){
+      const hole = document.createElement('div');
+      hole.className = 'wm-hole';
+      const critter = document.createElement('div');
+      critter.className = 'wm-critter';
+      hole.appendChild(critter);
+      fieldEl.appendChild(hole);
+      const entry = { el: hole, critterEl: critter, active: false, isBomb: false, expireAt: 0 };
+      hole.addEventListener('pointerdown', (e) => { e.preventDefault(); onHoleTap(entry); });
+      holes.push(entry);
+    }
+  }
+
+  function spawnOne(){
+    const idle = holes.filter(h => !h.active);
+    if (idle.length === 0) return;
+    const h = idle[Math.floor(Math.random() * idle.length)];
+    const p = preset();
+    h.active = true;
+    h.isBomb = Math.random() < p.bombChance;
+    h.expireAt = Date.now() + p.upTime;
+    h.critterEl.className = 'wm-critter ' + (h.isBomb ? 'bomb' : 'coin');
+    h.critterEl.innerHTML = h.isBomb ? BOMB_SVG : COIN_SVG;
+    h.el.classList.remove('hit');
+    h.el.classList.add('up');
+    activeCount++;
+  }
+
+  function retireHole(h){
+    h.active = false;
+    h.el.classList.remove('up');
+    activeCount = Math.max(0, activeCount - 1);
+  }
+
+  function onHoleTap(h){
+    if (state !== 'playing' || !h.active) return;
+    h.el.classList.add('hit');
+    if (h.isBomb){
+      score = Math.max(0, score - 15);
+      combo = 0;
+      Arcade.tone(140, 0.22, 'sawtooth', 0.16, { sweepTo: 70 });
+      Arcade.noiseBurst(0.18, 0.14, 500);
+    } else {
+      combo++;
+      bestStreak = Math.max(bestStreak, combo);
+      const bonus = Math.min(20, combo * 2);
+      score += 10 + bonus;
+      Arcade.tone(520 + Math.min(combo, 12) * 18, 0.08, 'triangle', 0.14, { sweepTo: 700 });
+      updateCombo();
+    }
+    scoreTag.textContent = score;
+    retireHole(h);
+  }
+
+  function updateCombo(){
+    if (combo >= 3){
+      comboTag.textContent = 'Streak ×' + combo;
+      comboTag.classList.add('show', 'pulse');
+      setTimeout(() => comboTag.classList.remove('pulse'), 180);
+    } else {
+      comboTag.classList.remove('show');
+    }
+  }
+
+  function loop(){
+    if (Arcade.isPaused()) { requestAnimationFrame(loop); return; }
+    if (state === 'playing') tick();
+    requestAnimationFrame(loop);
+  }
+
+  function tick(){
+    const now = Date.now();
+    const remaining = Math.max(0, roundEndAt - now);
+    const remSec = Math.ceil(remaining / 1000);
+    timeTag.textContent = remSec;
+    timeWrap.classList.toggle('time-low', remSec <= 10);
+
+    holes.forEach(h => {
+      if (h.active && now >= h.expireAt){
+        retireHole(h);
+      }
+    });
+
+    const p = preset();
+    if (now >= nextSpawnAt && activeCount < p.maxActive){
+      spawnOne();
+      nextSpawnAt = now + p.spawnGap * (0.75 + Math.random() * 0.5);
+    }
+
+    if (remaining <= 0) endRound();
+  }
+
+  function startGame(diff){
+    if (diff){
+      difficulty = diff;
+      localStorage.setItem(DIFF_KEY, diff);
+      document.querySelectorAll('#diffRow .diff-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === diff));
+    }
+    refreshBest();
+    sizeField();
+    buildField();
+    score = 0; combo = 0; bestStreak = 0; activeCount = 0;
+    scoreTag.textContent = '0';
+    timeTag.textContent = Math.ceil(ROUND_MS / 1000);
+    timeWrap.classList.remove('time-low');
+    comboTag.classList.remove('show');
+    const now = Date.now();
+    roundEndAt = now + ROUND_MS;
+    nextSpawnAt = now + 300;
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('hud').classList.add('show');
+  }
+
+  function endRound(){
+    state = 'over';
+    document.getElementById('hud').classList.remove('show');
+    holes.forEach(h => { if (h.active) retireHole(h); });
+    comboTag.classList.remove('show');
+
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+
+    document.getElementById('overSub').textContent = 'Round complete';
+    document.getElementById('finalStreak').textContent = bestStreak;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+
+    Arcade.logRun('whackamole', score, difficulty, Math.round(ROUND_MS / 1000));
+    if (score >= 100) Arcade.unlock('whackamole_100', 'Fast Hands', 'Score 100+ in Whack-a-Mole');
+    if (bestStreak >= 10) Arcade.unlock('whackamole_streak', 'Unshakeable', 'Reach a 10-hit streak without hitting a charge');
+  }
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
+    e.preventDefault();
+  }, { passive:false });
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    startGame(difficulty);
+  }, { passive:false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame(difficulty);
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  sizeField();
+  buildField();
+  refreshBest();
+  Arcade.mountPanels({ gameId: 'whackamole' });
+  Arcade.mountPauseMenu();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -107,6 +107,7 @@
 (function(){
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
+  const scoreEl = document.getElementById('score');
 
   const GOLD = '#c8973a';
   const GOLD_LIGHT = '#e8b55a';
@@ -190,7 +191,7 @@
     score = 0;
     frame = 0;
     groundOffset = 0;
-    document.getElementById('score').textContent = '0';
+    scoreEl.textContent = '0';
     initStars();
   }
 
@@ -250,14 +251,14 @@
     state = 'playing';
     document.getElementById('startOverlay').classList.remove('show');
     document.getElementById('overOverlay').classList.remove('show');
-    document.getElementById('score').classList.add('show');
+    scoreEl.classList.add('show');
     bird.vy = flapForce() * 0.7;
   }
 
   function endGame(){
     state = 'over';
     sfxHit();
-    document.getElementById('score').classList.remove('show');
+    scoreEl.classList.remove('show');
     const isNewBest = score > best;
     if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
     document.getElementById('finalScore').textContent = score;
@@ -429,7 +430,7 @@
         if (!p.passed && p.x + pw < bird.x - bird.size/2){
           p.passed = true;
           score++;
-          document.getElementById('score').textContent = score;
+          scoreEl.textContent = score;
           sfxScore();
         }
       }
@@ -522,7 +523,6 @@
     }
   }
   window.addEventListener('keydown', handleFlapKey);
-  document.addEventListener('keydown', handleFlapKey);
 
   function onPointer(e){
     e.preventDefault();

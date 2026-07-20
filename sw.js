@@ -9,7 +9,7 @@
 
    Bump CACHE_NAME whenever this list changes so old caches get swept. */
 
-const CACHE_NAME = 'game-hub-v23';
+const CACHE_NAME = 'game-hub-v26';
 const NETWORK_TIMEOUT_MS = 3500;
 
 const PRECACHE_URLS = [
@@ -40,7 +40,9 @@ const PRECACHE_URLS = [
   './memory-match/index.html',
   './gold-vault/index.html',
   './aurum-echo/index.html',
-  './pong/index.html'
+  './pong/index.html',
+  './connect-four/index.html',
+  './whack-a-mole/index.html'
 ];
 
 self.addEventListener('install', (event) => {
