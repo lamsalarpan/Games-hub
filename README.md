@@ -31,6 +31,7 @@ aurum-echo/index.html
 pong/index.html
 connect-four/index.html
 whack-a-mole/index.html
+word-vault/index.html
 faviconset/ (favicons + logo.png)
 ```
 

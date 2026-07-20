@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Word Vault — Arpan Lamsal</title>
+<meta name="description" content="A five-letter word deduction game built by Arpan Lamsal, styled to match his portfolio and the rest of the Game Hub.">
+
+<link rel="icon" href="../faviconset/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="16x16" href="../faviconset/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../faviconset/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="../faviconset/android-chrome-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../faviconset/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../assets/css/theme.css">
+<style>
+  html,body{
+    height:100%;
+    overflow:hidden;
+    touch-action:none;
+    overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:radial-gradient(60% 45% at 50% 30%, rgba(138,127,214,0.09), transparent 70%);
+  }
+
+  .wv-stat-row{
+    display:flex; align-items:center; gap:14px;
+    font-family:var(--font-mono); font-size:12px;
+    letter-spacing:0.06em; text-transform:uppercase;
+    color:var(--text-secondary);
+    opacity:0; transition:opacity .3s ease;
+  }
+  .wv-stat-row.show{ opacity:1; }
+  .wv-stat-row b{ color:var(--gold-light); font-size:14px; margin-left:4px; }
+
+  .wv-stage{
+    position:fixed; inset:0; z-index:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px;
+    padding-top:var(--nav-h);
+  }
+  .wv-msg{
+    font-family:var(--font-mono); font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--text-muted); height:16px; text-align:center;
+  }
+  .wv-msg.err{ color:#e0665a; }
+
+  .wv-board{
+    display:grid;
+    gap:calc(var(--wv-tile) * 0.14);
+  }
+  .wv-row{ display:grid; grid-template-columns:repeat(5, var(--wv-tile)); gap:calc(var(--wv-tile) * 0.14); }
+  .wv-row.shake{ animation:wv-shake .3s ease; }
+  @keyframes wv-shake{
+    0%,100%{ transform:translateX(0); } 20%{ transform:translateX(-6px); }
+    40%{ transform:translateX(6px); } 60%{ transform:translateX(-4px); } 80%{ transform:translateX(4px); }
+  }
+  .wv-tile{
+    width:var(--wv-tile); height:var(--wv-tile);
+    display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--border-strong);
+    border-radius:6px;
+    font-family:var(--font-mono); font-weight:700;
+    font-size:calc(var(--wv-tile) * 0.42);
+    color:var(--text-primary);
+    background:var(--bg-2);
+    text-transform:uppercase;
+    transition:transform .15s ease, background .3s ease, border-color .3s ease;
+  }
+  .wv-tile.filled{ border-color:rgba(240,237,230,0.3); }
+  .wv-tile.correct{ background:#5f9c74; border-color:#5f9c74; color:#0c0c0b; }
+  .wv-tile.present{ background:#c8973a; border-color:#c8973a; color:#0c0c0b; }
+  .wv-tile.absent{ background:#2a2a27; border-color:#2a2a27; color:var(--text-muted); }
+  .wv-tile.pop{ transform:scale(1.08); }
+
+  .wv-keyboard{ display:flex; flex-direction:column; gap:7px; width:min(94vw, 420px); }
+  .wv-krow{ display:flex; gap:5px; justify-content:center; }
+  .wv-key{
+    flex:1; max-width:38px; height:44px;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg-2); border:1px solid var(--border-strong); border-radius:5px;
+    color:var(--text-primary); font-family:var(--font-mono); font-size:12px; font-weight:700;
+    text-transform:uppercase; cursor:pointer; touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .wv-key.wide{ flex:1.7; max-width:60px; font-size:9.5px; }
+  .wv-key svg{ width:16px; height:16px; }
+  .wv-key.correct{ background:#5f9c74; border-color:#5f9c74; color:#0c0c0b; }
+  .wv-key.present{ background:#c8973a; border-color:#c8973a; color:#0c0c0b; }
+  .wv-key.absent{ background:#232320; border-color:#232320; color:var(--text-muted); }
+
+  @media (prefers-reduced-motion: reduce){
+    .wv-tile, .wv-row.shake{ transition:none; animation:none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-left">
+    <a href="https://arpanlamsal.com.np" class="nav-logo" aria-label="Arpan Lamsal — Home">
+      <img src="../faviconset/logo.png" alt="Arpan Lamsal logo">
+      <span class="nav-title">Word Vault</span>
+    </a>
+    <a href="../index.html" class="nav-home-btn" aria-label="Back to Game Hub">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      <span>Hub</span>
+    </a>
+  </div>
+</nav>
+
+<div class="hud">
+  <div class="wv-stat-row" id="hud">
+    <span>Guess <b id="guessTag">1</b>/<b id="maxTag">6</b></span>
+  </div>
+</div>
+
+<div class="wv-stage">
+  <div class="wv-msg" id="msgTag"></div>
+  <div class="wv-board" id="board"></div>
+  <div class="wv-keyboard" id="keyboard"></div>
+</div>
+
+<!-- Start overlay -->
+<div class="overlay show" id="startOverlay">
+  <a class="overlay-home-btn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <img class="mark" src="../faviconset/logo.png" alt="">
+    <h1>Five letters. Find it.</h1>
+    <div class="sub">Green is right, gold is close, grey is out</div>
+    <div class="diff-row" id="diffRow">
+      <button type="button" class="diff-btn" data-diff="easy">Easy</button>
+      <button type="button" class="diff-btn" data-diff="medium">Medium</button>
+      <button type="button" class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <div class="stat-row"><span>Best Score <span id="startBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="startBest">0</b></div>
+    <div class="hint">Easy: 7 guesses · Medium: 6 · Hard: 5 and every clue must be reused.</div>
+  </div>
+</div>
+
+<!-- Round over overlay -->
+<div class="overlay" id="overOverlay">
+  <a class="overlay-home-btn" id="homeBtn" href="../index.html" aria-label="Back to Game Hub"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>
+  <div class="panel">
+    <h1 id="overTitle">Cracked it.</h1>
+    <div class="sub" id="overSub">The word was ARBOR</div>
+    <div class="stat-row"><span>Guesses Used</span><b id="finalGuesses">0</b></div>
+    <div class="stat-row"><span>Score</span><b id="finalScore">0</b></div>
+    <div class="stat-row"><span>Best <span id="finalBestDiff" class="mono" style="color:var(--text-muted); font-size:10px;"></span></span><b id="finalBest">0</b></div>
+    <span class="new-best" id="newBestTag">New Best</span>
+    <button type="button" class="btn-primary" id="retryBtn">Play Again</button>
+    <div class="hint">Tap to play a new word</div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script>
+(function(){
+
+  const WORDS = ['apple','beach','brave','bring','brush','chair','charm','chest','chief','claim',
+    'class','clean','clear','climb','cloud','coach','coast','crane','crown','dance','depth','draft',
+    'drama','dream','drive','earth','eight','elbow','enjoy','enter','equal','event','faith','fault',
+    'feast','fiber','field','fifth','final','fresh','front','frost','fruit','glory','grace','grain',
+    'grand','grant','grass','great','green','grief','grill','group','grove','guard','guess','guest',
+    'guide','habit','happy','harsh','heart','heavy','honor','horse','hotel','house','human','ideal',
+    'image','index','inner','input','issue','joint','judge','juice','known','label','labor','large',
+    'laser','later','laugh','layer','learn','least','level','light','limit','lodge','logic','lucky',
+    'lunch','lyric','magic','major','maple','march','match','media','merit','metal','might','minor',
+    'model','money','month','moral','motor','mount','mouse','mouth','music','naval','never','newly',
+    'noble','noise','north','novel','nurse','ocean','offer','often','order','organ','other','ought',
+    'outer','owner','panel','panic','paper','party','peace','phase','phone','photo','piano','piece',
+    'pilot','pitch','place','plain','plane','plant','plate','point','pound','power','press','pride',
+    'prime','print','prior','prize','proof','proud','prove','pulse','punch','pupil','quiet','quite',
+    'radio','raise','range','rapid','ratio','reach','ready','realm','rebel','refer','reign','relax',
+    'reply','right','rival','river','robot','round','route','royal','rural','scale','scene','scope',
+    'score','sense','serve','seven','shade','shake','shall','shape','share','sharp','sheet','shelf',
+    'shell','shift','shine','shirt','shock','shoot','shore','short','sight','sixth','skill','sleep',
+    'slide','small','smart','smell','smile','smoke','solid','solve','sonic','sorry','sound','south',
+    'space','spare','speak','speed','spend','spent','split','sport','stage','stand','start',
+    'state','steam','steel','stick','stock','stone','store','storm','story','strip','study','style',
+    'sugar','suite','super','sweet','swift','table','taste','teach','tempo','tenth','thank','their',
+    'theme','there','thick','thing','think','third','those','three','throw','tiger','tight','timer',
+    'title','today','token','topic','total','touch','tough','tower','track','trade','trail','train',
+    'treat','trend','trial','tribe','trick','trust','truth','tumor','under','union','unite','unity',
+    'until','upper','upset','urban','usage','usual','valid','value','vapor','vault','venue','video',
+    'vigor','vinyl','virus','visit','vital','vivid','vocal','voice','waste','watch','water','weigh',
+    'welsh','wheel','where','which','while','white','whole','whose','woman','world','worry','worth',
+    'wound','wreck','write','wrong','yield','young','youth'];
+
+  function randomWord(){ return WORDS[Math.floor(Math.random() * WORDS.length)]; }
+
+  const PRESETS = {
+    easy:   { maxGuesses: 7, hardMode: false, scoreMul: 55 },
+    medium: { maxGuesses: 6, hardMode: false, scoreMul: 90 },
+    hard:   { maxGuesses: 5, hardMode: true,  scoreMul: 150 }
+  };
+  const DIFF_KEY = 'wordvault_al_difficulty';
+  let difficulty = localStorage.getItem(DIFF_KEY) || 'medium';
+  function preset(){ return PRESETS[difficulty] || PRESETS.medium; }
+  function bestKey(){ return 'wordvault_al_best_' + difficulty; }
+  function diffLabel(){ return '(' + difficulty.charAt(0).toUpperCase() + difficulty.slice(1) + ')'; }
+
+  let best = 0;
+  function refreshBest(){
+    best = parseInt(localStorage.getItem(bestKey()) || '0', 10);
+    document.getElementById('startBest').textContent = best;
+    const startTag = document.getElementById('startBestDiff'); if (startTag) startTag.textContent = diffLabel();
+  }
+  document.querySelectorAll('#diffRow .diff-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-diff') === difficulty);
+  });
+
+  const boardEl = document.getElementById('board');
+  const keyboardEl = document.getElementById('keyboard');
+  const msgTag = document.getElementById('msgTag');
+  const guessTag = document.getElementById('guessTag');
+  const maxTag = document.getElementById('maxTag');
+
+  const ROWS_LAYOUT = ['qwertyuiop', 'asdfghjkl', 'ENTERzxcvbnmBACK'];
+
+  let answer = '';
+  let rowEls = [];
+  let curRow = 0, curCol = 0;
+  let state = 'start'; // start | playing | over
+  let keyStates = {};
+  let knownGreens = {};      // pos -> letter
+  let knownYellowLetters = new Set();
+
+  function sizeBoard(){
+    const p = preset();
+    const availW = Math.min(window.innerWidth * 0.9, 340);
+    const navH = 68;
+    const availH = (window.visualViewport ? window.visualViewport.height : window.innerHeight) - navH - 240;
+    const tileW = (availW - 4 * (availW * 0.14 / 5)) / 5;
+    const tileH = availH / p.maxGuesses;
+    const tile = Math.max(34, Math.floor(Math.min(tileW, tileH, 58)));
+    document.documentElement.style.setProperty('--wv-tile', tile + 'px');
+  }
+  window.addEventListener('resize', sizeBoard);
+  window.addEventListener('orientationchange', () => setTimeout(sizeBoard, 50));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', sizeBoard);
+
+  function buildBoard(){
+    const p = preset();
+    boardEl.innerHTML = '';
+    rowEls = [];
+    for (let r = 0; r < p.maxGuesses; r++){
+      const row = document.createElement('div');
+      row.className = 'wv-row';
+      const tiles = [];
+      for (let c = 0; c < 5; c++){
+        const tile = document.createElement('div');
+        tile.className = 'wv-tile';
+        row.appendChild(tile);
+        tiles.push(tile);
+      }
+      boardEl.appendChild(row);
+      rowEls.push({ el: row, tiles });
+    }
+    maxTag.textContent = p.maxGuesses;
+  }
+
+  function buildKeyboard(){
+    keyboardEl.innerHTML = '';
+    ROWS_LAYOUT.forEach(rowStr => {
+      const krow = document.createElement('div');
+      krow.className = 'wv-krow';
+      let i = 0;
+      while (i < rowStr.length){
+        if (rowStr.slice(i, i + 5) === 'ENTER'){
+          krow.appendChild(makeKey('ENTER', 'Enter', true));
+          i += 5;
+        } else if (rowStr.slice(i, i + 4) === 'BACK'){
+          krow.appendChild(makeKey('BACK', '⌫', true));
+          i += 4;
+        } else {
+          krow.appendChild(makeKey(rowStr[i], rowStr[i], false));
+          i += 1;
+        }
+      }
+      keyboardEl.appendChild(krow);
+    });
+  }
+  function makeKey(code, label, wide){
+    const btn = document.createElement('div');
+    btn.className = 'wv-key' + (wide ? ' wide' : '');
+    btn.textContent = label;
+    btn.dataset.key = code;
+    btn.addEventListener('pointerdown', (e) => { e.preventDefault(); handleKey(code); });
+    return btn;
+  }
+
+  function evaluateGuess(guess, ans){
+    const result = new Array(5).fill('absent');
+    const ansArr = ans.split('');
+    const gArr = guess.split('');
+    for (let i = 0; i < 5; i++){
+      if (gArr[i] === ansArr[i]){ result[i] = 'correct'; ansArr[i] = null; gArr[i] = null; }
+    }
+    for (let i = 0; i < 5; i++){
+      if (gArr[i] == null) continue;
+      const idx = ansArr.indexOf(gArr[i]);
+      if (idx !== -1){ result[i] = 'present'; ansArr[idx] = null; }
+    }
+    return result;
+  }
+
+  function showMessage(text, isError){
+    msgTag.textContent = text;
+    msgTag.classList.toggle('err', !!isError);
+    if (text) setTimeout(() => { if (msgTag.textContent === text) { msgTag.textContent = ''; msgTag.classList.remove('err'); } }, 1600);
+  }
+
+  function checkHardMode(guess){
+    const p = preset();
+    if (!p.hardMode) return null;
+    for (const pos in knownGreens){
+      if (guess[pos] !== knownGreens[pos]){
+        return (parseInt(pos, 10) + 1) + getOrdinalSuffix(parseInt(pos, 10) + 1) + ' letter must be ' + knownGreens[pos].toUpperCase();
+      }
+    }
+    for (const letter of knownYellowLetters){
+      if (!guess.includes(letter)) return 'Guess must include ' + letter.toUpperCase();
+    }
+    return null;
+  }
+  function getOrdinalSuffix(n){
+    if (n === 1) return 'st'; if (n === 2) return 'nd'; if (n === 3) return 'rd'; return 'th';
+  }
+
+  function handleKey(code){
+    if (state !== 'playing') return;
+    if (code === 'ENTER'){ submitGuess(); return; }
+    if (code === 'BACK'){
+      if (curCol > 0){
+        curCol--;
+        const tile = rowEls[curRow].tiles[curCol];
+        tile.textContent = ''; tile.classList.remove('filled');
+      }
+      return;
+    }
+    if (/^[a-z]$/.test(code) && curCol < 5){
+      const tile = rowEls[curRow].tiles[curCol];
+      tile.textContent = code;
+      tile.classList.add('filled', 'pop');
+      setTimeout(() => tile.classList.remove('pop'), 120);
+      curCol++;
+    }
+  }
+
+  function submitGuess(){
+    if (curCol < 5){ shakeRow(); showMessage('Not enough letters', true); return; }
+    const tiles = rowEls[curRow].tiles;
+    const guess = tiles.map(t => t.textContent.toLowerCase()).join('');
+
+    const hardErr = checkHardMode(guess);
+    if (hardErr){ shakeRow(); showMessage(hardErr, true); return; }
+
+    Arcade.audioCtx();
+    const result = evaluateGuess(guess, answer);
+    result.forEach((r, i) => {
+      setTimeout(() => {
+        tiles[i].classList.add(r);
+        Arcade.tone(r === 'correct' ? 560 : (r === 'present' ? 420 : 260), 0.06, 'triangle', 0.1);
+      }, i * 140);
+    });
+
+    result.forEach((r, i) => {
+      const letter = guess[i];
+      if (r === 'correct') knownGreens[i] = letter;
+      else if (r === 'present') knownYellowLetters.add(letter);
+      const rank = { absent: 0, present: 1, correct: 2 };
+      if (rank[r] > (rank[keyStates[letter]] || 0)){
+        keyStates[letter] = r;
+      }
+    });
+
+    setTimeout(() => {
+      updateKeyboardColors();
+      const won = guess === answer;
+      curRow++;
+      curCol = 0;
+      guessTag.textContent = Math.min(curRow + 1, preset().maxGuesses);
+      if (won){
+        endGame(true, curRow);
+      } else if (curRow >= preset().maxGuesses){
+        endGame(false, curRow);
+      }
+    }, 5 * 140 + 120);
+  }
+
+  function updateKeyboardColors(){
+    keyboardEl.querySelectorAll('.wv-key').forEach(btn => {
+      const k = btn.dataset.key;
+      if (k && k.length === 1 && keyStates[k]){
+        btn.classList.remove('correct', 'present', 'absent');
+        btn.classList.add(keyStates[k]);
+      }
+    });
+  }
+
+  function shakeRow(){
+    const row = rowEls[curRow].el;
+    row.classList.remove('shake');
+    void row.offsetWidth;
+    row.classList.add('shake');
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (state !== 'playing') return;
+    if (e.key === 'Enter') { handleKey('ENTER'); return; }
+    if (e.key === 'Backspace') { handleKey('BACK'); return; }
+    if (/^[a-zA-Z]$/.test(e.key)) handleKey(e.key.toLowerCase());
+  });
+
+  function startGame(diff){
+    if (diff){
+      difficulty = diff;
+      localStorage.setItem(DIFF_KEY, diff);
+      document.querySelectorAll('#diffRow .diff-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-diff') === diff));
+    }
+    refreshBest();
+    answer = randomWord();
+    curRow = 0; curCol = 0;
+    keyStates = {};
+    knownGreens = {};
+    knownYellowLetters = new Set();
+    guessTag.textContent = '1';
+    msgTag.textContent = '';
+    sizeBoard();
+    buildBoard();
+    buildKeyboard();
+    state = 'playing';
+    document.getElementById('startOverlay').classList.remove('show');
+    document.getElementById('overOverlay').classList.remove('show');
+    document.getElementById('hud').classList.add('show');
+  }
+
+  function endGame(won, guessesUsed){
+    state = 'over';
+    document.getElementById('hud').classList.remove('show');
+    const p = preset();
+
+    let score;
+    if (won) score = Math.max(60, (p.maxGuesses - guessesUsed + 1) * p.scoreMul);
+    else {
+      const correctCount = Object.keys(knownGreens).length;
+      score = correctCount * 25;
+    }
+
+    const isNewBest = score > best;
+    if (isNewBest){ best = score; localStorage.setItem(bestKey(), String(best)); }
+
+    document.getElementById('overTitle').textContent = won ? 'Cracked it.' : 'Out of guesses.';
+    document.getElementById('overSub').textContent = 'The word was ' + answer.toUpperCase();
+    document.getElementById('finalGuesses').textContent = won ? guessesUsed : p.maxGuesses;
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalBest').textContent = best;
+    const finalTag = document.getElementById('finalBestDiff'); if (finalTag) finalTag.textContent = diffLabel();
+    document.getElementById('newBestTag').classList.toggle('show', isNewBest);
+    document.getElementById('overOverlay').classList.add('show');
+    if (isNewBest) { Arcade.celebrate(); Arcade.celebrateHaptic(); }
+
+    Arcade.logRun('wordvault', score, difficulty, guessesUsed * 12);
+    if (won){
+      Arcade.unlock('wordvault_win', 'Word Cracked', 'Solve a Word Vault puzzle');
+      if (difficulty === 'hard') Arcade.unlock('wordvault_hard_win', 'Precision Guesser', 'Solve a Word Vault puzzle on Hard difficulty');
+      if (guessesUsed <= 3) Arcade.unlock('wordvault_flawless', 'Lightning Guess', 'Solve a Word Vault puzzle in 3 guesses or fewer');
+    }
+  }
+
+  document.getElementById('startOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('.diff-btn') || e.target.closest('.overlay-home-btn')) return;
+    e.preventDefault();
+  }, { passive:false });
+  document.querySelectorAll('#startOverlay .diff-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      Arcade.audioCtx();
+      startGame(btn.getAttribute('data-diff'));
+    });
+  });
+  document.getElementById('overOverlay').addEventListener('pointerdown', function(e){
+    if (e.target.closest('#retryBtn') || e.target.closest('#homeBtn')) return;
+    e.preventDefault();
+    startGame(difficulty);
+  }, { passive:false });
+  document.getElementById('retryBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    startGame(difficulty);
+  });
+  document.getElementById('homeBtn').addEventListener('click', (e) => { e.stopPropagation(); });
+
+  sizeBoard();
+  refreshBest();
+  Arcade.mountPanels({ gameId: 'wordvault' });
+  Arcade.mountPauseMenu();
+})();
+</script>
+</body>
+</html>

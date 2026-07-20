@@ -264,6 +264,28 @@ window.Arcade = (function () {
       <circle cx="55" cy="21" r="2.2" fill="#0c0c0b"/>
       <path d="M62 66 L74 50 L80 56 L68 72 Z" fill="#c9556b"/>
       <rect x="61" y="60" width="16" height="7" rx="3" fill="#8a8880" transform="rotate(-38 61 60)"/>`
+    },
+    {
+      id: 'wordvault', title: 'Word Vault', href: 'word-vault/index.html',
+      accent: '#8a7fd6', category: 'Word', difficulty: 'Medium', playTime: '3–6 min',
+      desc: 'Guess the five-letter word. Every guess narrows down the answer.',
+      icon: `<defs><linearGradient id="g-word" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#e8b55a"/><stop offset="100%" stop-color="#c8973a"/>
+      </linearGradient></defs>
+      <rect x="10" y="18" width="16" height="16" rx="3" fill="url(#g-word)"/>
+      <rect x="28" y="18" width="16" height="16" rx="3" fill="#3a4658" stroke="rgba(240,237,230,0.14)" stroke-width="1.5"/>
+      <rect x="46" y="18" width="16" height="16" rx="3" fill="#3a4658" stroke="rgba(240,237,230,0.14)" stroke-width="1.5"/>
+      <rect x="64" y="18" width="16" height="16" rx="3" fill="#6fd0a8"/>
+      <rect x="10" y="38" width="16" height="16" rx="3" fill="#3a4658" stroke="rgba(240,237,230,0.14)" stroke-width="1.5"/>
+      <rect x="28" y="38" width="16" height="16" rx="3" fill="#6fd0a8"/>
+      <rect x="46" y="38" width="16" height="16" rx="3" fill="url(#g-word)"/>
+      <rect x="64" y="38" width="16" height="16" rx="3" fill="#3a4658" stroke="rgba(240,237,230,0.14)" stroke-width="1.5"/>
+      <rect x="10" y="58" width="70" height="24" rx="4" fill="rgba(240,237,230,0.06)"/>
+      <rect x="16" y="64" width="8" height="12" rx="2" fill="rgba(240,237,230,0.2)"/>
+      <rect x="28" y="64" width="8" height="12" rx="2" fill="rgba(240,237,230,0.2)"/>
+      <rect x="40" y="64" width="8" height="12" rx="2" fill="rgba(240,237,230,0.2)"/>
+      <rect x="52" y="64" width="8" height="12" rx="2" fill="rgba(240,237,230,0.2)"/>
+      <rect x="64" y="64" width="10" height="12" rx="2" fill="rgba(240,237,230,0.2)"/>`
     }
   ];
 
@@ -447,13 +469,17 @@ window.Arcade = (function () {
     { id: 'hard_try_connectfour', title: 'Hard Mode', desc: 'Play Connect Four on Hard' },
     { id: 'whackamole_100', title: 'Fast Hands', desc: 'Score 100+ in Whack-a-Mole' },
     { id: 'whackamole_streak', title: 'Unshakeable', desc: 'Reach a 10-hit streak without hitting a charge' },
-    { id: 'hard_try_whackamole', title: 'Hard Mode', desc: 'Play Whack-a-Mole on Hard' }
+    { id: 'hard_try_whackamole', title: 'Hard Mode', desc: 'Play Whack-a-Mole on Hard' },
+    { id: 'wordvault_win', title: 'Word Cracked', desc: 'Solve a Word Vault puzzle' },
+    { id: 'wordvault_hard_win', title: 'Precision Guesser', desc: 'Solve a Word Vault puzzle on Hard difficulty' },
+    { id: 'wordvault_flawless', title: 'Lightning Guess', desc: 'Solve a Word Vault puzzle in 3 guesses or fewer' },
+    { id: 'hard_try_wordvault', title: 'Hard Mode', desc: 'Play Word Vault on Hard' }
   ];
 
   /* ---- Estimated per-session seconds, used until a game passes a real
      durationSec into logRun() — keeps "Total Play Time" meaningful from
      day one instead of reading 0 until every game is wired for timing. */
-  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90, goldvault: 150, aurumecho: 120, pong: 150, connectfour: 180, whackamole: 60 };
+  const AVG_SESSION_SECONDS = { flappy: 150, dino: 210, tictactoe: 45, roadfighter: 240, snake: 180, stacktower: 150, brickbreaker: 180, bouncetail: 150, novadrift: 150, aurummerge: 240, goldrush: 210, memorymatch: 90, goldvault: 150, aurumecho: 120, pong: 150, connectfour: 180, whackamole: 60, wordvault: 180 };
   const PLAYTIME_KEY = 'arcade_total_playtime_sec_v1';
   function getTotalPlayTimeSec() { return parseInt(localStorage.getItem(PLAYTIME_KEY) || '0', 10); }
   function formatDuration(sec) {
